@@ -1438,10 +1438,26 @@ function updateMapPin(x, y) {
 function calcularPreco() {
   var destino = document.getElementById('destino-input').value.trim();
   var tipo  = document.getElementById('tipo-corrida').value;
-  var tarifa = DB.precos[tipo];
+  var p = DB.precos;
+  var tarifa = p[tipo] || p.basica;
   
-  if (tipo === 'bandeirada') {
-    tarifa = { valor: 0, km_minimo: 0, km_extra: DB.precos.basica.km_extra };
+  // Simula distância
+  var dist = 1.0;
+  if (destino.length > 5) {
+    dist = (destino.length / 4) + (Math.random() * 2);
+  }
+  
+  var band = p.bandeirada || 0;
+  var distExtra = Math.max(0, dist - (tarifa.km_minimo || 0));
+  var total = band + (tarifa.valor || 0) + (distExtra * (tarifa.km_extra || 0));
+
+  document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+  var pct = Math.min(100, (dist / 10) * 100);
+  document.getElementById('dist-bar').style.width = pct + '%';
+  document.getElementById('dist-text').textContent = '📏 Distância estimada: ' + dist.toFixed(1) + ' km';
+  
+  STATE.distancia_atual = dist;
+};
   } else if (!tarifa || typeof tarifa !== 'object') {
     tarifa = DB.precos.basica;
   }
@@ -2229,6 +2245,39 @@ function updateAdminPrecos() {
 
 function atualizarPreviewTarifa() {
   var p = DB.precos || {};
+  
+  var get = function(id, def) {
+    var el = document.getElementById(id);
+    return (el && el.value !== "") ? (parseFloat(el.value) || 0) : def;
+  };
+  
+  var band  = get('t-bandeirada', p.bandeirada || 0);
+  var bVal  = get('t-basica-valor', p.basica ? p.basica.valor : 0);
+  var bMin  = get('t-basica-kmmin', p.basica ? p.basica.km_minimo : 0);
+  var bEx   = get('t-basica-kmex', p.basica ? p.basica.km_extra : 0);
+  
+  var eVal  = get('t-expressa-valor', p.expressa ? p.expressa.valor : 0);
+  var eMin  = get('t-expressa-kmmin', p.expressa ? p.expressa.km_minimo : 0);
+  var eEx   = get('t-expressa-kmex', p.expressa ? p.expressa.km_extra : 0);
+
+  var d = 6.0; // Distância de simulação
+  var calc = function(base, min, extra) {
+    return band + base + (Math.max(0, d - min) * extra);
+  };
+
+  var totalB = calc(bVal, bMin, bEx);
+  var totalE = calc(eVal, eMin, eEx);
+
+  var el = document.getElementById('adm-tarifa-preview');
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML = 
+    '<div style="background:rgba(255,107,0,0.15); border-left:4px solid var(--orange); padding:12px; border-radius:8px">' +
+    '<h4 style="margin:0 0 8px; color:var(--orange)">📊 Simulação de Valor (Corrida de 6 km)</h4>' +
+    '<div><b>🏍️ Básica:</b> R$ ' + band.toFixed(2) + ' + R$ ' + bVal.toFixed(2) + ' base + ' + (d-bMin).toFixed(1) + 'km extra = <b>R$ ' + totalB.toFixed(2).replace('.',',') + '</b></div>' +
+    '<div style="margin-top:4px"><b>⚡ Expressa:</b> R$ ' + band.toFixed(2) + ' + R$ ' + eVal.toFixed(2) + ' base + ' + (d-eMin).toFixed(1) + 'km extra = <b>R$ ' + totalE.toFixed(2).replace('.',',') + '</b></div>' +
+    '</div>';
+};
   var get = function(id, def) {
     var el = document.getElementById(id);
     var val = el ? el.value : "";
