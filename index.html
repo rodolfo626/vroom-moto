@@ -1314,9 +1314,43 @@ function useSimulatedLocation() {
 }
 
 function onLocationObtained() {
+  var lat = STATE.clienteLat;
+  var lng = STATE.clienteLng;
+  
+  // Mostra que está buscando o endereço real
+  document.getElementById('loc-display').innerHTML = 
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
+    '<div class="status status-waiting">📍 Buscando endereço real...</div>' +
+    '</div>';
+  document.getElementById('map-label-text').textContent = '📡 Buscando endereço...';
+
+  // Reverse Geocoding usando Nominatim (OpenStreetMap) - Gratuito e sem chave
+  fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1')
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+      var addr = '';
+      if (data.address) {
+        var road = data.address.road || data.address.pedestrian || data.address.suburb || 'Rua desconhecida';
+        var houseNumber = data.address.house_number || 'S/N';
+        var city = data.address.city || data.address.town || data.address.village || '';
+        addr = road + ', ' + houseNumber + (city ? ' - ' + city : '');
+      } else {
+        addr = 'Rua ' + getRuaAleatoria() + ', nº ' + (Math.floor(Math.random()*900)+100);
+      }
+      
+      STATE.clienteAddr = addr;
+      finalizarObtencaoLocalizacao();
+    })
+    .catch(function() {
+      // Fallback para endereço aleatório se a API falhar
+      STATE.clienteAddr = 'Rua ' + getRuaAleatoria() + ', nº ' + (Math.floor(Math.random()*900)+100);
+      finalizarObtencaoLocalizacao();
+    });
+}
+
+function finalizarObtencaoLocalizacao() {
   var lat = STATE.clienteLat.toFixed(4);
   var lng = STATE.clienteLng.toFixed(4);
-  STATE.clienteAddr = 'Rua ' + getRuaAleatoria() + ', nº ' + (Math.floor(Math.random()*900)+100);
 
   // Atualiza UI
   document.getElementById('loc-display').innerHTML =
@@ -1333,7 +1367,7 @@ function onLocationObtained() {
   // Mapa
   updateMapPin(50, 50);
   document.getElementById('map-label-text').textContent = '📍 ' + STATE.clienteAddr;
-  toast('✅ Localização obtida com sucesso!', 'success');
+  toast('✅ Endereço localizado!', 'success');
 
   // Calcula preço
   calcularPreco();
