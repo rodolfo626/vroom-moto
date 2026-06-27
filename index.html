@@ -1497,7 +1497,8 @@ function updateMotCorridasList() {
       '<span class="status status-running">' + (emAndamento.status === 'aceita' ? 'Indo buscar' : 'Em corrida') + '</span>' +
       '</div>' +
       '<div class="ride-actions">' +
-      '<button class="btn btn-orange btn-sm flex-1" onclick="concluirCorridaMot(' + emAndamento.id + ')">🏁 Concluir Corrida</button>' +
+      '<button class="btn btn-sm flex-1" style="background:#1a73e8;color:white" onclick="abrirMapsCorrida(' + emAndamento.id + ')">📍 Ver no Maps</button>' +
+      '<button class="btn btn-orange btn-sm flex-1" onclick="concluirCorridaMot(' + emAndamento.id + ')">🏁 Concluir</button>' +
       '</div></div>' +
       '<div class="fake-map" style="margin-top:12px"><div class="map-grid"></div>' +
       '<div class="map-road-h" style="top:50%;left:0;right:0"></div>' +
@@ -1516,14 +1517,47 @@ function aceitarCorrida(id) {
   c.status = 'aceita';
   c.motorista = STATE.motoristaLogado;
   saveDB();
-  toast('✅ Corrida aceita! Vá buscar o cliente.', 'success');
+  toast('✅ Corrida aceita! Abrindo Google Maps...', 'success');
   updateMotCorridasList();
+
+  // Abre Google Maps com rota até o cliente
+  var lat = c.clienteLat;
+  var lng = c.clienteLng;
+  if (lat && lng) {
+    var destino = c.destino ? encodeURIComponent(c.destino) : '';
+    var mapsUrl;
+    if (destino) {
+      // Rota: da localização atual do motorista → cliente → destino final
+      mapsUrl = 'https://www.google.com/maps/dir/?api=1' +
+        '&destination=' + lat + ',' + lng +
+        '&waypoints=' + lat + ',' + lng +
+        '&travelmode=driving';
+      // Rota direta até o cliente (origem)
+      mapsUrl = 'https://www.google.com/maps/dir/?api=1' +
+        '&destination=' + lat + ',' + lng +
+        '&travelmode=driving';
+    } else {
+      mapsUrl = 'https://www.google.com/maps/dir/?api=1' +
+        '&destination=' + lat + ',' + lng +
+        '&travelmode=driving';
+    }
+    setTimeout(function() {
+      window.open(mapsUrl, '_blank');
+    }, 800);
+  }
 }
 
 function recusarCorrida(id) {
   var el = document.getElementById('ride-' + id);
   if (el) el.remove();
   toast('Corrida recusada.', 'info');
+}
+
+function abrirMapsCorrida(id) {
+  var c = DB.corridas.find(function(x){ return x.id === id; });
+  if (!c || !c.clienteLat || !c.clienteLng) { toast('📍 Localização do cliente não disponível.', 'error'); return; }
+  var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + c.clienteLat + ',' + c.clienteLng + '&travelmode=driving';
+  window.open(mapsUrl, '_blank');
 }
 
 function concluirCorridaMot(id) {
