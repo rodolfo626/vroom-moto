@@ -858,6 +858,27 @@
         <div class="card">
           <div id="adm-precos-list"></div>
         </div>
+
+        <!-- CONFIGURAÇÃO KM MÍNIMO -->
+        <div class="card" style="border-left: 4px solid var(--orange)">
+          <h3>📏 Distância Mínima (Valor Fixo)</h3>
+          <p class="text-sm" style="margin:8px 0 16px;opacity:0.7">Até essa distância o cliente paga apenas o valor mínimo (bandeirada + corrida). O adicional por km só é cobrado no que ultrapassar.</p>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <div style="flex:1">
+              <label class="text-sm" style="display:block;margin-bottom:6px;font-weight:600">Km mínimo</label>
+              <input type="number" id="edit-km-minimo" placeholder="3.0" step="0.5" min="0.5" max="20" oninput="atualizarPreviewTarifa()"
+                style="width:100%;padding:12px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;font-size:16px">
+            </div>
+            <div style="flex:1">
+              <label class="text-sm" style="display:block;margin-bottom:6px;font-weight:600">Valor adicional por km (R$)</label>
+              <input type="number" id="edit-km-extra-2" placeholder="1.50" step="0.10" min="0" oninput="atualizarPreviewTarifa()"
+                style="width:100%;padding:12px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;font-size:16px">
+            </div>
+          </div>
+          <div id="adm-tarifa-preview" style="background:rgba(255,107,0,0.1);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;display:none"></div>
+          <button class="btn btn-orange" onclick="salvarTarifa()">💾 Salvar Configuração</button>
+        </div>
+
         <div class="card">
           <h3>✏️ Editar Preços</h3>
           <div class="input-group">
@@ -957,7 +978,7 @@
 var DB = {
   motoristas: [],
   corridas: [],
-  precos: { basica: 8.00, expressa: 10.00, km_extra: 1.50, bandeirada: 3.00 },
+  precos: { basica: 8.00, expressa: 10.00, km_extra: 1.50, bandeirada: 3.00, km_minimo: 3.0 },
   admins: [{ user: 'admin', pass: 'admin123' }, { user: 'Rodolfo Oliveira', pass: 'Rm290198' }]
 };
 
@@ -1173,9 +1194,12 @@ function calcularPreco() {
   var base = DB.precos.basica;
   var band = DB.precos.bandeirada;
   var kmex = DB.precos.km_extra;
+  var kmMin = DB.precos.km_minimo || 3.0;
   var dist = 2 + Math.random() * 8; // 2-10km simulado
   var extra = tipo === 'expressa' ? DB.precos.expressa - DB.precos.basica : 0;
-  var total = band + (dist * kmex) + base + extra;
+  // Cobra km_extra só na distância que ultrapassar o km mínimo
+  var distExtra = Math.max(0, dist - kmMin);
+  var total = band + base + (distExtra * kmex) + extra;
 
   document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
   document.getElementById('dist-bar').style.width = Math.min(100, dist * 10) + '%';
@@ -1196,8 +1220,10 @@ function confirmarCorrida() {
 
   var base  = DB.precos.bandeirada + DB.precos.basica;
   var dist  = 2 + Math.random() * 8;
+  var kmMin = DB.precos.km_minimo || 3.0;
+  var distExtra = Math.max(0, dist - kmMin);
   var extra = tipo === 'expressa' ? (DB.precos.expressa - DB.precos.basica) : 0;
-  var preco = base + dist * DB.precos.km_extra + extra;
+  var preco = base + distExtra * DB.precos.km_extra + extra;
 
   STATE.corridaAtual = {
     id: Date.now(),
@@ -1825,12 +1851,49 @@ function cadastrarMotorista() {
 function updateAdminPrecos() {
   var el = document.getElementById('adm-precos-list');
   var nomes = { basica: 'Corrida Básica', expressa: 'Corrida Expressa', km_extra: 'Por km adicional', bandeirada: 'Bandeirada' };
-  el.innerHTML = Object.keys(DB.precos).map(function(k) {
+  el.innerHTML = Object.keys(DB.precos).filter(function(k){ return k !== 'km_minimo'; }).map(function(k) {
     return '<div class="price-row">' +
-      '<span class="price-name">' + nomes[k] + '</span>' +
+      '<span class="price-name">' + (nomes[k] || k) + '</span>' +
       '<span class="price-val">R$ ' + DB.precos[k].toFixed(2).replace('.',',') + '</span>' +
       '</div>';
-  }).join('');
+  }).join('') +
+  '<div class="price-row" style="border-top:1px solid rgba(255,255,255,0.1);margin-top:8px;padding-top:8px">' +
+  '<span class="price-name">📏 Km mínimo (valor fixo)</span>' +
+  '<span class="price-val" style="color:var(--orange)">' + (DB.precos.km_minimo || 3.0).toFixed(1) + ' km</span>' +
+  '</div>';
+
+  // Preenche os campos de configuração de tarifa
+  var kmMinInput = document.getElementById('edit-km-minimo');
+  var kmExtraInput = document.getElementById('edit-km-extra-2');
+  if (kmMinInput) kmMinInput.value = (DB.precos.km_minimo || 3.0).toFixed(1);
+  if (kmExtraInput) kmExtraInput.value = (DB.precos.km_extra || 1.50).toFixed(2);
+  atualizarPreviewTarifa();
+}
+
+function atualizarPreviewTarifa() {
+  var kmMin = parseFloat(document.getElementById('edit-km-minimo').value) || DB.precos.km_minimo || 3.0;
+  var kmEx  = parseFloat(document.getElementById('edit-km-extra-2').value) || DB.precos.km_extra || 1.50;
+  var vmin  = DB.precos.bandeirada + DB.precos.basica;
+  var preview = document.getElementById('adm-tarifa-preview');
+  if (!preview) return;
+  preview.style.display = 'block';
+  preview.innerHTML =
+    '💡 <strong>Como vai funcionar:</strong><br>' +
+    '• Até <strong>' + kmMin.toFixed(1) + ' km</strong>: valor fixo de <strong>R$ ' + vmin.toFixed(2).replace('.',',') + '</strong><br>' +
+    '• Além disso: + R$ ' + kmEx.toFixed(2).replace('.',',') + ' por km adicional<br>' +
+    '<span style="opacity:0.7;font-size:12px">Ex: corrida de 6 km → R$ ' + (vmin + Math.max(0, 6 - kmMin) * kmEx).toFixed(2).replace('.',',') + '</span>';
+}
+
+function salvarTarifa() {
+  var kmMin = parseFloat(document.getElementById('edit-km-minimo').value);
+  var kmEx  = parseFloat(document.getElementById('edit-km-extra-2').value);
+  if (isNaN(kmMin) || kmMin <= 0) { toast('⚠️ Informe um km mínimo válido!', 'error'); return; }
+  if (isNaN(kmEx)  || kmEx  <= 0) { toast('⚠️ Informe um valor por km válido!', 'error'); return; }
+  DB.precos.km_minimo = kmMin;
+  DB.precos.km_extra  = kmEx;
+  saveDB();
+  updateAdminPrecos();
+  toast('✅ Tarifa salva! Km mínimo: ' + kmMin.toFixed(1) + ' km', 'success');
 }
 
 function salvarPreco() {
