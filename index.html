@@ -1402,6 +1402,7 @@ function updateMapPin(x, y) {
 }
 
 function calcularPreco() {
+  var destino = document.getElementById('destino-input').value.trim();
   var tipo  = document.getElementById('tipo-corrida').value;
   var tarifa = DB.precos[tipo];
   
@@ -1411,14 +1412,25 @@ function calcularPreco() {
     tarifa = DB.precos.basica;
   }
 
+  // Simula distância baseada no tamanho do texto do destino para efeito visual realístico no MVP
+  // No futuro pode integrar com API de Matriz de Distância
+  var dist = 1.0;
+  if (destino.length > 5) {
+    dist = (destino.length / 4) + (Math.random() * 2);
+  }
+  
   var band = DB.precos.bandeirada || 0;
-  var dist = 1.0; 
   var distExtra = Math.max(0, dist - (tarifa.km_minimo || 0));
   var total = band + (tarifa.valor || 0) + (distExtra * (tarifa.km_extra || 0));
 
   document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-  document.getElementById('dist-bar').style.width = '10%';
-  document.getElementById('dist-text').textContent = '📏 Valor base para corridas até ' + (tarifa.km_minimo || 0) + ' km';
+  
+  var pct = Math.min(100, (dist / 10) * 100);
+  document.getElementById('dist-bar').style.width = pct + '%';
+  document.getElementById('dist-text').textContent = '📏 Distância estimada: ' + dist.toFixed(1) + ' km';
+  
+  // Salva no estado para usar no confirmarCorrida
+  STATE.ultimaDistCalc = dist;
 }
 
 function solicitarCorrida() {
@@ -1441,7 +1453,7 @@ function confirmarCorrida() {
   }
 
   var band = DB.precos.bandeirada || 0;
-  var dist = 1.0; 
+  var dist = STATE.ultimaDistCalc || 1.0; 
   var distExtra = Math.max(0, dist - (tarifa.km_minimo || 0));
   var preco = band + (tarifa.valor || 0) + (distExtra * (tarifa.km_extra || 0));
 
@@ -1580,6 +1592,7 @@ function updateClienteRideStatus() {
     '<div class="card">' +
     '<div class="price-row"><span class="text-sm">📍 Origem</span><span class="bold" style="font-size:13px;max-width:55%;text-align:right">' + (c.origem || '—') + '</span></div>' +
     '<div class="price-row"><span class="text-sm">🏁 Destino</span><span class="bold" style="font-size:13px;max-width:55%;text-align:right">' + c.destino + '</span></div>' +
+    '<div class="price-row"><span class="text-sm">📏 Distância</span><span class="bold">' + c.dist.toFixed(1) + ' km</span></div>' +
     '<div class="price-row"><span class="text-sm">💰 Valor</span><span style="font-weight:900;color:var(--green)">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span></div>' +
     '</div>' +
     motHtml +
@@ -1752,8 +1765,8 @@ function updateMotCorridasList() {
           '<span class="ride-client">👤 ' + cliNome + ' (' + posLabel + ')</span>' +
           '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span>' +
           '</div>' +
-          '<div class="ride-info"><span>🏁 ' + c.destino + '</span><span>🕐 ' + c.ts + '</span></div>' +
-          '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (c.origem || 'Localização do cliente') + '</span></div>' +
+          '<div class="ride-info"><span>🏁 ' + c.destino + '</span><span>📏 ' + c.dist.toFixed(1) + ' km</span></div>' +
+          '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (c.origem || 'Localização do cliente') + '</span><span>🕐 ' + c.ts + '</span></div>' +
           '<div style="margin-top:8px;font-size:12px;opacity:0.5">Conclua a corrida atual para aceitar</div>' +
           '</div>';
       }
@@ -1763,8 +1776,8 @@ function updateMotCorridasList() {
         '<span class="ride-client">👤 ' + cliNome + ' (' + posLabel + ')</span>' +
         '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span>' +
         '</div>' +
-        '<div class="ride-info"><span>🏁 ' + c.destino + '</span><span>🕐 ' + c.ts + '</span></div>' +
-        '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (c.origem || 'Localização do cliente') + '</span></div>' +
+        '<div class="ride-info"><span>🏁 ' + c.destino + '</span><span>📏 ' + c.dist.toFixed(1) + ' km</span></div>' +
+        '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (c.origem || 'Localização do cliente') + '</span><span>🕐 ' + c.ts + '</span></div>' +
         '<div style="margin-top:10px;background:#22c55e22;border-radius:8px;padding:8px;text-align:center;font-weight:700;color:#22c55e;font-size:14px">✅ Toque para aceitar esta corrida</div>' +
         '</div>';
     }).join('');
@@ -1785,7 +1798,7 @@ function updateMotCorridasList() {
       '<div class="ride-header"><span class="ride-client" style="color:' + statusCor + '">' + statusLabel + '</span>' +
       '<span class="ride-price">R$ ' + emAndamento.preco.toFixed(2).replace('.',',') + '</span></div>' +
       '<div class="ride-info" style="margin-bottom:8px"><strong>👤 ' + cliInfo + '</strong></div>' +
-      '<div class="ride-info"><span>🏁 ' + emAndamento.destino + '</span></div>' +
+      '<div class="ride-info"><span>🏁 ' + emAndamento.destino + '</span><span>📏 ' + emAndamento.dist.toFixed(1) + ' km</span></div>' +
       '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (emAndamento.origem || 'Localização do cliente') + '</span></div>' +
       '<div class="ride-actions" style="margin-top:10px">' +
       '<button class="btn btn-sm flex-1" style="background:#1a73e8;color:white" onclick="abrirMapsCorrida(' + emAndamento.id + ')">📍 Maps</button>' +
