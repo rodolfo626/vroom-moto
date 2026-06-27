@@ -1261,6 +1261,17 @@ function initCliente() {
     document.getElementById('modal-cliente-cadastro').classList.add('open');
     return;
   }
+  
+  // Atualiza os labels das opções com os valores do ADM
+  var sel = document.getElementById('tipo-corrida');
+  if (sel && DB.precos) {
+    var p = DB.precos;
+    sel.innerHTML = 
+      '<option value="basica">🛵 Básica (R$ ' + p.basica.valor.toFixed(2).replace('.',',') + ')</option>' +
+      '<option value="expressa">🚀 Expressa (R$ ' + p.expressa.valor.toFixed(2).replace('.',',') + ')</option>' +
+      '<option value="bandeirada">🚩 Bandeirada (R$ ' + p.bandeirada.toFixed(2).replace('.',',') + ')</option>';
+  }
+
   updateClienteRideStatus();
   // Força a busca da localização ao abrir a tela do cliente
   getLocation();
@@ -1375,10 +1386,17 @@ function confirmarCorrida() {
   if (!destino) { toast('⚠️ Informe o destino!', 'error'); return; }
   if (!STATE.clienteLat) { toast('⚠️ Obtenha sua localização primeiro!', 'error'); return; }
 
-  var tarifa = DB.precos[tipo] || DB.precos.basica;
+  var tarifa = DB.precos[tipo];
+  if (tipo === 'bandeirada') {
+    tarifa = { valor: 0, km_minimo: 0, km_extra: DB.precos.basica.km_extra };
+  } else if (!tarifa || typeof tarifa !== 'object') {
+    tarifa = DB.precos.basica;
+  }
+
+  var band  = DB.precos.bandeirada || 0;
   var dist  = 2 + Math.random() * 8;
-  var distExtra = Math.max(0, dist - tarifa.km_minimo);
-  var preco = DB.precos.bandeirada + tarifa.valor + distExtra * tarifa.km_extra;
+  var distExtra = Math.max(0, dist - (tarifa.km_minimo || 0));
+  var preco = band + (tarifa.valor || 0) + (distExtra * (tarifa.km_extra || 0));
 
   STATE.corridaAtual = {
     id: Date.now(),
