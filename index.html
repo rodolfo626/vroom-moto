@@ -675,8 +675,25 @@
   </div>
   <div class="content">
     <div class="content-max">
-      <!-- Toggle online/offline -->
-      <div class="card">
+
+      <!-- ESTADO BLOQUEADO (MENSALIDADE) -->
+      <div id="mot-bloqueado-screen" style="display:none;margin-bottom:20px">
+        <div class="card" style="text-align:center;padding:30px 20px;border:2px solid var(--red);background:rgba(255,71,87,0.05)">
+          <div style="font-size:50px;margin-bottom:15px">🚫</div>
+          <h3 style="color:var(--red);margin-bottom:10px">Acesso Bloqueado</h3>
+          <div id="mot-bloqueado-msg" style="background:rgba(0,0,0,0.2);padding:15px;border-radius:10px;margin-bottom:20px;font-size:14px;line-height:1.5">
+            Carregando mensagem...
+          </div>
+          <a href="https://wa.me/5511999999999" target="_blank" class="btn btn-green" style="width:100%;margin-bottom:10px;text-decoration:none;display:inline-block">
+            💬 Resolver no WhatsApp
+          </a>
+          <button class="btn btn-ghost" onclick="logoutMotorista()">Sair da conta</button>
+        </div>
+      </div>
+
+      <div id="mot-paineis-ativos">
+        <!-- Toggle online/offline -->
+        <div class="card">
         <div class="toggle-row">
           <div>
             <div class="toggle-label">Status de Disponibilidade</div>
@@ -1103,6 +1120,7 @@ var STATE = {
 // =====================================================
 function init() {
   loadDB();
+  verificarVencimentos(); // Bloqueia inadimplentes ao carregar
   if (DB.motoristas.length === 0) seedMotoristas();
   setTimeout(function() {
     document.getElementById('splash').style.display = 'none';
@@ -1306,12 +1324,8 @@ function getLocation() {
   );
 }
 
-function useSimulatedLocation() {
-  // Simula coordenadas de uma cidade brasileira
-  STATE.clienteLat = -23.5505 + (Math.random() - 0.5) * 0.05;
-  STATE.clienteLng = -46.6333 + (Math.random() - 0.5) * 0.05;
-  onLocationObtained();
-}
+// REMOVIDO useSimulatedLocation para garantir localização real
+
 
 function onLocationObtained() {
   var lat = STATE.clienteLat;
@@ -1627,11 +1641,15 @@ function loginMotorista() {
   });
 
   if (!mot) { toast('❌ Usuário ou senha incorretos!', 'error'); return; }
-  if (mot.status === 'bloqueado') { toast('🚫 Sua conta está bloqueada. Fale com o administrador.', 'error'); return; }
-  if (mot.status === 'pendente')  { toast('⏳ Conta aguardando autorização.', 'error'); return; }
-
+  
+  // Permite login mesmo bloqueado para ver o aviso, mas redireciona
   STATE.motoristaLogado = mot;
-  mot.online = true;
+  if (mot.status !== 'autorizado') {
+    mot.online = false;
+  } else {
+    mot.online = true;
+  }
+  
   saveDB();
   showScreen('motorista-painel');
 }
@@ -1653,6 +1671,18 @@ function initMotorista() {
   if (!mot) { showScreen('motorista-login'); return; }
 
   document.getElementById('mot-nome').textContent = mot.nome.split(' ')[0];
+  
+  // Controle de visibilidade se estiver bloqueado/pendente
+  var isBlocked = mot.status !== 'autorizado';
+  document.getElementById('mot-bloqueado-screen').style.display = isBlocked ? 'block' : 'none';
+  document.getElementById('mot-paineis-ativos').style.display = isBlocked ? 'none' : 'block';
+  document.getElementById('mot-status-badge').style.display = isBlocked ? 'none' : 'inline-block';
+  
+  if (isBlocked) {
+    document.getElementById('mot-bloqueado-msg').textContent = mot.msg_admin || 
+      (mot.status === 'pendente' ? 'Sua conta está em análise. Aguarde a liberação do administrador.' : 'Sua conta está bloqueada por falta de pagamento ou outro motivo.');
+  }
+
   document.getElementById('mot-toggle-online').checked = STATE.motOnline;
   updateMotOnlineLabel();
   updateMotCorridasList();
