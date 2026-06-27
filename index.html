@@ -778,6 +778,10 @@
           <h3>📋 Dados Cadastrais</h3>
           <div id="mot-perfil-dados"></div>
         </div>
+        <div class="card" style="border-left:4px solid var(--blue)">
+          <h3 style="display:flex;align-items:center;gap:8px">💬 Mensagens do ADM</h3>
+          <div id="mot-msg-admin" class="text-sm" style="background:var(--card-bg);padding:12px;border-radius:8px;min-height:50px">Nenhuma mensagem.</div>
+        </div>
         <button class="btn btn-ghost mt-16" onclick="logoutMotorista()">Sair da conta</button>
       </div>
     </div>
@@ -930,9 +934,32 @@
 
       </div>
 
-      <!-- Pagamentos -->
+      <!-- Pagamentos / Taxa de Serviço -->
       <div id="adm-tab-pagamentos" style="display:none">
-        <div class="section-label">Status de Pagamento dos Motoristas</div>
+
+        <!-- Configuração do valor da mensalidade -->
+        <div class="card" style="margin-bottom:16px;border-left:4px solid var(--orange)">
+          <div class="section-label" style="margin:0 0 10px">💰 Taxa de Serviço Mensal</div>
+          <div class="flex-row" style="gap:8px;align-items:center">
+            <div style="flex:1">
+              <div class="text-sm" style="color:var(--text2);margin-bottom:4px">Valor da mensalidade (todos os motoristas)</div>
+              <div style="font-size:22px;font-weight:900;color:var(--green)" id="taxa-valor-display">R$ —</div>
+            </div>
+            <button class="btn btn-orange btn-sm" onclick="abrirEditarTaxa()">✏️ Editar</button>
+          </div>
+          <div id="taxa-edit-form" style="display:none;margin-top:12px">
+            <div class="input-group" style="margin:0">
+              <label>Novo valor (R$)</label>
+              <input type="number" id="taxa-novo-valor" placeholder="Ex: 89.90" step="0.01" min="0">
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn btn-green btn-sm flex-1" onclick="salvarTaxa()">✅ Salvar</button>
+              <button class="btn btn-ghost btn-sm" onclick="cancelarEditarTaxa()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-label">Motoristas — Controle de Mensalidade</div>
         <div id="adm-pagamentos-list"></div>
       </div>
 
@@ -978,10 +1005,15 @@
     <div class="input-group">
       <label>Status</label>
       <select id="cad-status">
+        <option value="pendente">Pendente (aguardando pagamento)</option>
         <option value="autorizado">Autorizado</option>
-        <option value="pendente">Pendente de análise</option>
         <option value="bloqueado">Bloqueado</option>
       </select>
+    </div>
+    <div class="input-group" id="cad-datapag-group">
+      <label>📅 Data do pagamento da mensalidade</label>
+      <input type="date" id="cad-datapag">
+      <div class="text-sm" style="color:var(--text2);margin-top:4px">O acesso expira automaticamente em 30 dias</div>
     </div>
     <button class="btn btn-green" onclick="cadastrarMotorista()">Salvar Motorista</button>
     <button class="btn btn-ghost mt-8" onclick="fecharModal('modal-cadastro')">Cancelar</button>
@@ -1003,6 +1035,22 @@
   </div>
 </div>
 
+<!-- Modal Mensagem para Motorista -->
+<div class="modal-overlay" id="modal-msg-mot">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>💬 Mensagem para <span id="msg-mot-nome">...</span></h3>
+    <div class="input-group">
+      <label>Texto da mensagem (aparecerá no perfil dele)</label>
+      <textarea id="msg-mot-texto" rows="4" style="width:100%;background:var(--card2);color:var(--text);border:1px solid #444;border-radius:8px;padding:12px;font-family:inherit" placeholder="Digite aqui avisos, instruções ou cobranças..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-green flex-1" onclick="enviarMensagemMot()">Salvar Mensagem</button>
+      <button class="btn btn-ghost" onclick="fecharModal('modal-msg-mot')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // =====================================================
 // ESTADO GLOBAL
@@ -1010,6 +1058,7 @@
 var DB = {
   motoristas: [],
   corridas: [],
+  mensalidade_valor: 89.90,
   precos: {
     basica:   { valor: 8.00,  km_minimo: 3.0, km_extra: 1.50 },
     expressa: { valor: 10.00, km_minimo: 3.0, km_extra: 2.00 },
@@ -1076,18 +1125,19 @@ function loadDB() {
 
 function saveDB() {
   localStorage.setItem('vroomDB', JSON.stringify({
-    motoristas: DB.motoristas,
-    corridas:   DB.corridas,
-    precos:     DB.precos,
-    admins:     DB.admins
+    motoristas:        DB.motoristas,
+    corridas:          DB.corridas,
+    precos:            DB.precos,
+    admins:            DB.admins,
+    mensalidade_valor: DB.mensalidade_valor
   }));
 }
 
 function seedMotoristas() {
   DB.motoristas = [
-    { id: 1, nome: 'Carlos Silva',   cpf: '123.456.789-00', tel: '(11) 99999-1111', placa: 'ABC-1234', senha: 'moto123', status: 'autorizado', online: false, ganhos_hoje: 45.50, ganhos_semana: 210.00, ganhos_mes: 860.00, corridas_hoje: 6, avaliacao: 4.9, pagamento: 'ok', corridas: [] },
-    { id: 2, nome: 'Marcos Pereira', cpf: '987.654.321-00', tel: '(11) 99999-2222', placa: 'DEF-5678', senha: 'moto456', status: 'autorizado', online: false, ganhos_hoje: 32.00, ganhos_semana: 175.00, ganhos_mes: 720.00, corridas_hoje: 4, avaliacao: 4.7, pagamento: 'pend', corridas: [] },
-    { id: 3, nome: 'João Santos',    cpf: '456.789.123-00', tel: '(11) 99999-3333', placa: 'GHI-9012', senha: 'moto789', status: 'bloqueado', online: false, ganhos_hoje: 0,     ganhos_semana: 0,       ganhos_mes: 480.00, corridas_hoje: 0, avaliacao: 3.8, pagamento: 'late', corridas: [] }
+    { id: 1, nome: 'Carlos Silva',   cpf: '123.456.789-00', tel: '(11) 99999-1111', placa: 'ABC-1234', senha: 'moto123', status: 'autorizado', online: false, ganhos_hoje: 45.50, ganhos_semana: 210.00, ganhos_mes: 860.00, corridas_hoje: 6, avaliacao: 4.9, pagamento: 'ok', data_pagamento: '2026-06-01', msg_admin: '', corridas: [] },
+    { id: 2, nome: 'Marcos Pereira', cpf: '987.654.321-00', tel: '(11) 99999-2222', placa: 'DEF-5678', senha: 'moto456', status: 'autorizado', online: false, ganhos_hoje: 32.00, ganhos_semana: 175.00, ganhos_mes: 720.00, corridas_hoje: 4, avaliacao: 4.7, pagamento: 'pend', data_pagamento: '2026-06-15', msg_admin: '', corridas: [] },
+    { id: 3, nome: 'João Santos',    cpf: '456.789.123-00', tel: '(11) 99999-3333', placa: 'GHI-9012', senha: 'moto789', status: 'bloqueado', online: false, ganhos_hoje: 0,     ganhos_semana: 0,       ganhos_mes: 480.00, corridas_hoje: 0, avaliacao: 3.8, pagamento: 'late', data_pagamento: null, msg_admin: 'Falar com Rodolfo sobre pendência.', corridas: [] }
   ];
   saveDB();
 }
@@ -1752,7 +1802,13 @@ function updateMotPerfil() {
     '<div class="price-row"><span class="text-sm">CPF</span><span>' + mot.cpf + '</span></div>' +
     '<div class="price-row"><span class="text-sm">Telefone</span><span>' + mot.tel + '</span></div>' +
     '<div class="price-row"><span class="text-sm">Placa</span><span>' + mot.placa + '</span></div>' +
-    '<div class="price-row"><span class="text-sm">Status</span><span class="status status-online">Autorizado</span></div>';
+    '<div class="price-row"><span class="text-sm">Status</span><span class="status status-online">' + mot.status + '</span></div>';
+  
+  var elMsg = document.getElementById('mot-msg-admin');
+  if (elMsg) {
+    elMsg.innerHTML = mot.msg_admin ? mot.msg_admin : '<span style="opacity:0.5 italic">Nenhuma mensagem do administrador.</span>';
+    if (mot.msg_admin) elMsg.style.color = 'var(--blue)';
+  }
 }
 
 // =====================================================
@@ -1789,11 +1845,32 @@ function logoutAdmin() {
 // PAINEL ADMIN
 // =====================================================
 function initAdmin() {
+  verificarVencimentos();
   updateAdminStats();
   updateAdminMotoristas();
   updateAdminPrecos();
   updateAdminPagamentos();
   updateAdminCorridas();
+}
+
+function verificarVencimentos() {
+  var hoje = new Date();
+  var alterado = false;
+  DB.motoristas.forEach(function(mot) {
+    if (mot.data_pagamento) {
+      var dataPag = new Date(mot.data_pagamento);
+      var diffTime = Math.abs(hoje - dataPag);
+      var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Se passou de 30 dias e ainda está autorizado, bloqueia
+      if (diffDays > 30 && mot.status === 'autorizado') {
+        mot.status = 'bloqueado';
+        mot.msg_admin = 'Sua mensalidade venceu após 30 dias. Realize o pagamento para liberar o acesso.';
+        alterado = true;
+      }
+    }
+  });
+  if (alterado) saveDB();
 }
 
 function updateAdminStats() {
@@ -1837,11 +1914,30 @@ function updateAdminMotoristas() {
       '<div class="mt-8"><span class="status ' + st.cls + '">' + st.txt + '</span></div>' +
       '</div>' +
       '<div class="user-actions">' +
+      '<button class="btn btn-ghost btn-xs" title="Enviar Mensagem" onclick="abrirModalMsgMot(' + m.id + ')">💬</button>' +
       '<button class="btn btn-' + (m.status === 'autorizado' ? 'ghost' : 'green') + ' btn-xs" onclick="toggleStatusMot(' + m.id + ')">' +
       (m.status === 'autorizado' ? '🔒' : '✅') + '</button>' +
       '<button class="btn btn-red btn-xs" onclick="confirmarExcluirMot(' + m.id + ')">🗑️</button>' +
       '</div></div>';
   }).join('');
+}
+
+function abrirModalMsgMot(id) {
+  var mot = DB.motoristas.find(function(m){ return m.id === id; });
+  if (!mot) return;
+  STATE.msgId = id;
+  document.getElementById('msg-mot-nome').textContent = mot.nome;
+  document.getElementById('msg-mot-texto').value = mot.msg_admin || '';
+  document.getElementById('modal-msg-mot').classList.add('open');
+}
+
+function enviarMensagemMot() {
+  var mot = DB.motoristas.find(function(m){ return m.id === STATE.msgId; });
+  if (!mot) return;
+  mot.msg_admin = document.getElementById('msg-mot-texto').value.trim();
+  saveDB();
+  fecharModal('modal-msg-mot');
+  toast('✅ Mensagem salva para ' + mot.nome, 'success');
 }
 
 function toggleStatusMot(id) {
@@ -1986,7 +2082,25 @@ function salvarPreco() {
   document.getElementById('edit-preco-val').value = '';
 }
 
+function abrirEditarTaxa() {
+  document.getElementById('taxa-novo-valor').value = DB.mensalidade_valor || 0;
+  document.getElementById('taxa-edit-form').style.display = 'block';
+}
+function cancelarEditarTaxa() {
+  document.getElementById('taxa-edit-form').style.display = 'none';
+}
+function salvarTaxa() {
+  var val = parseFloat(document.getElementById('taxa-novo-valor').value);
+  if (isNaN(val) || val < 0) { toast('⚠️ Valor inválido', 'error'); return; }
+  DB.mensalidade_valor = val;
+  saveDB();
+  document.getElementById('taxa-valor-display').textContent = 'R$ ' + val.toFixed(2).replace('.', ',');
+  document.getElementById('taxa-edit-form').style.display = 'none';
+  toast('✅ Valor da taxa mensal atualizado!', 'success');
+}
+
 function updateAdminPagamentos() {
+  document.getElementById('taxa-valor-display').textContent = 'R$ ' + (DB.mensalidade_valor || 0).toFixed(2).replace('.', ',');
   var el = document.getElementById('adm-pagamentos-list');
   if (DB.motoristas.length === 0) {
     el.innerHTML = '<div class="empty-state"><div class="icon">💳</div><p>Nenhum motorista cadastrado</p></div>';
@@ -1995,20 +2109,35 @@ function updateAdminPagamentos() {
   var payMap = { ok: { cls: 'pay-ok', txt: '✅ Em dia' }, pend: { cls: 'pay-pend', txt: '⏳ Pendente' }, late: { cls: 'pay-late', txt: '❌ Atrasado' } };
   el.innerHTML = DB.motoristas.map(function(m) {
     var p = payMap[m.pagamento] || payMap.ok;
+    var dataPagStr = m.data_pagamento ? new Date(m.data_pagamento).toLocaleDateString('pt-BR') : 'Nunca';
     return '<div class="user-item">' +
       '<div class="user-avatar" style="background:linear-gradient(135deg,var(--blue),#357ABD)">' + m.nome.charAt(0) + '</div>' +
       '<div class="user-info">' +
       '<div class="user-name">' + m.nome + '</div>' +
-      '<div class="user-detail">Ganhos: R$ ' + (m.ganhos_mes || 0).toFixed(2).replace('.',',') + ' · ' + (m.corridas_hoje || 0) + ' corridas hoje</div>' +
+      '<div class="user-detail">Último Pagto: ' + dataPagStr + '</div>' +
       '</div>' +
       '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">' +
       '<span class="pay-badge ' + p.cls + '">' + p.txt + '</span>' +
       '<div style="display:flex;gap:4px">' +
-      '<button class="btn btn-xs btn-green" onclick="setPayStatus(' + m.id + ',\'ok\')">✅</button>' +
+      '<button class="btn btn-xs btn-green" title="Confirmar Pagamento Hoje" onclick="registrarPagamento(' + m.id + ')">💰</button>' +
       '<button class="btn btn-xs btn-ghost" onclick="setPayStatus(' + m.id + ',\'pend\')">⏳</button>' +
       '<button class="btn btn-xs btn-red" onclick="setPayStatus(' + m.id + ',\'late\')">❌</button>' +
       '</div></div></div>';
   }).join('');
+}
+
+function registrarPagamento(id) {
+  var mot = DB.motoristas.find(function(m){ return m.id === id; });
+  if (!mot) return;
+  var hoje = new Date().toISOString().split('T')[0];
+  mot.data_pagamento = hoje;
+  mot.pagamento = 'ok';
+  mot.status = 'autorizado'; // Libera automaticamente ao pagar
+  mot.msg_admin = 'Sua mensalidade foi confirmada! Próximo vencimento em 30 dias.';
+  saveDB();
+  updateAdminPagamentos();
+  updateAdminMotoristas();
+  toast('✅ Pagamento registrado e acesso liberado para ' + mot.nome, 'success');
 }
 
 function setPayStatus(id, status) {
