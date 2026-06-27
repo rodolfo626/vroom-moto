@@ -2228,16 +2228,22 @@ function updateAdminPrecos() {
 }
 
 function atualizarPreviewTarifa() {
-  var get = function(id, def) { var el = document.getElementById(id); return el ? (parseFloat(el.value)||def) : def; };
-  var bVal  = get('t-basica-valor', 8);
-  var bKmMin= get('t-basica-kmmin', 3);
-  var bKmEx = get('t-basica-kmex',  1.5);
-  var eVal  = get('t-expressa-valor', 10);
-  var eKmMin= get('t-expressa-kmmin', 3);
-  var eKmEx = get('t-expressa-kmex',  2);
-  var band  = get('t-bandeirada', 3);
-  var ex6b  = band + bVal + Math.max(0, 6 - bKmMin) * bKmEx;
-  var ex6e  = band + eVal + Math.max(0, 6 - eKmMin) * eKmEx;
+  var p = DB.precos || {};
+  var get = function(id, def) {
+    var el = document.getElementById(id);
+    return (el && el.value !== '') ? (parseFloat(el.value) || 0) : def;
+  };
+  var bVal = get('t-basica-valor', p.basica ? p.basica.valor : 8);
+  var bKmMin = get('t-basica-kmmin', p.basica ? p.basica.km_minimo : 3);
+  var bKmEx = get('t-basica-kmex', p.basica ? p.basica.km_extra : 1.5);
+  var eVal = get('t-expressa-valor', p.expressa ? p.expressa.valor : 10);
+  var eKmMin = get('t-expressa-kmmin', p.expressa ? p.expressa.km_minimo : 3);
+  var eKmEx = get('t-expressa-kmex', p.expressa ? p.expressa.km_extra : 2);
+  var band = get('t-bandeirada', p.bandeirada || 3);
+
+  var ex6b = band + bVal + Math.max(0, 6 - bKmMin) * bKmEx;
+  var ex6e = band + eVal + Math.max(0, 6 - eKmMin) * eKmEx;
+
   var preview = document.getElementById('adm-tarifa-preview');
   if (!preview) return;
   preview.style.display = 'block';
@@ -2248,7 +2254,6 @@ function atualizarPreviewTarifa() {
     '⚡ Expressa: até ' + eKmMin.toFixed(1) + ' km → R$ ' + (band+eVal).toFixed(2).replace('.',',') + ' fixo' +
     ' | acima: +R$ ' + eKmEx.toFixed(2).replace('.',',') + '/km → <strong>6 km = R$ ' + ex6e.toFixed(2).replace('.',',') + '</strong>';
 }
-
 function salvarTarifa() {
   var get = function(id, def) { var el = document.getElementById(id); return el ? (parseFloat(el.value)||def) : def; };
   var bVal  = get('t-basica-valor', 0);
