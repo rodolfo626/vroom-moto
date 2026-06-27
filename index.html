@@ -599,14 +599,14 @@
         <div class="card" id="cliente-dest-card" style="display:none">
           <h3>🏁 Para onde vai?</h3>
           <div class="input-group">
-            <input type="text" id="destino-input" placeholder="Ex: Centro, Rodoviária, Shopping...">
+            <input type="text" id="destino-input" oninput="calcularPreco()" placeholder="Ex: Centro, Rodoviária, Shopping...">
           </div>
           <div class="input-group">
             <label>Tipo de corrida</label>
-            <select id="tipo-corrida">
-              <option value="basica">Corrida Básica</option>
-              <option value="expressa">Corrida Expressa (+R$2)</option>
-              <option value="agendada">Agendada</option>
+            <select id="tipo-corrida" onchange="calcularPreco()">
+              <option value="basica">🛵 Econômica (Moto)</option>
+              <option value="expressa">🚀 Turbo (Entrega Rápida)</option>
+              <option value="agendada">📅 Agendada</option>
             </select>
           </div>
           <div id="preco-estimado" class="card" style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.2);padding:14px;margin-bottom:0">
