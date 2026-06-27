@@ -2023,26 +2023,15 @@ function updateMotPerfil() {
 function loginAdmin() {
   var user = document.getElementById('adm-user').value.trim();
   var pass = document.getElementById('adm-pass').value.trim();
-  if (!user || !pass) { toast('⚠️ Preencha todos os campos!', 'error'); return; }
-
-  // Credenciais fixas de admin (não dependem de localStorage)
-  var ADMINS_FIXOS = [
-    { user: 'admin', pass: 'admin123' },
-    { user: 'Rodolfo Oliveira', pass: 'Rm290198' },
-    { user: 'rodolfo oliveira', pass: 'Rm290198' },
-    { user: 'Rodolfo', pass: 'Rm290198' },
-    { user: 'rodolfo', pass: 'Rm290198' }
-  ];
-
-  var ok = ADMINS_FIXOS.find(function(a) {
-    return a.user.toLowerCase() === user.toLowerCase() && a.pass === pass;
-  });
-
-  if (!ok) { toast('❌ Usuário ou senha incorretos!', 'error'); return; }
-
-  showScreen('admin-painel');
+  if (!user || !pass) { toast('⚠️ Preencha usuário e senha!', 'error'); return; }
+  var u = user.toLowerCase();
+  if ((u === 'admin' && pass === 'admin123') || (u === 'rodolfo oliveira' && pass === 'Rm290198') || (u === 'rodolfo' && pass === 'Rm290198')) {
+    showScreen('admin-painel');
+    toast('✅ Bem-vindo, Administrador!', 'success');
+  } else {
+    toast('❌ Usuário ou senha incorretos!', 'error');
+  }
 }
-
 function logoutAdmin() {
   showHome();
 }
