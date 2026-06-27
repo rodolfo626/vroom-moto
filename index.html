@@ -1219,12 +1219,13 @@ function fecharModal(id) {
 // =====================================================
 function initCliente() {
   updateClienteRideStatus();
+  // Força a busca da localização ao abrir a tela do cliente
+  getLocation();
 }
 
 function getLocation() {
   if (!navigator.geolocation) {
-    toast('GPS não suportado. Usando localização simulada.', 'info');
-    useSimulatedLocation();
+    toast('❌ Seu navegador não suporta GPS.', 'error');
     return;
   }
   toast('📡 Buscando sua localização...', 'info');
@@ -1234,11 +1235,20 @@ function getLocation() {
       STATE.clienteLng = pos.coords.longitude;
       onLocationObtained();
     },
-    function() {
-      toast('GPS indisponível. Usando localização simulada.', 'info');
-      useSimulatedLocation();
+    function(error) {
+      var msg = '❌ Erro ao obter localização.';
+      if (error.code === 1) msg = '⚠️ Por favor, ative a localização do seu celular para pedir uma corrida.';
+      toast(msg, 'error');
+      
+      document.getElementById('loc-display').innerHTML = 
+        '<div style="background:rgba(255,71,87,0.1);padding:12px;border-radius:12px;border:1px solid var(--red)">' +
+        '<div class="bold" style="color:var(--red);margin-bottom:4px">GPS Desativado</div>' +
+        '<div class="text-sm">Para usar o app e pedir sua corrida, é necessário que a localização do celular esteja ativada.</div>' +
+        '</div>';
+      document.getElementById('btn-get-loc').style.display = 'block';
+      document.getElementById('btn-get-loc').innerHTML = '🔄 Tentar Novamente';
     },
-    { timeout: 8000 }
+    { timeout: 10000, enableHighAccuracy: true }
   );
 }
 
