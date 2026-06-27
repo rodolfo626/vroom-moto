@@ -606,6 +606,7 @@
             <select id="tipo-corrida" onchange="calcularPreco()">
               <option value="basica">🛵 Básica</option>
               <option value="expressa">🚀 Expressa</option>
+              <option value="bandeirada">🚩 Bandeirada</option>
             </select>
           </div>
           <div id="preco-estimado" class="card" style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.2);padding:14px;margin-bottom:0">
@@ -1343,11 +1344,19 @@ function updateMapPin(x, y) {
 
 function calcularPreco() {
   var tipo  = document.getElementById('tipo-corrida').value;
-  var tarifa = DB.precos[tipo] || DB.precos.basica;
-  var band  = DB.precos.bandeirada;
+  var tarifa = DB.precos[tipo];
+  
+  // Se for bandeirada, cria um objeto temporário com valor 0 (usa apenas a taxa global)
+  if (tipo === 'bandeirada') {
+    tarifa = { valor: 0, km_minimo: 0, km_extra: DB.precos.basica.km_extra };
+  } else if (!tarifa || typeof tarifa !== 'object') {
+    tarifa = DB.precos.basica;
+  }
+
+  var band  = DB.precos.bandeirada || 0;
   var dist  = 2 + Math.random() * 8;
-  var distExtra = Math.max(0, dist - tarifa.km_minimo);
-  var total = band + tarifa.valor + (distExtra * tarifa.km_extra);
+  var distExtra = Math.max(0, dist - (tarifa.km_minimo || 0));
+  var total = band + (tarifa.valor || 0) + (distExtra * (tarifa.km_extra || 0));
 
   document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
   document.getElementById('dist-bar').style.width = Math.min(100, dist * 10) + '%';
