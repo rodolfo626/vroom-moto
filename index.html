@@ -1280,12 +1280,8 @@ function confirmarCorrida() {
   DB.corridas.push(STATE.corridaAtual);
   saveDB();
 
-  // Simula motorista aceitando em 3-8 segundos
-  var motOnlines = DB.motoristas.filter(function(m){ return m.status === 'autorizado'; });
-  if (motOnlines.length > 0) {
-    var mot = motOnlines[Math.floor(Math.random() * motOnlines.length)];
-    setTimeout(function() { aceitarCorridaSimulado(mot); }, 3000 + Math.random() * 5000);
-  }
+  // Simula motorista aceitando em 3-8 segundos — REMOVIDO: agora só motorista real aceita
+  // (a simulação foi desativada para que a corrida fique na fila esperando motorista real)
 
   document.getElementById('cliente-dest-card').style.display = 'none';
   document.getElementById('cliente-map').style.display = 'none';
@@ -1294,37 +1290,7 @@ function confirmarCorrida() {
   toast('🔍 Procurando motorista...', 'info');
 }
 
-function aceitarCorridaSimulado(mot) {
-  if (!STATE.corridaAtual || STATE.corridaAtual.status !== 'buscando') return;
-  STATE.corridaAtual.status    = 'aceita';
-  STATE.corridaAtual.motorista = mot;
-
-  var idx = DB.corridas.findIndex(function(c){ return c.id === STATE.corridaAtual.id; });
-  if (idx >= 0) DB.corridas[idx] = STATE.corridaAtual;
-  saveDB();
-
-  updateClienteRideStatus();
-  toast('✅ Motorista a caminho!', 'success');
-
-  // Simula chegada em 2 min
-  setTimeout(function() {
-    if (STATE.corridaAtual && STATE.corridaAtual.status === 'aceita') {
-      STATE.corridaAtual.status = 'andamento';
-      var i2 = DB.corridas.findIndex(function(c){ return c.id === STATE.corridaAtual.id; });
-      if (i2 >= 0) DB.corridas[i2] = STATE.corridaAtual;
-      saveDB();
-      updateClienteRideStatus();
-      toast('🏍️ Corrida em andamento!', 'info');
-    }
-  }, 12000);
-
-  // Simula conclusão
-  setTimeout(function() {
-    if (STATE.corridaAtual && STATE.corridaAtual.status === 'andamento') {
-      concluirCorridaSimulado();
-    }
-  }, 30000);
-}
+function aceitarCorridaSimulado(mot) {} // desativado — apenas motorista real aceita
 
 function concluirCorridaSimulado() {
   if (!STATE.corridaAtual) return;
@@ -1380,11 +1346,11 @@ function updateClienteRideStatus() {
   var c = STATE.corridaAtual;
 
   // Steps
-  var step = c.status === 'buscando' ? 0 : c.status === 'aceita' ? 1 : c.status === 'andamento' ? 2 : 3;
+  var step = c.status === 'buscando' ? 0 : c.status === 'a_caminho' ? 1 : c.status === 'em_corrida' ? 2 : 3;
   var steps = ['Aguardando', 'A caminho', 'Em corrida', 'Concluída'];
   var icons = ['🔍', '🏍️', '⚡', '🎉'];
   var subs = [
-    'Procurando o motorista mais próximo...',
+    'Procurando motorista disponível na fila...',
     'Motorista a caminho da sua localização',
     'Você está sendo transportado',
     'Chegou ao destino! Boa viagem!'
@@ -1409,7 +1375,7 @@ function updateClienteRideStatus() {
   }
 
   var actionBtn = '';
-  if (c.status === 'buscando' || c.status === 'aceita') {
+  if (c.status === 'buscando' || c.status === 'a_caminho') {
     actionBtn = '<button class="btn btn-ghost" onclick="cancelarCorrida()">Cancelar corrida</button>';
   } else if (c.status === 'concluida' || c.status === 'cancelada') {
     actionBtn = '<button class="btn btn-orange" onclick="novaCorridaCliente()">🏍️ Nova Corrida</button>';
@@ -1555,94 +1521,121 @@ function switchMotTab(tab, el) {
 }
 
 function updateMotCorridasList() {
+  var mot = STATE.motoristaLogado;
+
+  // === FILA DE ESPERA — corridas aguardando motorista ===
   var el = document.getElementById('mot-corridas-list');
   var disponiveis = DB.corridas.filter(function(c){ return c.status === 'buscando'; });
 
   if (disponiveis.length === 0) {
-    el.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Nenhuma corrida disponível no momento</p></div>';
+    el.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Nenhuma corrida na fila no momento</p></div>';
     document.getElementById('mot-notif').style.display = 'none';
   } else {
     document.getElementById('mot-notif').style.display = 'block';
-    el.innerHTML = disponiveis.map(function(c) {
-      var dist = (Math.random() * 2 + 0.5).toFixed(1);
+    el.innerHTML = '<div class="section-label" style="margin-bottom:8px">📋 Fila de espera (' + disponiveis.length + ')</div>' +
+    disponiveis.map(function(c, idx) {
+      var posLabel = (idx + 1) + 'º na fila';
+      // Verifica se este motorista já tem corrida ativa
+      var temCorridaAtiva = DB.corridas.some(function(x){
+        return x.motorista && x.motorista.id === mot.id && (x.status === 'a_caminho' || x.status === 'em_corrida');
+      });
+      var btnAceitar = temCorridaAtiva
+        ? '<span class="text-sm" style="opacity:0.5">Conclua a corrida atual primeiro</span>'
+        : '<button class="btn btn-green btn-sm flex-1" onclick="aceitarCorrida(' + c.id + ')">✅ Aceitar</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="recusarCorrida(' + c.id + ')">✕ Recusar</button>';
       return '<div class="ride-item" id="ride-' + c.id + '">' +
-        '<div class="ride-header"><span class="ride-client">👤 Cliente</span>' +
-        '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span></div>' +
+        '<div class="ride-header">' +
+        '<span class="ride-client">👤 ' + posLabel + '</span>' +
+        '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span>' +
+        '</div>' +
         '<div class="ride-info">' +
         '<span>🏁 ' + c.destino + '</span>' +
-        '<span>📏 ' + dist + ' km</span>' +
-        '<span>⏰ ' + c.ts + '</span>' +
+        '<span>🕐 ' + c.ts + '</span>' +
         '</div>' +
-        '<div class="ride-actions">' +
-        '<button class="btn btn-green btn-sm flex-1" onclick="aceitarCorrida(' + c.id + ')">✅ Aceitar</button>' +
-        '<button class="btn btn-ghost btn-sm" onclick="recusarCorrida(' + c.id + ')">✕ Recusar</button>' +
-        '</div></div>';
+        '<div class="ride-info" style="margin-top:4px">' +
+        '<span>📍 ' + (c.origem || 'Localização do cliente') + '</span>' +
+        '</div>' +
+        '<div class="ride-actions" style="margin-top:8px">' + btnAceitar + '</div>' +
+        '</div>';
     }).join('');
   }
 
-  // Corrida atual do motorista
-  var mot = STATE.motoristaLogado;
+  // === CORRIDA ATUAL DO MOTORISTA ===
   var emAndamento = DB.corridas.find(function(c){
-    return c.motorista && c.motorista.id === mot.id && (c.status === 'aceita' || c.status === 'andamento');
+    return c.motorista && c.motorista.id === mot.id && (c.status === 'a_caminho' || c.status === 'em_corrida');
   });
   var elAtual = document.getElementById('mot-corrida-atual');
   if (emAndamento) {
+    var isACaminho = emAndamento.status === 'a_caminho';
+    var statusLabel = isACaminho ? '🏍️ Indo buscar cliente' : '⚡ Em corrida';
+    var statusCor   = isACaminho ? 'var(--orange)' : 'var(--green)';
     elAtual.innerHTML =
       '<div class="ride-item accepted">' +
-      '<div class="ride-header"><span class="ride-client">🟢 Em andamento</span>' +
+      '<div class="ride-header"><span class="ride-client" style="color:' + statusCor + '">' + statusLabel + '</span>' +
       '<span class="ride-price">R$ ' + emAndamento.preco.toFixed(2).replace('.',',') + '</span></div>' +
-      '<div class="ride-info"><span>🏁 ' + emAndamento.destino + '</span>' +
-      '<span class="status status-running">' + (emAndamento.status === 'aceita' ? 'Indo buscar' : 'Em corrida') + '</span>' +
-      '</div>' +
-      '<div class="ride-actions">' +
-      '<button class="btn btn-sm flex-1" style="background:#1a73e8;color:white" onclick="abrirMapsCorrida(' + emAndamento.id + ')">📍 Ver no Maps</button>' +
-      '<button class="btn btn-orange btn-sm flex-1" onclick="concluirCorridaMot(' + emAndamento.id + ')">🏁 Concluir</button>' +
+      '<div class="ride-info"><span>🏁 ' + emAndamento.destino + '</span></div>' +
+      '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (emAndamento.origem || 'Localização do cliente') + '</span></div>' +
+      '<div class="ride-actions" style="margin-top:10px">' +
+      '<button class="btn btn-sm flex-1" style="background:#1a73e8;color:white" onclick="abrirMapsCorrida(' + emAndamento.id + ')">📍 Maps</button>' +
+      (isACaminho
+        ? '<button class="btn btn-green btn-sm flex-1" onclick="chegueiCliente(' + emAndamento.id + ')">📣 Cheguei!</button>'
+        : '<button class="btn btn-orange btn-sm flex-1" onclick="concluirCorridaMot(' + emAndamento.id + ')">🏁 Concluir</button>'
+      ) +
       '</div></div>' +
       '<div class="fake-map" style="margin-top:12px"><div class="map-grid"></div>' +
       '<div class="map-road-h" style="top:50%;left:0;right:0"></div>' +
       '<div class="map-road-v" style="left:40%;top:0;bottom:0"></div>' +
       '<div class="map-pin" style="top:50%;left:40%">📍</div>' +
       '<div class="map-moto" style="top:30%;left:60%;animation:none">🏍️</div>' +
-      '<div class="map-label">Rota em andamento</div></div>';
+      '<div class="map-label">' + (isACaminho ? 'A caminho do cliente' : 'Corrida em andamento') + '</div></div>';
   } else {
     elAtual.innerHTML = '<div class="empty-state" style="padding:20px"><p>Nenhuma corrida em andamento</p></div>';
   }
 }
 
 function aceitarCorrida(id) {
+  var mot = STATE.motoristaLogado;
+  // Bloqueia se já tem corrida ativa
+  var temAtiva = DB.corridas.some(function(x){
+    return x.motorista && x.motorista.id === mot.id && (x.status === 'a_caminho' || x.status === 'em_corrida');
+  });
+  if (temAtiva) { toast('⚠️ Conclua a corrida atual antes de aceitar outra!', 'error'); return; }
+
   var c = DB.corridas.find(function(x){ return x.id === id; });
-  if (!c) return;
-  c.status = 'aceita';
-  c.motorista = STATE.motoristaLogado;
+  if (!c || c.status !== 'buscando') { toast('⚠️ Corrida não está mais disponível.', 'error'); updateMotCorridasList(); return; }
+
+  c.status = 'a_caminho';
+  c.motorista = mot;
   saveDB();
+
+  // Atualiza STATE do cliente se for o mesmo dispositivo
+  if (STATE.corridaAtual && STATE.corridaAtual.id === id) {
+    STATE.corridaAtual.status    = 'a_caminho';
+    STATE.corridaAtual.motorista = mot;
+    updateClienteRideStatus();
+  }
+
   toast('✅ Corrida aceita! Abrindo Google Maps...', 'success');
   updateMotCorridasList();
 
   // Abre Google Maps com rota até o cliente
-  var lat = c.clienteLat;
-  var lng = c.clienteLng;
-  if (lat && lng) {
-    var destino = c.destino ? encodeURIComponent(c.destino) : '';
-    var mapsUrl;
-    if (destino) {
-      // Rota: da localização atual do motorista → cliente → destino final
-      mapsUrl = 'https://www.google.com/maps/dir/?api=1' +
-        '&destination=' + lat + ',' + lng +
-        '&waypoints=' + lat + ',' + lng +
-        '&travelmode=driving';
-      // Rota direta até o cliente (origem)
-      mapsUrl = 'https://www.google.com/maps/dir/?api=1' +
-        '&destination=' + lat + ',' + lng +
-        '&travelmode=driving';
-    } else {
-      mapsUrl = 'https://www.google.com/maps/dir/?api=1' +
-        '&destination=' + lat + ',' + lng +
-        '&travelmode=driving';
-    }
-    setTimeout(function() {
-      window.open(mapsUrl, '_blank');
-    }, 800);
+  if (c.clienteLat && c.clienteLng) {
+    var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + c.clienteLat + ',' + c.clienteLng + '&travelmode=driving';
+    setTimeout(function() { window.open(mapsUrl, '_blank'); }, 800);
   }
+}
+
+function chegueiCliente(id) {
+  var c = DB.corridas.find(function(x){ return x.id === id; });
+  if (!c) return;
+  c.status = 'em_corrida';
+  saveDB();
+  if (STATE.corridaAtual && STATE.corridaAtual.id === id) {
+    STATE.corridaAtual.status = 'em_corrida';
+    updateClienteRideStatus();
+  }
+  toast('📣 Cliente notificado! Corrida iniciada.', 'success');
+  updateMotCorridasList();
 }
 
 function recusarCorrida(id) {
@@ -1661,6 +1654,7 @@ function abrirMapsCorrida(id) {
 function concluirCorridaMot(id) {
   var c = DB.corridas.find(function(x){ return x.id === id; });
   if (!c) return;
+  if (c.status !== 'em_corrida') { toast('⚠️ Clique em "Cheguei!" primeiro para iniciar a corrida.', 'error'); return; }
   c.status = 'concluida';
   var mot = STATE.motoristaLogado;
   var ganho = c.preco * 0.8;
@@ -1671,6 +1665,11 @@ function concluirCorridaMot(id) {
   if (!mot.corridas) mot.corridas = [];
   mot.corridas.push(c);
   saveDB();
+  // Atualiza lado cliente
+  if (STATE.corridaAtual && STATE.corridaAtual.id === id) {
+    STATE.corridaAtual.status = 'concluida';
+    updateClienteRideStatus();
+  }
   toast('🎉 Corrida concluída! +R$ ' + ganho.toFixed(2).replace('.',','), 'success');
   updateMotCorridasList();
   updateMotGanhos();
@@ -2009,7 +2008,7 @@ function updateAdminCorridas() {
     return;
   }
   el.innerHTML = DB.corridas.slice(-10).reverse().map(function(c) {
-    var st = { buscando:'🔍 Buscando', aceita:'✅ Aceita', andamento:'🏍️ Andamento', concluida:'🎉 Concluída', cancelada:'❌ Cancelada' };
+    var st = { buscando:'🔍 Aguardando', a_caminho:'🏍️ A caminho', em_corrida:'⚡ Em corrida', concluida:'🎉 Concluída', cancelada:'❌ Cancelada' };
     return '<div class="ride-item ' + (c.status === 'concluida' ? 'accepted' : c.status === 'cancelada' ? 'completed' : '') + '">' +
       '<div class="ride-header"><span class="ride-client">🏁 ' + c.destino + '</span>' +
       '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span></div>' +
