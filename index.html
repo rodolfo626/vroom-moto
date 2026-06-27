@@ -1977,6 +1977,7 @@ function cadastrarMotorista() {
   var placa = document.getElementById('cad-placa').value.trim().toUpperCase();
   var senha = document.getElementById('cad-senha').value.trim();
   var status = document.getElementById('cad-status').value;
+  var dataPag = document.getElementById('cad-datapag').value;
 
   if (!nome || !cpf || !tel || !placa || !senha) {
     toast('⚠️ Preencha todos os campos!', 'error'); return;
@@ -1985,8 +1986,9 @@ function cadastrarMotorista() {
   var novo = {
     id: Date.now(),
     nome: nome, cpf: cpf, tel: tel, placa: placa, senha: senha, status: status,
+    data_pagamento: dataPag || null,
     online: false, ganhos_hoje: 0, ganhos_semana: 0, ganhos_mes: 0,
-    corridas_hoje: 0, avaliacao: 5.0, pagamento: 'ok', corridas: []
+    corridas_hoje: 0, avaliacao: 5.0, pagamento: dataPag ? 'ok' : 'pend', msg_admin: '', corridas: []
   };
   DB.motoristas.push(novo);
   saveDB();
