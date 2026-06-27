@@ -1051,6 +1051,27 @@
   </div>
 </div>
 
+<!-- Modal Cadastro de Cliente -->
+<div class="modal-overlay" id="modal-cliente-cadastro">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:40px;margin-bottom:10px">👋</div>
+      <h3>Bem-vindo ao Vroom Moto!</h3>
+      <p class="text-sm">Faça seu cadastro rápido para começar a pedir suas corridas.</p>
+    </div>
+    <div class="input-group">
+      <label>Nome Completo</label>
+      <input type="text" id="cli-cad-nome" placeholder="Seu nome">
+    </div>
+    <div class="input-group">
+      <label>WhatsApp</label>
+      <input type="tel" id="cli-cad-tel" placeholder="(00) 00000-0000">
+    </div>
+    <button class="btn btn-orange" onclick="salvarCadastroCliente()">Concluir Cadastro</button>
+  </div>
+</div>
+
 <script>
 // =====================================================
 // ESTADO GLOBAL
@@ -1070,6 +1091,7 @@ var DB = {
 var STATE = {
   screen: 'home',
   motoristaLogado: null,
+  clienteLogado: null,
   clienteLat: null, clienteLng: null, clienteAddr: null,
   corridaAtual: null, // { id, clienteLat, clienteLng, destino, tipo, status, motorista }
   excluirId: null,
@@ -1091,6 +1113,9 @@ function init() {
 function loadDB() {
   try {
     var saved = localStorage.getItem('vroomDB');
+    var savedUser = localStorage.getItem('vroomUser');
+    if (savedUser) STATE.clienteLogado = JSON.parse(savedUser);
+    
     if (saved) {
       var parsed = JSON.parse(saved);
       DB.motoristas = parsed.motoristas || [];
@@ -1187,6 +1212,20 @@ function onScreenLoad(name) {
   if (name === 'admin-painel')   initAdmin();
 }
 
+function salvarCadastroCliente() {
+  var nome = document.getElementById('cli-cad-nome').value.trim();
+  var tel  = document.getElementById('cli-cad-tel').value.trim();
+  if (!nome || !tel) { toast('⚠️ Preencha nome e WhatsApp!', 'error'); return; }
+  
+  var user = { id: Date.now(), nome: nome, tel: tel };
+  STATE.clienteLogado = user;
+  localStorage.setItem('vroomUser', JSON.stringify(user));
+  
+  fecharModal('modal-cliente-cadastro');
+  toast('✅ Cadastro realizado! Bem-vindo, ' + nome.split(' ')[0], 'success');
+  initCliente();
+}
+
 // =====================================================
 // TOAST
 // =====================================================
@@ -1218,6 +1257,10 @@ function fecharModal(id) {
 // ÁREA DO CLIENTE
 // =====================================================
 function initCliente() {
+  if (!STATE.clienteLogado) {
+    document.getElementById('modal-cliente-cadastro').classList.add('open');
+    return;
+  }
   updateClienteRideStatus();
   // Força a busca da localização ao abrir a tela do cliente
   getLocation();
@@ -1333,6 +1376,7 @@ function confirmarCorrida() {
     id: Date.now(),
     clienteLat: STATE.clienteLat,
     clienteLng: STATE.clienteLng,
+    cliente: STATE.clienteLogado,
     origem: STATE.clienteAddr,
     destino: destino,
     tipo: tipo,
@@ -1612,10 +1656,11 @@ function updateMotCorridasList() {
     el.innerHTML = '<div class="section-label" style="margin-bottom:8px">📋 Fila de espera (' + disponiveis.length + ')</div>' +
     disponiveis.map(function(c, idx) {
       var posLabel = (idx + 1) + 'º na fila';
+      var cliNome = c.cliente ? c.cliente.nome.split(' ')[0] : 'Cliente';
       if (temCorridaAtiva) {
         return '<div class="ride-item" id="ride-' + c.id + '">' +
           '<div class="ride-header">' +
-          '<span class="ride-client">👤 ' + posLabel + '</span>' +
+          '<span class="ride-client">👤 ' + cliNome + ' (' + posLabel + ')</span>' +
           '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span>' +
           '</div>' +
           '<div class="ride-info"><span>🏁 ' + c.destino + '</span><span>🕐 ' + c.ts + '</span></div>' +
@@ -1626,7 +1671,7 @@ function updateMotCorridasList() {
       return '<div class="ride-item tappable" id="ride-' + c.id + '" onclick="aceitarCorrida(' + c.id + ')">' +
         '<div style="position:absolute;top:8px;right:10px;font-size:11px;opacity:0.4;font-weight:600">TOQUE PARA ACEITAR</div>' +
         '<div class="ride-header">' +
-        '<span class="ride-client">👤 ' + posLabel + '</span>' +
+        '<span class="ride-client">👤 ' + cliNome + ' (' + posLabel + ')</span>' +
         '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span>' +
         '</div>' +
         '<div class="ride-info"><span>🏁 ' + c.destino + '</span><span>🕐 ' + c.ts + '</span></div>' +
@@ -1645,10 +1690,12 @@ function updateMotCorridasList() {
     var isACaminho = emAndamento.status === 'a_caminho';
     var statusLabel = isACaminho ? '🏍️ Indo buscar cliente' : '⚡ Em corrida';
     var statusCor   = isACaminho ? 'var(--orange)' : 'var(--green)';
+    var cliInfo = emAndamento.cliente ? emAndamento.cliente.nome + ' (' + emAndamento.cliente.tel + ')' : 'Cliente';
     elAtual.innerHTML =
       '<div class="ride-item accepted">' +
       '<div class="ride-header"><span class="ride-client" style="color:' + statusCor + '">' + statusLabel + '</span>' +
       '<span class="ride-price">R$ ' + emAndamento.preco.toFixed(2).replace('.',',') + '</span></div>' +
+      '<div class="ride-info" style="margin-bottom:8px"><strong>👤 ' + cliInfo + '</strong></div>' +
       '<div class="ride-info"><span>🏁 ' + emAndamento.destino + '</span></div>' +
       '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (emAndamento.origem || 'Localização do cliente') + '</span></div>' +
       '<div class="ride-actions" style="margin-top:10px">' +
