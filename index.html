@@ -284,22 +284,13 @@
       border-left: 4px solid var(--orange);
       display: flex; flex-direction: column; gap: 8px;
       position: relative; overflow: hidden;
-      transition: transform 0.15s ease;
+      transition: transform 0.1s, box-shadow 0.1s;
       user-select: none;
     }
     .ride-item.accepted { border-left-color: var(--green); }
     .ride-item.completed { border-left-color: var(--text2); opacity: 0.7; }
-
-    /* Swipe para aceitar */
-    .swipe-bg {
-      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(90deg, #22c55e, #16a34a);
-      display: flex; align-items: center; padding-left: 20px;
-      font-size: 22px; font-weight: 800; color: white;
-      opacity: 0; pointer-events: none; border-radius: 12px;
-      transition: opacity 0.1s;
-      z-index: 0;
-    }
+    .ride-item.tappable { cursor: pointer; }
+    .ride-item.tappable:active { transform: scale(0.97); box-shadow: 0 0 0 3px #22c55e55; }
     .ride-item-content { position: relative; z-index: 1; }
     .ride-header { display: flex; justify-content: space-between; align-items: center; }
     .ride-client { font-weight: 700; font-size: 15px; }
@@ -1553,40 +1544,36 @@ function updateMotCorridasList() {
     document.getElementById('mot-notif').style.display = 'none';
   } else {
     document.getElementById('mot-notif').style.display = 'block';
+    // FIFO: garante ordem de chegada (menor id = mais antigo)
+    disponiveis.sort(function(a, b){ return a.id - b.id; });
+    var temCorridaAtiva = DB.corridas.some(function(x){
+      return x.motorista && x.motorista.id === mot.id && (x.status === 'a_caminho' || x.status === 'em_corrida');
+    });
     el.innerHTML = '<div class="section-label" style="margin-bottom:8px">📋 Fila de espera (' + disponiveis.length + ')</div>' +
     disponiveis.map(function(c, idx) {
       var posLabel = (idx + 1) + 'º na fila';
-      // Verifica se este motorista já tem corrida ativa
-      var temCorridaAtiva = DB.corridas.some(function(x){
-        return x.motorista && x.motorista.id === mot.id && (x.status === 'a_caminho' || x.status === 'em_corrida');
-      });
-      var swipeHint = temCorridaAtiva ? '' : '<div style="font-size:11px;opacity:0.45;text-align:center;margin-top:6px;letter-spacing:0.5px">← deslize para aceitar →</div>';
-      var btnAceitar = temCorridaAtiva
-        ? '<span class="text-sm" style="opacity:0.5">Conclua a corrida atual primeiro</span>'
-        : '<button class="btn btn-green btn-sm flex-1" onclick="aceitarCorrida(' + c.id + ')">✅ Aceitar</button>' +
-          '<button class="btn btn-ghost btn-sm" onclick="recusarCorrida(' + c.id + ')">✕ Recusar</button>';
-      var swipeAttr = temCorridaAtiva ? '' : 'data-swipe-id="' + c.id + '"';
-      return '<div class="ride-item" id="ride-' + c.id + '" ' + swipeAttr + '>' +
-        '<div class="swipe-bg">✅ Aceitar!</div>' +
-        '<div class="ride-item-content">' +
+      if (temCorridaAtiva) {
+        return '<div class="ride-item" id="ride-' + c.id + '">' +
+          '<div class="ride-header">' +
+          '<span class="ride-client">👤 ' + posLabel + '</span>' +
+          '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span>' +
+          '</div>' +
+          '<div class="ride-info"><span>🏁 ' + c.destino + '</span><span>🕐 ' + c.ts + '</span></div>' +
+          '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (c.origem || 'Localização do cliente') + '</span></div>' +
+          '<div style="margin-top:8px;font-size:12px;opacity:0.5">Conclua a corrida atual para aceitar</div>' +
+          '</div>';
+      }
+      return '<div class="ride-item tappable" id="ride-' + c.id + '" onclick="aceitarCorrida(' + c.id + ')">' +
+        '<div style="position:absolute;top:8px;right:10px;font-size:11px;opacity:0.4;font-weight:600">TOQUE PARA ACEITAR</div>' +
         '<div class="ride-header">' +
         '<span class="ride-client">👤 ' + posLabel + '</span>' +
         '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span>' +
         '</div>' +
-        '<div class="ride-info">' +
-        '<span>🏁 ' + c.destino + '</span>' +
-        '<span>🕐 ' + c.ts + '</span>' +
-        '</div>' +
-        '<div class="ride-info" style="margin-top:4px">' +
-        '<span>📍 ' + (c.origem || 'Localização do cliente') + '</span>' +
-        '</div>' +
-        '<div class="ride-actions" style="margin-top:8px">' + btnAceitar + '</div>' +
-        swipeHint +
-        '</div></div>';
+        '<div class="ride-info"><span>🏁 ' + c.destino + '</span><span>🕐 ' + c.ts + '</span></div>' +
+        '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (c.origem || 'Localização do cliente') + '</span></div>' +
+        '<div style="margin-top:10px;background:#22c55e22;border-radius:8px;padding:8px;text-align:center;font-weight:700;color:#22c55e;font-size:14px">✅ Toque para aceitar esta corrida</div>' +
+        '</div>';
     }).join('');
-    // Ativa swipe nos cards renderizados
-    setTimeout(initSwipeCards, 50);
-  }
 
   // === CORRIDA ATUAL DO MOTORISTA ===
   var emAndamento = DB.corridas.find(function(c){
@@ -1701,49 +1688,6 @@ function concluirCorridaMot(id) {
   toast('🎉 Corrida concluída! +R$ ' + ganho.toFixed(2).replace('.',','), 'success');
   updateMotCorridasList();
   updateMotGanhos();
-}
-
-function initSwipeCards() {
-  var cards = document.querySelectorAll('[data-swipe-id]');
-  cards.forEach(function(card) {
-    var id = parseInt(card.getAttribute('data-swipe-id'));
-    var startX = 0, currentX = 0, isDragging = false;
-    var THRESHOLD = 90; // px para confirmar swipe
-
-    function onStart(x) { startX = x; currentX = x; isDragging = true; }
-    function onMove(x) {
-      if (!isDragging) return;
-      currentX = x;
-      var dx = currentX - startX;
-      if (dx < 0) dx = 0; // só swipe para direita
-      var pct = Math.min(dx / THRESHOLD, 1);
-      card.style.transform = 'translateX(' + dx + 'px)';
-      var bg = card.querySelector('.swipe-bg');
-      if (bg) bg.style.opacity = pct;
-    }
-    function onEnd() {
-      if (!isDragging) return;
-      isDragging = false;
-      var dx = currentX - startX;
-      if (dx >= THRESHOLD) {
-        card.style.transform = 'translateX(110%)';
-        setTimeout(function() { aceitarCorrida(id); }, 200);
-      } else {
-        card.style.transform = '';
-        var bg = card.querySelector('.swipe-bg');
-        if (bg) bg.style.opacity = 0;
-      }
-    }
-    // Touch
-    card.addEventListener('touchstart',  function(e){ onStart(e.touches[0].clientX); }, { passive: true });
-    card.addEventListener('touchmove',   function(e){ onMove(e.touches[0].clientX); },  { passive: true });
-    card.addEventListener('touchend',    function(){ onEnd(); });
-    // Mouse (desktop)
-    card.addEventListener('mousedown',   function(e){ onStart(e.clientX); });
-    card.addEventListener('mousemove',   function(e){ if(isDragging) onMove(e.clientX); });
-    card.addEventListener('mouseup',     function(){ onEnd(); });
-    card.addEventListener('mouseleave',  function(){ onEnd(); });
-  });
 }
 
 function updateMotFila() {
