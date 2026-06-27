@@ -1313,6 +1313,12 @@ function concluirCorridaSimulado() {
   toast('🎉 Corrida concluída! Obrigado!', 'success');
 }
 
+function confirmarCancelarCorrida() {
+  if (confirm('Tem certeza que deseja cancelar a corrida?')) {
+    cancelarCorrida();
+  }
+}
+
 function cancelarCorrida() {
   if (!STATE.corridaAtual) return;
   STATE.corridaAtual.status = 'cancelada';
@@ -1376,7 +1382,7 @@ function updateClienteRideStatus() {
 
   var actionBtn = '';
   if (c.status === 'buscando' || c.status === 'a_caminho') {
-    actionBtn = '<button class="btn btn-ghost" onclick="cancelarCorrida()">Cancelar corrida</button>';
+    actionBtn = '<button class="btn" style="width:100%;background:rgba(255,71,87,0.15);color:#FF4757;border:1.5px solid rgba(255,71,87,0.4);font-size:15px;font-weight:700;padding:14px;border-radius:12px;margin-top:4px" onclick="confirmarCancelarCorrida()">✕ Cancelar Corrida</button>';
   } else if (c.status === 'concluida' || c.status === 'cancelada') {
     actionBtn = '<button class="btn btn-orange" onclick="novaCorridaCliente()">🏍️ Nova Corrida</button>';
   }
