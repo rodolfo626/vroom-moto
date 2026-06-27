@@ -1391,21 +1391,20 @@ function calcularPreco() {
   var tipo  = document.getElementById('tipo-corrida').value;
   var tarifa = DB.precos[tipo];
   
-  // Se for bandeirada, cria um objeto temporário com valor 0 (usa apenas a taxa global)
   if (tipo === 'bandeirada') {
     tarifa = { valor: 0, km_minimo: 0, km_extra: DB.precos.basica.km_extra };
   } else if (!tarifa || typeof tarifa !== 'object') {
     tarifa = DB.precos.basica;
   }
 
-  var band  = DB.precos.bandeirada || 0;
-  var dist  = 2 + Math.random() * 8;
+  var band = DB.precos.bandeirada || 0;
+  var dist = 1.0; 
   var distExtra = Math.max(0, dist - (tarifa.km_minimo || 0));
   var total = band + (tarifa.valor || 0) + (distExtra * (tarifa.km_extra || 0));
 
   document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-  document.getElementById('dist-bar').style.width = Math.min(100, dist * 10) + '%';
-  document.getElementById('dist-text').textContent = '📏 Distância estimada: ' + dist.toFixed(1) + ' km';
+  document.getElementById('dist-bar').style.width = '10%';
+  document.getElementById('dist-text').textContent = '📏 Valor base para corridas até ' + (tarifa.km_minimo || 0) + ' km';
 }
 
 function solicitarCorrida() {
@@ -1427,8 +1426,8 @@ function confirmarCorrida() {
     tarifa = DB.precos.basica;
   }
 
-  var band  = DB.precos.bandeirada || 0;
-  var dist  = 2 + Math.random() * 8;
+  var band = DB.precos.bandeirada || 0;
+  var dist = 1.0; 
   var distExtra = Math.max(0, dist - (tarifa.km_minimo || 0));
   var preco = band + (tarifa.valor || 0) + (distExtra * (tarifa.km_extra || 0));
 
