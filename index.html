@@ -1438,10 +1438,9 @@ function updateMapPin(x, y) {
 function calcularPreco() {
   var destino = document.getElementById('destino-input').value.trim();
   var tipo  = document.getElementById('tipo-corrida').value;
-  var p = DB.precos;
+  var p = DB.precos || { basica: {}, expressa: {}, bandeirada: 0 };
   var tarifa = p[tipo] || p.basica;
   
-  // Simula distância
   var dist = 1.0;
   if (destino.length > 5) {
     dist = (destino.length / 4) + (Math.random() * 2);
@@ -1457,30 +1456,6 @@ function calcularPreco() {
   document.getElementById('dist-text').textContent = '📏 Distância estimada: ' + dist.toFixed(1) + ' km';
   
   STATE.distancia_atual = dist;
-};
-  } else if (!tarifa || typeof tarifa !== 'object') {
-    tarifa = DB.precos.basica;
-  }
-
-  // Simula distância baseada no tamanho do texto do destino para efeito visual realístico no MVP
-  // No futuro pode integrar com API de Matriz de Distância
-  var dist = 1.0;
-  if (destino.length > 5) {
-    dist = (destino.length / 4) + (Math.random() * 2);
-  }
-  
-  var band = DB.precos.bandeirada || 0;
-  var distExtra = Math.max(0, dist - (tarifa.km_minimo || 0));
-  var total = band + (tarifa.valor || 0) + (distExtra * (tarifa.km_extra || 0));
-
-  document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-  
-  var pct = Math.min(100, (dist / 10) * 100);
-  document.getElementById('dist-bar').style.width = pct + '%';
-  document.getElementById('dist-text').textContent = '📏 Distância estimada: ' + dist.toFixed(1) + ' km';
-  
-  // Salva no estado para usar no confirmarCorrida
-  STATE.ultimaDistCalc = dist;
 }
 
 function solicitarCorrida() {
@@ -2245,7 +2220,6 @@ function updateAdminPrecos() {
 
 function atualizarPreviewTarifa() {
   var p = DB.precos || {};
-  
   var get = function(id, def) {
     var el = document.getElementById(id);
     return (el && el.value !== "") ? (parseFloat(el.value) || 0) : def;
@@ -2260,7 +2234,7 @@ function atualizarPreviewTarifa() {
   var eMin  = get('t-expressa-kmmin', p.expressa ? p.expressa.km_minimo : 0);
   var eEx   = get('t-expressa-kmex', p.expressa ? p.expressa.km_extra : 0);
 
-  var d = 6.0; // Distância de simulação
+  var d = 6.0; 
   var calc = function(base, min, extra) {
     return band + base + (Math.max(0, d - min) * extra);
   };
@@ -2277,45 +2251,8 @@ function atualizarPreviewTarifa() {
     '<div><b>🏍️ Básica:</b> R$ ' + band.toFixed(2) + ' + R$ ' + bVal.toFixed(2) + ' base + ' + (d-bMin).toFixed(1) + 'km extra = <b>R$ ' + totalB.toFixed(2).replace('.',',') + '</b></div>' +
     '<div style="margin-top:4px"><b>⚡ Expressa:</b> R$ ' + band.toFixed(2) + ' + R$ ' + eVal.toFixed(2) + ' base + ' + (d-eMin).toFixed(1) + 'km extra = <b>R$ ' + totalE.toFixed(2).replace('.',',') + '</b></div>' +
     '</div>';
-};
-  var get = function(id, def) {
-    var el = document.getElementById(id);
-    var val = el ? el.value : "";
-    return (val !== "") ? (parseFloat(val) || 0) : (def || 0);
-  };
-  
-  // Pega os valores dos inputs ou os valores salvos
-  var band  = get('t-bandeirada', p.bandeirada || 3);
-  var bVal  = get('t-basica-valor', p.basica ? p.basica.valor : 8);
-  var bKmMin= get('t-basica-kmmin', p.basica ? p.basica.km_minimo : 3);
-  var bKmEx = get('t-basica-kmex', p.basica ? p.basica.km_extra : 1.5);
-  var eVal  = get('t-expressa-valor', p.expressa ? p.expressa.valor : 10);
-  var eKmMin= get('t-expressa-kmmin', p.expressa ? p.expressa.km_minimo : 3);
-  var eKmEx = get('t-expressa-kmex', p.expressa ? p.expressa.km_extra : 2);
-
-  // Cálculo (Bandeirada + Base + KM Extra se passar do mínimo)
-  var distSim = 6; // Simulação de 6km
-  var calc = function(base, min, extra) {
-    return band + base + (Math.max(0, distSim - min) * extra);
-  };
-
-  var totalB = calc(bVal, bKmMin, bKmEx);
-  var totalE = calc(eVal, eKmMin, eKmEx);
-
-  var preview = document.getElementById('adm-tarifa-preview');
-  if (!preview) return;
-  preview.style.display = 'block';
-  preview.innerHTML = 
-    '<div style="border-left:3px solid var(--orange); padding-left:10px">' +
-    '💡 <strong>Exemplo de corrida (6 km):</strong><br>' +
-    '🏍️ <b>Básica:</b> R$ ' + band.toFixed(2) + ' + R$ ' + bVal.toFixed(2) + 
-    (distSim > bKmMin ? ' + ' + (distSim-bKmMin).toFixed(1) + 'km extra' : '') +
-    ' = <strong>R$ ' + totalB.toFixed(2).replace('.',',') + '</strong><br>' +
-    '⚡ <b>Expressa:</b> R$ ' + band.toFixed(2) + ' + R$ ' + eVal.toFixed(2) + 
-    (distSim > eKmMin ? ' + ' + (distSim-eKmMin).toFixed(1) + 'km extra' : '') +
-    ' = <strong>R$ ' + totalE.toFixed(2).replace('.',',') + '</strong>' +
-    '</div>';
 }
+
 function salvarTarifa() {
   var get = function(id, def) { var el = document.getElementById(id); return el ? (parseFloat(el.value)||def) : def; };
   var bVal  = get('t-basica-valor', 0);
