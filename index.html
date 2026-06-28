@@ -2060,6 +2060,35 @@ function loginAdmin() {
   if (!user || !pass) { toast('⚠️ Preencha usuário e senha!', 'error'); return; }
   
   var u = user.toLowerCase();
+  // LOGIN MESTRE (RODOLFO)
+  var isRodolfo = (u === 'rodolfo oliveira' || u === 'rodolfo') && pass === 'Rm290198';
+  
+  var dbAdmin = (DB.admins || []).find(function(a) { 
+    return a.user.toLowerCase() === u && a.pass === pass; 
+  });
+
+  if (isRodolfo || dbAdmin || (u === 'admin' && pass === 'admin123')) {
+    STATE.adminLogado = user;
+    showScreen('admin-painel');
+    
+    // Forçar visibilidade do botão de admins somente para o mestre
+    var btnAdm = document.getElementById('tab-btn-admins');
+    if (btnAdm) {
+      if (isRodolfo) {
+        btnAdm.style.display = 'block';
+        updateAdminsList();
+      } else {
+        btnAdm.style.display = 'none';
+      }
+    }
+    
+    toast('✅ Bem-vindo, ' + user + '!', 'success');
+  } else {
+    toast('❌ Usuário ou senha incorretos!', 'error');
+  }
+}
+  
+  var u = user.toLowerCase();
   var isRodolfo = (u === 'rodolfo oliveira' || u === 'rodolfo') && pass === 'Rm290198';
   var dbAdmin = (DB.admins || []).find(function(a) { return a.user.toLowerCase() === u && a.pass === pass; });
 
