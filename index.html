@@ -1781,6 +1781,14 @@ function updateMotCorridasList() {
   // === FILA DE ESPERA — corridas aguardando motorista ===
   var el = document.getElementById('mot-corridas-list');
   var disponiveis = DB.corridas.filter(function(c){ return c.status === 'buscando'; });
+  
+  // Se o motorista estiver offline, não vê corridas e não ouve o som
+  if (!STATE.motOnline) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">🔴</div><p>Você está offline. Ligue a chave para receber corridas.</p></div>';
+    document.getElementById('mot-notif').style.display = 'none';
+    STATE.lastCount = 0;
+    return;
+  }
   if (disponiveis.length > (STATE.lastCount || 0)) {
     var audio = document.getElementById('audio-notif');
     if(audio) audio.play().catch(function(e){ console.log('Bloqueio de audio:', e); });
