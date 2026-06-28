@@ -501,6 +501,7 @@
       text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;
     }
   </style>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_GOOGLE_MAPS_KEY_HERE&libraries=places"></script>
 </head>
 <body>
 
@@ -1417,27 +1418,47 @@ function updateMapPin(x, y) {
   acc.style.left = x + '%';
 }
 
+
+var distanceService;
 function calcularPreco() {
+  if (!distanceService && typeof google !== 'undefined') distanceService = new google.maps.DistanceMatrixService();
   var destino = document.getElementById('destino-input').value.trim();
   var tipo  = document.getElementById('tipo-corrida').value;
   var p = DB.precos || { mun_basica: 10, mun_expressa: 15, int_base: 5, int_km: 3 };
-  var total = 0;
-  var dist = 1.0;
+  
+  if (!destino || destino.length < 3) return;
 
   if (tipo === 'intermunicipal') {
-    if (destino.length > 5) dist = (destino.length / 4) + (Math.random() * 2);
-    total = (p.int_base || 5) + (dist * (p.int_km || 3));
-    document.getElementById('dist-text').textContent = '🛣️ Valor Intermunicipal Calculado';
+    if (typeof google === 'undefined') {
+        document.getElementById('dist-text').textContent = '⚠️ Google Maps não carregado';
+        return;
+    }
+    document.getElementById('dist-text').textContent = '🔄 Calculando distância via Google...';
+    distanceService.getDistanceMatrix({
+      origins: [new google.maps.LatLng(STATE.clienteLat, STATE.clienteLng)],
+      destinations: [destino],
+      travelMode: 'DRIVING'
+    }, function(response, status) {
+      if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
+        var distanceInKm = response.rows[0].elements[0].distance.value / 1000;
+        var total = (p.int_base || 5) + (distanceInKm * (p.int_km || 3));
+        
+        document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+        document.getElementById('dist-text').textContent = '🛣️ Distância real: ' + distanceInKm.toFixed(1) + ' km';
+        var pct = Math.min(100, (distanceInKm / 30) * 100);
+        document.getElementById('dist-bar').style.width = pct + '%';
+        STATE.ultimaDistCalc = distanceInKm;
+      }
+    });
   } else {
-    total = p[tipo] || (tipo === 'mun_expressa' ? 15 : 10);
+    var total = p[tipo] || (tipo === 'mun_expressa' ? 15 : 10);
+    document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
     document.getElementById('dist-text').textContent = '📍 Valor fixo (Municipal)';
+    document.getElementById('dist-bar').style.width = '100%';
+    STATE.ultimaDistCalc = 1.0;
   }
-
-  document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-  var pct = Math.min(100, (dist / 20) * 100);
-  document.getElementById('dist-bar').style.width = pct + '%';
-  STATE.ultimaDistCalc = dist;
 }
+
 function solicitarCorrida() {
   if (!STATE.clienteLat) { getLocation(); return; }
   document.getElementById('cliente-dest-card').style.display = 'block';
