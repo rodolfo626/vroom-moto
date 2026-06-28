@@ -611,7 +611,7 @@
           </div>
           <div id="preco-estimado" class="card" style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.2);padding:14px;margin-bottom:0">
             <div style="display:flex;justify-content:space-between;align-items:center">
-              <span class="text-sm">Preço estimado</span>
+              <span class="text-sm">Preço da Corrida</span>
               <span style="font-size:22px;font-weight:900;color:var(--green)" id="preco-val">R$ 8,00</span>
             </div>
             <div class="progress-bar mt-8"><div class="progress-fill" style="background:var(--green);width:0%" id="dist-bar"></div></div>
@@ -1427,7 +1427,7 @@ function calcularPreco() {
   if (tipo === 'intermunicipal') {
     if (destino.length > 5) dist = (destino.length / 4) + (Math.random() * 2);
     total = (p.int_base || 5) + (dist * (p.int_km || 3));
-    document.getElementById('dist-text').textContent = '📏 Distância estimada: ' + dist.toFixed(1) + ' km';
+    document.getElementById('dist-text').textContent = '🛣️ Valor Intermunicipal Calculado';
   } else {
     total = p[tipo] || (tipo === 'mun_expressa' ? 15 : 10);
     document.getElementById('dist-text').textContent = '📍 Valor fixo (Municipal)';
