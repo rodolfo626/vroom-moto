@@ -871,6 +871,7 @@
         <button class="tab" onclick="switchAdmTab('precos', this)">💰 Preços</button>
         <button class="tab" onclick="switchAdmTab('pagamentos', this)">💳 Pagamentos</button>
         <button class="tab" onclick="switchAdmTab('corridas', this)">📊 Corridas</button>
+        <button class="tab" id="tab-btn-admins" style="display:none" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
       </div>
 
       <!-- Motoristas -->
@@ -978,6 +979,26 @@
             <p>Nenhuma corrida registrada ainda</p>
           </div>
         </div>
+      </div>
+
+      <!-- ABA ADMINS (Somente Rodolfo) -->
+      <div id="adm-tab-admins" style="display:none">
+        <div class="section-label">Gerenciamento de Administradores</div>
+        <div class="card">
+          <h3>➕ Novo Administrador</h3>
+          <div class="input-group">
+            <label>Usuário</label>
+            <input type="text" id="new-adm-user" placeholder="Nome de usuário">
+          </div>
+          <div class="input-group">
+            <label>Senha</label>
+            <input type="password" id="new-adm-pass" placeholder="Senha de acesso">
+          </div>
+          <button class="btn btn-blue" onclick="cadastrarNovoAdmin()">💾 Cadastrar Admin</button>
+        </div>
+        
+        <div class="section-label" style="margin-top:20px">Admins Cadastrados</div>
+        <div id="adm-admins-list"></div>
       </div>
     </div>
   </div>
@@ -2033,6 +2054,28 @@ function loginAdmin() {
   var user = document.getElementById('adm-user').value.trim();
   var pass = document.getElementById('adm-pass').value.trim();
   if (!user || !pass) { toast('⚠️ Preencha usuário e senha!', 'error'); return; }
+  
+  var u = user.toLowerCase();
+  var isRodolfo = (u === 'rodolfo oliveira' || u === 'rodolfo') && pass === 'Rm290198';
+  var dbAdmin = (DB.admins || []).find(function(a) { return a.user.toLowerCase() === u && a.pass === pass; });
+
+  if (isRodolfo || dbAdmin) {
+    STATE.adminLogado = user;
+    showScreen('admin-painel');
+    document.getElementById('tab-btn-admins').style.display = isRodolfo ? 'block' : 'none';
+    if (isRodolfo) updateAdminsList();
+    toast('✅ Bem-vindo, ' + user + '!', 'success');
+  } else {
+    if (u === 'admin' && pass === 'admin123') {
+      STATE.adminLogado = 'admin';
+      showScreen('admin-painel');
+      document.getElementById('tab-btn-admins').style.display = 'none';
+      toast('✅ Bem-vindo, Admin!', 'success');
+    } else {
+      toast('❌ Usuário ou senha incorretos!', 'error');
+    }
+  }
+}
   var u = user.toLowerCase();
   if ((u === 'admin' && pass === 'admin123') || (u === 'rodolfo oliveira' && pass === 'Rm290198') || (u === 'rodolfo' && pass === 'Rm290198')) {
     showScreen('admin-painel');
@@ -2108,6 +2151,49 @@ function updateAdminStats() {
 
 function switchAdmTab(tab, el) {
   document.querySelectorAll('#screen-admin-painel .tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('adm-tab-motoristas').style.display = tab === 'motoristas' ? 'block' : 'none';
+  document.getElementById('adm-tab-precos').style.display     = tab === 'precos'     ? 'block' : 'none';
+  document.getElementById('adm-tab-pagamentos').style.display = tab === 'pagamentos' ? 'block' : 'none';
+  document.getElementById('adm-tab-corridas').style.display   = tab === 'corridas'   ? 'block' : 'none';
+  if(document.getElementById('adm-tab-admins')) 
+    document.getElementById('adm-tab-admins').style.display   = tab === 'admins'     ? 'block' : 'none';
+}
+
+function updateAdminsList() {
+  var el = document.getElementById('adm-admins-list');
+  if (!DB.admins) DB.admins = [];
+  if (DB.admins.length === 0) {
+    el.innerHTML = '<div class="empty-state"><p>Nenhum admin adicional cadastrado.</p></div>';
+    return;
+  }
+  el.innerHTML = DB.admins.map(function(a, idx) {
+    return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:12px">' +
+           '<div><b>' + a.user + '</b></div>' +
+           '<button class="btn btn-red btn-xs" onclick="excluirAdmin(' + idx + ')">🗑️</button></div>';
+  }).join('');
+}
+
+function cadastrarNovoAdmin() {
+  var user = document.getElementById('new-adm-user').value.trim();
+  var pass = document.getElementById('new-adm-pass').value.trim();
+  if (!user || !pass) { toast('⚠️ Preencha usuário e senha!', 'error'); return; }
+  if (!DB.admins) DB.admins = [];
+  DB.admins.push({ user: user, pass: pass });
+  saveDB();
+  updateAdminsList();
+  document.getElementById('new-adm-user').value = '';
+  document.getElementById('new-adm-pass').value = '';
+  toast('✅ Administrador cadastrado!', 'success');
+}
+
+function excluirAdmin(idx) {
+  if (!confirm('Deseja realmente remover este administrador?')) return;
+  DB.admins.splice(idx, 1);
+  saveDB();
+  updateAdminsList();
+  toast('🗑️ Administrador removido.', 'info');
+});
   el.classList.add('active');
   document.getElementById('adm-tab-motoristas').style.display  = tab === 'motoristas'  ? 'block' : 'none';
   document.getElementById('adm-tab-precos').style.display      = tab === 'precos'      ? 'block' : 'none';
