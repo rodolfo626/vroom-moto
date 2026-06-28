@@ -994,6 +994,10 @@
             <label>Senha</label>
             <input type="password" id="new-adm-pass" placeholder="Senha de acesso">
           </div>
+          <div class="input-group">
+            <label>Sua Senha Mestre (Confirmação)</label>
+            <input type="password" id="adm-master-confirm" placeholder="Confirme com sua senha Rm...">
+          </div>
           <button class="btn btn-blue" onclick="cadastrarNovoAdmin()">💾 Cadastrar Admin</button>
         </div>
         
@@ -2162,14 +2166,28 @@ function updateAdminsList() {
 function cadastrarNovoAdmin() {
   var user = document.getElementById('new-adm-user').value.trim();
   var pass = document.getElementById('new-adm-pass').value.trim();
-  if (!user || !pass) { toast('⚠️ Preencha tudo!', 'error'); return; }
+  var master = document.getElementById('adm-master-confirm').value.trim();
+
+  if (!user || !pass || !master) { 
+    toast('⚠️ Preencha todos os campos, incluindo sua senha mestre!', 'error'); 
+    return; 
+  }
+  
+  if (master !== 'Rm290198') {
+    toast('❌ Senha mestre incorreta! Cadastro não autorizado.', 'error');
+    return;
+  }
+
   if (!DB.admins) DB.admins = [];
   DB.admins.push({ user: user, pass: pass });
   saveDB();
   updateAdminsList();
+  
   document.getElementById('new-adm-user').value = '';
   document.getElementById('new-adm-pass').value = '';
-  toast('✅ Admin cadastrado!', 'success');
+  document.getElementById('adm-master-confirm').value = '';
+  
+  toast('✅ Administrador cadastrado com sucesso!', 'success');
 }
 
 function excluirAdmin(idx) {
