@@ -2076,14 +2076,7 @@ function loginAdmin() {
     }
   }
 }
-  var u = user.toLowerCase();
-  if ((u === 'admin' && pass === 'admin123') || (u === 'rodolfo oliveira' && pass === 'Rm290198') || (u === 'rodolfo' && pass === 'Rm290198')) {
-    showScreen('admin-painel');
-    toast('✅ Bem-vindo, Administrador!', 'success');
-  } else {
-    toast('❌ Usuário ou senha incorretos!', 'error');
-  }
-}
+
 function logoutAdmin() {
   showHome();
 }
