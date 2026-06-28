@@ -887,67 +887,53 @@
           <div id="adm-precos-list"></div>
         </div>
 
-        <!-- CONFIGURAÇÃO KM MÍNIMO -->
+        <!-- CONFIGURAÇÃO DE PREÇOS -->
         <div class="card" style="border-left: 4px solid var(--orange)">
-          <h3>📏 Distância Mínima por Tipo de Corrida</h3>
-          <p class="text-sm" style="margin:8px 0 16px;opacity:0.7">Defina o km mínimo e o valor por km adicional separadamente para cada tipo. O cliente paga o valor fixo até o mínimo — acima disso cobra o adicional.</p>
+          <h3>💰 Configuração de Preços Fixos e KM</h3>
+          <p class="text-sm" style="margin:8px 0 16px;opacity:0.7">Ajuste os valores das corridas Municipais e a base para o cálculo Intermunicipal.</p>
 
-          <!-- Básica -->
+          <!-- Municipal Básica -->
           <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;margin-bottom:12px">
-            <div style="font-weight:700;margin-bottom:10px;color:var(--orange)">🏍️ Corrida Básica</div>
+            <div style="font-weight:700;margin-bottom:10px;color:var(--orange)">🛵 Municipal Básica</div>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <div style="flex:1;min-width:120px">
-                <label class="text-sm" style="display:block;margin-bottom:5px">Valor fixo (R$)</label>
-                <input type="number" id="t-basica-valor" step="0.50" min="0" oninput="atualizarPreviewTarifa()"
-                  style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;font-size:15px">
-              </div>
-              <div style="flex:1;min-width:120px">
-                <label class="text-sm" style="display:block;margin-bottom:5px">Km mínimo</label>
-                <input type="number" id="t-basica-kmmin" step="0.5" min="0.5" oninput="atualizarPreviewTarifa()"
-                  style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;font-size:15px">
-              </div>
-              <div style="flex:1;min-width:120px">
-                <label class="text-sm" style="display:block;margin-bottom:5px">+ por km (R$)</label>
-                <input type="number" id="t-basica-kmex" step="0.10" min="0" oninput="atualizarPreviewTarifa()"
+                <label class="text-sm" style="display:block;margin-bottom:5px">Valor Fixo (R$)</label>
+                <input type="number" id="adm-mun-basica" step="1.00" min="0"
                   style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;font-size:15px">
               </div>
             </div>
           </div>
 
-          <!-- Expressa -->
+          <!-- Municipal Expressa -->
           <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;margin-bottom:12px">
-            <div style="font-weight:700;margin-bottom:10px;color:#7EC8E3">⚡ Corrida Expressa</div>
+            <div style="font-weight:700;margin-bottom:10px;color:#7EC8E3">🚀 Municipal Expressa</div>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
               <div style="flex:1;min-width:120px">
-                <label class="text-sm" style="display:block;margin-bottom:5px">Valor fixo (R$)</label>
-                <input type="number" id="t-expressa-valor" step="0.50" min="0" oninput="atualizarPreviewTarifa()"
-                  style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;font-size:15px">
-              </div>
-              <div style="flex:1;min-width:120px">
-                <label class="text-sm" style="display:block;margin-bottom:5px">Km mínimo</label>
-                <input type="number" id="t-expressa-kmmin" step="0.5" min="0.5" oninput="atualizarPreviewTarifa()"
-                  style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;font-size:15px">
-              </div>
-              <div style="flex:1;min-width:120px">
-                <label class="text-sm" style="display:block;margin-bottom:5px">+ por km (R$)</label>
-                <input type="number" id="t-expressa-kmex" step="0.10" min="0" oninput="atualizarPreviewTarifa()"
+                <label class="text-sm" style="display:block;margin-bottom:5px">Valor Fixo (R$)</label>
+                <input type="number" id="adm-mun-expressa" step="1.00" min="0"
                   style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;font-size:15px">
               </div>
             </div>
           </div>
 
-          <!-- Bandeirada -->
-          <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-weight:700;margin-bottom:10px;color:#aaa">🚩 Bandeirada (taxa de abertura)</div>
-            <div style="max-width:180px">
-              <label class="text-sm" style="display:block;margin-bottom:5px">Valor (R$)</label>
-              <input type="number" id="t-bandeirada" step="0.50" min="0" oninput="atualizarPreviewTarifa()"
-                style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;font-size:15px">
+          <!-- Intermunicipal -->
+          <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:14px;margin-bottom:12px">
+            <div style="font-weight:700;margin-bottom:10px;color:var(--green)">🛣️ Intermunicipal (Cálculo)</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div style="flex:1;min-width:120px">
+                <label class="text-sm" style="display:block;margin-bottom:5px">Base / Saída (R$)</label>
+                <input type="number" id="adm-int-base" step="1.00" min="0"
+                  style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;font-size:15px">
+              </div>
+              <div style="flex:1;min-width:120px">
+                <label class="text-sm" style="display:block;margin-bottom:5px">Valor por KM (R$)</label>
+                <input type="number" id="adm-int-km" step="0.10" min="0"
+                  style="width:100%;padding:10px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:white;font-size:15px">
+              </div>
             </div>
           </div>
 
-          <div id="adm-tarifa-preview" style="background:rgba(255,107,0,0.1);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.8;display:none"></div>
-          <button class="btn btn-orange" onclick="salvarTarifa()">💾 Salvar Tarifas</button>
+          <button class="btn btn-orange" onclick="salvarPrecosAdm()">💾 Salvar Alterações de Preço</button>
         </div>
 
       </div>
@@ -1434,34 +1420,24 @@ function updateMapPin(x, y) {
 function calcularPreco() {
   var destino = document.getElementById('destino-input').value.trim();
   var tipo  = document.getElementById('tipo-corrida').value;
+  var p = DB.precos || { mun_basica: 10, mun_expressa: 15, int_base: 5, int_km: 3 };
   var total = 0;
   var dist = 1.0;
 
   if (tipo === 'intermunicipal') {
-    // Lógica para cálculo por KM (distância simulada baseada no texto do destino)
-    if (destino.length > 5) {
-      dist = (destino.length / 4) + (Math.random() * 2);
-    }
-    // Supondo uma base de R$ 5,00 + R$ 3,00 por KM para Intermunicipal
-    total = 5.00 + (dist * 3.00);
+    if (destino.length > 5) dist = (destino.length / 4) + (Math.random() * 2);
+    total = (p.int_base || 5) + (dist * (p.int_km || 3));
     document.getElementById('dist-text').textContent = '📏 Distância estimada: ' + dist.toFixed(1) + ' km';
   } else {
-    // Preços fixos para Municipal
-    var precos = {
-      mun_basica: 10,
-      mun_expressa: 15
-    };
-    total = precos[tipo] || 10;
+    total = p[tipo] || (tipo === 'mun_expressa' ? 15 : 10);
     document.getElementById('dist-text').textContent = '📍 Valor fixo (Municipal)';
   }
 
   document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
   var pct = Math.min(100, (dist / 20) * 100);
   document.getElementById('dist-bar').style.width = pct + '%';
-  
   STATE.ultimaDistCalc = dist;
 }
-
 function solicitarCorrida() {
   if (!STATE.clienteLat) { getLocation(); return; }
   document.getElementById('cliente-dest-card').style.display = 'block';
@@ -1474,17 +1450,14 @@ function confirmarCorrida() {
   if (!destino) { toast('⚠️ Informe o destino!', 'error'); return; }
   if (!STATE.clienteLat) { toast('⚠️ Obtenha sua localização primeiro!', 'error'); return; }
 
+  var p = DB.precos || { mun_basica: 10, mun_expressa: 15, int_base: 5, int_km: 3 };
   var preco = 0;
   var dist = STATE.ultimaDistCalc || 1.0;
 
   if (tipo === 'intermunicipal') {
-    preco = 5.00 + (dist * 3.00);
+    preco = (p.int_base || 5) + (dist * (p.int_km || 3));
   } else {
-    var precos = {
-      mun_basica: 10,
-      mun_expressa: 15
-    };
-    preco = precos[tipo] || 10;
+    preco = p[tipo] || (tipo === 'mun_expressa' ? 15 : 10);
   }
 
   STATE.corridaAtual = {
@@ -2188,93 +2161,39 @@ function cadastrarMotorista() {
 }
 
 function updateAdminPrecos() {
-  var el = document.getElementById('adm-precos-list');
-  var tipos = [
-    { key: 'basica',   label: '🏍️ Corrida Básica' },
-    { key: 'expressa', label: '⚡ Corrida Expressa' }
-  ];
-  el.innerHTML = tipos.map(function(t) {
-    var tar = DB.precos[t.key] || {};
-    return '<div class="price-row" style="flex-direction:column;align-items:flex-start;gap:4px;padding:12px 0">' +
-      '<span class="price-name" style="font-weight:700">' + t.label + '</span>' +
-      '<span class="text-sm" style="opacity:0.8">Valor fixo: <strong>R$ ' + (tar.valor||0).toFixed(2).replace('.',',') + '</strong>' +
-      ' &nbsp;|&nbsp; Km mín: <strong>' + (tar.km_minimo||3).toFixed(1) + ' km</strong>' +
-      ' &nbsp;|&nbsp; +km: <strong>R$ ' + (tar.km_extra||0).toFixed(2).replace('.',',') + '/km</strong></span>' +
-      '</div>';
-  }).join('') +
-  '<div class="price-row" style="border-top:1px solid rgba(255,255,255,0.1);margin-top:4px;padding-top:10px">' +
-  '<span class="price-name">🚩 Bandeirada</span>' +
-  '<span class="price-val">R$ ' + (DB.precos.bandeirada||3).toFixed(2).replace('.',',') + '</span>' +
-  '</div>';
-
-  // Preenche os campos
-  var p = DB.precos;
-  var set = function(id, val) { var el = document.getElementById(id); if(el) el.value = val; };
-  set('t-basica-valor',   (p.basica.valor     ||8   ).toFixed(2));
-  set('t-basica-kmmin',   (p.basica.km_minimo ||3   ).toFixed(1));
-  set('t-basica-kmex',    (p.basica.km_extra  ||1.50).toFixed(2));
-  set('t-expressa-valor', (p.expressa.valor     ||10  ).toFixed(2));
-  set('t-expressa-kmmin', (p.expressa.km_minimo ||3   ).toFixed(1));
-  set('t-expressa-kmex',  (p.expressa.km_extra  ||2.00).toFixed(2));
-  set('t-bandeirada',     (p.bandeirada         ||3.00).toFixed(2));
-  atualizarPreviewTarifa();
-}
-
-function atualizarPreviewTarifa() {
   var p = DB.precos || {};
-  var get = function(id, def) {
-    var el = document.getElementById(id);
-    return (el && el.value !== "") ? (parseFloat(el.value) || 0) : def;
-  };
-  
-  var band  = get('t-bandeirada', p.bandeirada || 0);
-  var bVal  = get('t-basica-valor', p.basica ? p.basica.valor : 0);
-  var bMin  = get('t-basica-kmmin', p.basica ? p.basica.km_minimo : 0);
-  var bEx   = get('t-basica-kmex', p.basica ? p.basica.km_extra : 0);
-  
-  var eVal  = get('t-expressa-valor', p.expressa ? p.expressa.valor : 0);
-  var eMin  = get('t-expressa-kmmin', p.expressa ? p.expressa.km_minimo : 0);
-  var eEx   = get('t-expressa-kmex', p.expressa ? p.expressa.km_extra : 0);
+  if (!p.mun_basica) p.mun_basica = 10;
+  if (!p.mun_expressa) p.mun_expressa = 15;
+  if (!p.int_base) p.int_base = 5;
+  if (!p.int_km) p.int_km = 3;
 
-  var d = 6.0; 
-  var calc = function(base, min, extra) {
-    return band + base + (Math.max(0, d - min) * extra);
-  };
+  document.getElementById('adm-mun-basica').value = p.mun_basica;
+  document.getElementById('adm-mun-expressa').value = p.mun_expressa;
+  document.getElementById('adm-int-base').value = p.int_base;
+  document.getElementById('adm-int-km').value = p.int_km;
 
-  var totalB = calc(bVal, bMin, bEx);
-  var totalE = calc(eVal, eMin, eEx);
-
-  var el = document.getElementById('adm-tarifa-preview');
-  if (!el) return;
-  el.style.display = 'block';
-  el.innerHTML = 
-    '<div style="background:rgba(255,107,0,0.15); border-left:4px solid var(--orange); padding:12px; border-radius:8px">' +
-    '<h4 style="margin:0 0 8px; color:var(--orange)">📊 Simulação de Valor (Corrida de 6 km)</h4>' +
-    '<div><b>🏍️ Básica:</b> R$ ' + band.toFixed(2) + ' + R$ ' + bVal.toFixed(2) + ' base + ' + (d-bMin).toFixed(1) + 'km extra = <b>R$ ' + totalB.toFixed(2).replace('.',',') + '</b></div>' +
-    '<div style="margin-top:4px"><b>⚡ Expressa:</b> R$ ' + band.toFixed(2) + ' + R$ ' + eVal.toFixed(2) + ' base + ' + (d-eMin).toFixed(1) + 'km extra = <b>R$ ' + totalE.toFixed(2).replace('.',',') + '</b></div>' +
-    '</div>';
+  var el = document.getElementById('adm-precos-list');
+  el.innerHTML = '<div class="price-row"><span>🛵 Municipal Básica</span><strong>R$ ' + p.mun_basica.toFixed(2).replace('.',',') + '</strong></div>' +
+                 '<div class="price-row"><span>🚀 Municipal Expressa</span><strong>R$ ' + p.mun_expressa.toFixed(2).replace('.',',') + '</strong></div>' +
+                 '<div class="price-row"><span>🛣️ Intermunicipal (Base)</span><strong>R$ ' + p.int_base.toFixed(2).replace('.',',') + '</strong></div>' +
+                 '<div class="price-row"><span>🛣️ Intermunicipal (p/ KM)</span><strong>R$ ' + p.int_km.toFixed(2).replace('.',',') + '</strong></div>';
 }
 
-function salvarTarifa() {
-  var get = function(id, def) { var el = document.getElementById(id); return el ? (parseFloat(el.value)||def) : def; };
-  var bVal  = get('t-basica-valor', 0);
-  var bKmMin= get('t-basica-kmmin', 0);
-  var bKmEx = get('t-basica-kmex',  0);
-  var eVal  = get('t-expressa-valor', 0);
-  var eKmMin= get('t-expressa-kmmin', 0);
-  var eKmEx = get('t-expressa-kmex',  0);
-  var band  = get('t-bandeirada', 0);
-  if (!bVal||!bKmMin||!bKmEx||!eVal||!eKmMin||!eKmEx||!band) { toast('⚠️ Preencha todos os campos!', 'error'); return; }
-  DB.precos = {
-    basica:     { valor: bVal,  km_minimo: bKmMin, km_extra: bKmEx },
-    expressa:   { valor: eVal,  km_minimo: eKmMin, km_extra: eKmEx },
-    bandeirada: band
-  };
+function salvarPrecosAdm() {
+  var munB = parseFloat(document.getElementById('adm-mun-basica').value);
+  var munE = parseFloat(document.getElementById('adm-mun-expressa').value);
+  var intB = parseFloat(document.getElementById('adm-int-base').value);
+  var intK = parseFloat(document.getElementById('adm-int-km').value);
+
+  if (isNaN(munB) || isNaN(munE) || isNaN(intB) || isNaN(intK)) {
+    toast('⚠️ Preencha todos os campos!', 'error'); return;
+  }
+
+  DB.precos = { mun_basica: munB, mun_expressa: munE, int_base: intB, int_km: intK };
   saveDB();
   updateAdminPrecos();
-  toast('✅ Tarifas salvas com sucesso!', 'success');
+  toast('✅ Preços salvos!', 'success');
 }
-
 function salvarPreco() {
   var tipo = document.getElementById('edit-preco-tipo').value;
   var val  = parseFloat(document.getElementById('edit-preco-val').value);
