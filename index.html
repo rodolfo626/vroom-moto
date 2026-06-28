@@ -606,8 +606,7 @@
             <select id="tipo-corrida" onchange="calcularPreco()">
               <option value="mun_basica">🛵 Municipal Básica (R$ 10)</option>
               <option value="mun_expressa">🚀 Municipal Expressa (R$ 15)</option>
-              <option value="int_basica">🛵 Intermunicipal Básica (R$ 35)</option>
-              <option value="int_expressa">🚀 Intermunicipal Expressa (R$ 55)</option>
+              <option value="intermunicipal">🛣️ Intermunicipal (Calculado p/ KM)</option>
             </select>
           </div>
           <div id="preco-estimado" class="card" style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.2);padding:14px;margin-bottom:0">
@@ -1437,21 +1436,32 @@ function updateMapPin(x, y) {
 }
 
 function calcularPreco() {
+  var destino = document.getElementById('destino-input').value.trim();
   var tipo  = document.getElementById('tipo-corrida').value;
-  var precos = {
-    mun_basica: 10,
-    mun_expressa: 15,
-    int_basica: 35,
-    int_expressa: 55
-  };
-  var total = precos[tipo] || 10;
+  var total = 0;
+  var dist = 1.0;
+
+  if (tipo === 'intermunicipal') {
+    // Lógica para cálculo por KM (distância simulada baseada no texto do destino)
+    if (destino.length > 5) {
+      dist = (destino.length / 4) + (Math.random() * 2);
+    }
+    // Supondo uma base de R$ 5,00 + R$ 3,00 por KM para Intermunicipal
+    total = 5.00 + (dist * 3.00);
+    document.getElementById('dist-text').textContent = '📏 Distância estimada: ' + dist.toFixed(1) + ' km';
+  } else {
+    // Preços fixos para Municipal
+    var precos = {
+      mun_basica: 10,
+      mun_expressa: 15
+    };
+    total = precos[tipo] || 10;
+    document.getElementById('dist-text').textContent = '📍 Valor fixo (Municipal)';
+  }
 
   document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-  // Distância simbólica
-  var dist = 1.0;
-  var pct = Math.min(100, (dist / 10) * 100);
+  var pct = Math.min(100, (dist / 20) * 100);
   document.getElementById('dist-bar').style.width = pct + '%';
-  document.getElementById('dist-text').textContent = '📍 Valor fixo selecionado';
   
   STATE.ultimaDistCalc = dist;
 }
@@ -1468,14 +1478,18 @@ function confirmarCorrida() {
   if (!destino) { toast('⚠️ Informe o destino!', 'error'); return; }
   if (!STATE.clienteLat) { toast('⚠️ Obtenha sua localização primeiro!', 'error'); return; }
 
-  var precos = {
-    mun_basica: 10,
-    mun_expressa: 15,
-    int_basica: 35,
-    int_expressa: 55
-  };
-  var preco = precos[tipo] || 10;
-  var dist = 1.0; 
+  var preco = 0;
+  var dist = STATE.ultimaDistCalc || 1.0;
+
+  if (tipo === 'intermunicipal') {
+    preco = 5.00 + (dist * 3.00);
+  } else {
+    var precos = {
+      mun_basica: 10,
+      mun_expressa: 15
+    };
+    preco = precos[tipo] || 10;
+  }
 
   STATE.corridaAtual = {
     id: Date.now(),
