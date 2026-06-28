@@ -659,10 +659,7 @@
           <label>Senha</label>
           <input type="password" id="mot-pass" placeholder="Sua senha">
         </div>
-        <div class="input-group">
-          <label>🔑 Chave de Ativação</label>
-          <input type="text" id="mot-chave" placeholder="Insira sua chave">
-        </div>
+        
         <button class="btn btn-green mt-16" onclick="loginMotorista()">Entrar</button>
         <p class="text-sm text-center mt-8">Problema de acesso? Fale com o administrador</p>
       </div>
@@ -1683,8 +1680,8 @@ function updateClienteHistorico() {
 function loginMotorista() {
   var user = document.getElementById('mot-user').value.trim();
   var pass = document.getElementById('mot-pass').value.trim();
-  var chave = document.getElementById('mot-chave').value.trim();
-  if (!user || !pass || !chave) { toast('⚠️ Preencha CPF, Senha e Chave!', 'error'); return; }
+  
+  if (!user || !pass) { toast('⚠️ Preencha CPF e Senha!', 'error'); return; }
 
   var mot = DB.motoristas.find(function(m) {
     return (m.cpf === user || m.tel === user || m.nome.toLowerCase() === user.toLowerCase()) && m.senha === pass;
