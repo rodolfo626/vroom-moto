@@ -2066,7 +2066,8 @@ function loginAdmin() {
   if (isRodolfo || dbAdmin) {
     STATE.adminLogado = user;
     showScreen('admin-painel');
-    document.getElementById('tab-btn-admins').style.display = isRodolfo ? 'block' : 'none';
+    var btnAdm = document.getElementById('tab-btn-admins');
+    if(btnAdm) btnAdm.style.setProperty('display', isRodolfo ? 'block' : 'none', 'important');
     if (isRodolfo) updateAdminsList();
     toast('✅ Bem-vindo, ' + user + '!', 'success');
   } else {
