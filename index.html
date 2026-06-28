@@ -604,9 +604,10 @@
           <div class="input-group">
             <label>Tipo de corrida</label>
             <select id="tipo-corrida" onchange="calcularPreco()">
-              <option value="basica">🛵 Básica</option>
-              <option value="expressa">🚀 Expressa</option>
-              <option value="municipal_basica">📍 Municipal Básica (R$ 10)</option><option value="municipal_expressa">📍 Municipal Expressa (R$ 15)</option><option value="inter_basica">🛣️ Intermunicipal Básica (R$ 35)</option><option value="inter_expressa">🛣️ Intermunicipal Expressa (R$ 55)</option>
+              <option value="mun_basica">🛵 Municipal Básica (R$ 10)</option>
+              <option value="mun_expressa">🚀 Municipal Expressa (R$ 15)</option>
+              <option value="int_basica">🛵 Intermunicipal Básica (R$ 35)</option>
+              <option value="int_expressa">🚀 Intermunicipal Expressa (R$ 55)</option>
             </select>
           </div>
           <div id="preco-estimado" class="card" style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.2);padding:14px;margin-bottom:0">
@@ -1436,14 +1437,25 @@ function updateMapPin(x, y) {
 }
 
 function calcularPreco() {
-  var destino = document.getElementById('destino-input').value.trim();
-  var tipo = document.getElementById('tipo-corrida').value;
-  var precos = { municipal_basica: 10, municipal_expressa: 15, inter_basica: 35, inter_expressa: 55, basica: 10, expressa: 15, bandeirada: 3.0 };
-  var total = precos[tipo] || 0;
+  var tipo  = document.getElementById('tipo-corrida').value;
+  var precos = {
+    mun_basica: 10,
+    mun_expressa: 15,
+    int_basica: 35,
+    int_expressa: 55
+  };
+  var total = precos[tipo] || 10;
+
   document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-  document.getElementById('dist-text').textContent = '🏁 Destino: ' + (destino || 'Digite o endereço');
-  STATE.ultimaDistCalc = 1.0;
+  // Distância simbólica
+  var dist = 1.0;
+  var pct = Math.min(100, (dist / 10) * 100);
+  document.getElementById('dist-bar').style.width = pct + '%';
+  document.getElementById('dist-text').textContent = '📍 Valor fixo selecionado';
+  
+  STATE.ultimaDistCalc = dist;
 }
+
 function solicitarCorrida() {
   if (!STATE.clienteLat) { getLocation(); return; }
   document.getElementById('cliente-dest-card').style.display = 'block';
@@ -1452,12 +1464,913 @@ function solicitarCorrida() {
 
 function confirmarCorrida() {
   var destino = document.getElementById('destino-input').value.trim();
-  var tipo = document.getElementById('tipo-corrida').value;
+  var tipo    = document.getElementById('tipo-corrida').value;
   if (!destino) { toast('⚠️ Informe o destino!', 'error'); return; }
-  var precos = { municipal_basica: 10, municipal_expressa: 15, inter_basica: 35, inter_expressa: 55, basica: 10, expressa: 15, bandeirada: 3.0 };
-  var preco = precos[tipo] || 0;
-  STATE.corridaAtual = { id: Date.now(), clienteLat: STATE.clienteLat, clienteLng: STATE.clienteLng, cliente: STATE.clienteLogado, origem: STATE.clienteAddr, destino: destino, tipo: tipo, preco: preco, dist: 1.0, status: 'buscando', motorista: null, ts: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) };
-  DB.corridas.push(STATE.corridaAtual); saveDB();
+  if (!STATE.clienteLat) { toast('⚠️ Obtenha sua localização primeiro!', 'error'); return; }
+
+  var precos = {
+    mun_basica: 10,
+    mun_expressa: 15,
+    int_basica: 35,
+    int_expressa: 55
+  };
+  var preco = precos[tipo] || 10;
+  var dist = 1.0; 
+
+  STATE.corridaAtual = {
+    id: Date.now(),
+    clienteLat: STATE.clienteLat,
+    clienteLng: STATE.clienteLng,
+    cliente: STATE.clienteLogado,
+    origem: STATE.clienteAddr,
+    destino: destino,
+    tipo: tipo,
+    preco: preco,
+    dist: dist,
+    status: 'buscando',
+    motorista: null,
+    ts: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
+  };
+
+  DB.corridas.push(STATE.corridaAtual);
+  saveDB();
+
   document.getElementById('cliente-dest-card').style.display = 'none';
   document.getElementById('cliente-map').style.display = 'none';
+  document.getElementById('cliente-loc-card').style.display = 'none';
+  updateClienteRideStatus();
+  toast('🔍 Procurando motorista...', 'info');
 }
+
+function aceitarCorridaSimulado(mot) {} // desativado — apenas motorista real aceita
+
+function concluirCorridaSimulado() {
+  if (!STATE.corridaAtual) return;
+  STATE.corridaAtual.status = 'concluida';
+  var idx = DB.corridas.findIndex(function(c){ return c.id === STATE.corridaAtual.id; });
+  if (idx >= 0) DB.corridas[idx] = STATE.corridaAtual;
+
+  // Credita para o motorista
+  var mot = DB.motoristas.find(function(m){ return m.id === STATE.corridaAtual.motorista.id; });
+  if (mot) {
+    mot.ganhos_hoje = (mot.ganhos_hoje || 0) + STATE.corridaAtual.preco * 0.8;
+    mot.ganhos_semana = (mot.ganhos_semana || 0) + STATE.corridaAtual.preco * 0.8;
+    mot.ganhos_mes = (mot.ganhos_mes || 0) + STATE.corridaAtual.preco * 0.8;
+    mot.corridas_hoje = (mot.corridas_hoje || 0) + 1;
+    if (!mot.corridas) mot.corridas = [];
+    mot.corridas.push(STATE.corridaAtual);
+  }
+  saveDB();
+  updateClienteRideStatus();
+  toast('🎉 Corrida concluída! Obrigado!', 'success');
+}
+
+function confirmarCancelarCorrida() {
+  if (confirm('Tem certeza que deseja cancelar a corrida?')) {
+    cancelarCorrida();
+  }
+}
+
+function cancelarCorrida() {
+  if (!STATE.corridaAtual) return;
+  STATE.corridaAtual.status = 'cancelada';
+  var idx = DB.corridas.findIndex(function(c){ return c.id === STATE.corridaAtual.id; });
+  if (idx >= 0) DB.corridas[idx] = STATE.corridaAtual;
+  saveDB();
+  STATE.corridaAtual = null;
+
+  document.getElementById('cliente-loc-card').style.display = 'block';
+  document.getElementById('cliente-map').style.display = 'block';
+  updateClienteRideStatus();
+  toast('Corrida cancelada.', 'info');
+}
+
+function novaCorridaCliente() {
+  STATE.corridaAtual = null;
+  document.getElementById('cliente-loc-card').style.display = 'block';
+  document.getElementById('cliente-map').style.display = 'block';
+  document.getElementById('cliente-ride-status').style.display = 'none';
+  updateClienteHistorico();
+}
+
+function updateClienteRideStatus() {
+  var el = document.getElementById('cliente-ride-status');
+  if (!STATE.corridaAtual) {
+    el.style.display = 'none';
+    updateClienteHistorico();
+    return;
+  }
+  el.style.display = 'block';
+  var c = STATE.corridaAtual;
+
+  // Steps
+  var step = c.status === 'buscando' ? 0 : c.status === 'a_caminho' ? 1 : c.status === 'em_corrida' ? 2 : 3;
+  var steps = ['Aguardando', 'A caminho', 'Em corrida', 'Concluída'];
+  var icons = ['🔍', '🏍️', '⚡', '🎉'];
+  var subs = [
+    'Procurando motorista disponível na fila...',
+    'Motorista a caminho da sua localização',
+    'Você está sendo transportado',
+    'Chegou ao destino! Boa viagem!'
+  ];
+
+  var stepsHtml = '<div class="steps">';
+  for (var i = 0; i < 4; i++) {
+    var cls = i < step ? 'done' : (i === step ? 'active' : '');
+    stepsHtml += '<div class="step ' + cls + '"><div class="step-dot">' + (cls === 'done' ? '✓' : (i+1)) + '</div><div class="step-label">' + steps[i] + '</div></div>';
+  }
+  stepsHtml += '</div>';
+
+  var motHtml = '';
+  if (c.motorista && c.status !== 'buscando') {
+    var motImg = '<div style="font-size:32px">🧑‍🦯</div>';
+    // Se quiser colocar foto do motorista depois, pode seguir a mesma lógica
+    
+    motHtml = '<div class="card" style="background:var(--card2);margin-bottom:16px">' +
+      '<div class="flex-row">' + motImg + '<div class="flex-1"><div class="bold">' + c.motorista.nome + '</div>' +
+      '<div class="text-sm">🏍️ ' + c.motorista.placa + '</div>' +
+      '<div class="text-sm">⭐ ' + c.motorista.avaliacao.toFixed(1) + ' · 📞 ' + c.motorista.tel + '</div></div></div>' +
+      '</div>';
+    // Moto animada no mapa
+    showMotorOnMap(step);
+  }
+
+  // Foto do cliente para exibição no card
+  var cliImg = '<div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;margin-right:12px">' + (c.cliente && c.cliente.foto ? '<img src="'+c.cliente.foto+'" style="width:100%;height:100%;object-fit:cover">' : '👤') + '</div>';
+
+  var actionBtn = '';
+  if (c.status === 'buscando' || c.status === 'a_caminho') {
+    actionBtn = '<button class="btn" style="width:100%;background:rgba(255,71,87,0.15);color:#FF4757;border:1.5px solid rgba(255,71,87,0.4);font-size:15px;font-weight:700;padding:14px;border-radius:12px;margin-top:4px" onclick="confirmarCancelarCorrida()">✕ Cancelar Corrida</button>';
+  } else if (c.status === 'concluida' || c.status === 'cancelada') {
+    actionBtn = '<button class="btn btn-orange" onclick="novaCorridaCliente()">🏍️ Nova Corrida</button>';
+  }
+
+  el.innerHTML =
+    '<div class="ride-status-card">' +
+    '<div class="ride-status-icon">' + icons[step] + '</div>' +
+    '<div class="ride-status-title">' + steps[step] + '</div>' +
+    '<div class="ride-status-sub">' + subs[step] + '</div>' +
+    '</div>' +
+    stepsHtml +
+    '<div class="card">' +
+    '<div style="display:flex;align-items:center;margin-bottom:15px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.05)">' + cliImg + '<div><div class="bold">' + (c.cliente ? c.cliente.nome : 'Cliente') + '</div><div class="text-sm">' + (c.cliente ? c.cliente.tel : '') + '</div></div></div>' +
+    '<div class="price-row"><span class="text-sm">📍 Origem</span><span class="bold" style="font-size:13px;max-width:55%;text-align:right">' + (c.origem || '—') + '</span></div>' +
+    '<div class="price-row"><span class="text-sm">🏁 Destino</span><span class="bold" style="font-size:13px;max-width:55%;text-align:right">' + c.destino + '</span></div>' +
+    '<div class="price-row"><span class="text-sm">📏 Distância</span><span class="bold">' + c.dist.toFixed(1) + ' km</span></div>' +
+    '<div class="price-row"><span class="text-sm">💰 Valor</span><span style="font-weight:900;color:var(--green)">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span></div>' +
+    '</div>' +
+    motHtml +
+    '<div class="fake-map" id="corrida-map-mini"><div class="map-grid"></div>' +
+    '<div class="map-road-h" style="top:40%;left:0;right:0"></div>' +
+    '<div class="map-road-v" style="left:50%;top:0;bottom:0"></div>' +
+    '<div class="map-pin" style="top:50%;left:50%">📍</div>' +
+    (c.motorista && step > 0 ? '<div class="map-moto" id="moto-icon" style="top:20%;left:20%">🏍️</div>' : '') +
+    '<div class="map-label">Rastreamento em tempo real</div></div>' +
+    actionBtn;
+
+  if (c.motorista && step > 0) animateMoto();
+}
+
+function animateMoto() {
+  var moto = document.getElementById('moto-icon');
+  if (!moto) return;
+  var positions = [{t:'20%',l:'20%'},{t:'35%',l:'35%'},{t:'45%',l:'48%'},{t:'50%',l:'50%'}];
+  var i = 0;
+  var interval = setInterval(function() {
+    if (!document.getElementById('moto-icon')) { clearInterval(interval); return; }
+    moto.style.top  = positions[i % positions.length].t;
+    moto.style.left = positions[i % positions.length].l;
+    i++;
+    if (i > 20) clearInterval(interval);
+  }, 1500);
+}
+
+function showMotorOnMap(step) {}
+
+function updateClienteHistorico() {
+  var el = document.getElementById('cliente-historico');
+  var hist = DB.corridas.filter(function(c){ return c.status === 'concluida' || c.status === 'cancelada'; });
+  if (hist.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">🏍️</div><p>Nenhuma corrida ainda</p></div>';
+    return;
+  }
+  el.innerHTML = hist.slice(-5).reverse().map(function(c) {
+    var statusCls = c.status === 'concluida' ? 'status-online' : 'status-offline';
+    var statusTxt = c.status === 'concluida' ? 'Concluída' : 'Cancelada';
+    return '<div class="ride-item ' + (c.status === 'concluida' ? 'accepted' : 'completed') + '">' +
+      '<div class="ride-header"><span class="ride-client">🏁 ' + c.destino + '</span>' +
+      '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span></div>' +
+      '<div class="ride-info"><span>🕐 ' + c.ts + '</span><span class="status ' + statusCls + '">' + statusTxt + '</span></div>' +
+      '</div>';
+  }).join('');
+}
+
+// =====================================================
+// LOGIN MOTORISTA
+// =====================================================
+function loginMotorista() {
+  var user = document.getElementById('mot-user').value.trim();
+  var pass = document.getElementById('mot-pass').value.trim();
+  if (!user || !pass) { toast('⚠️ Preencha todos os campos!', 'error'); return; }
+
+  var mot = DB.motoristas.find(function(m) {
+    return (m.cpf === user || m.tel === user || m.nome.toLowerCase() === user.toLowerCase()) && m.senha === pass;
+  });
+
+  if (!mot) { toast('❌ Usuário ou senha incorretos!', 'error'); return; }
+  
+  // Permite login mesmo bloqueado para ver o aviso, mas redireciona
+  STATE.motoristaLogado = mot;
+  if (mot.status !== 'autorizado') {
+    mot.online = false;
+  } else {
+    mot.online = true;
+  }
+  
+  saveDB();
+  showScreen('motorista-painel');
+}
+
+function logoutMotorista() {
+  if (STATE.motoristaLogado) {
+    STATE.motoristaLogado.online = false;
+    saveDB();
+    STATE.motoristaLogado = null;
+  }
+  showHome();
+}
+
+// =====================================================
+// PAINEL MOTORISTA
+// =====================================================
+function initMotorista() {
+  var mot = STATE.motoristaLogado;
+  if (!mot) { showScreen('motorista-login'); return; }
+
+  document.getElementById('mot-nome').textContent = mot.nome.split(' ')[0];
+  
+  // Controle de visibilidade se estiver bloqueado/pendente
+  var isBlocked = mot.status !== 'autorizado';
+  document.getElementById('mot-bloqueado-screen').style.display = isBlocked ? 'block' : 'none';
+  document.getElementById('mot-paineis-ativos').style.display = isBlocked ? 'none' : 'block';
+  document.getElementById('mot-status-badge').style.display = isBlocked ? 'none' : 'inline-block';
+  
+  if (isBlocked) {
+    document.getElementById('mot-bloqueado-msg').textContent = mot.msg_admin || 
+      (mot.status === 'pendente' ? 'Sua conta está em análise. Aguarde a liberação do administrador.' : 'Sua conta está bloqueada por falta de pagamento ou outro motivo.');
+  }
+
+  document.getElementById('mot-toggle-online').checked = STATE.motOnline;
+  updateMotOnlineLabel();
+  updateMotCorridasList();
+  updateMotFila();
+  updateMotGanhos();
+  updateMotPerfil();
+}
+
+function toggleMotoristaOnline() {
+  STATE.motOnline = document.getElementById('mot-toggle-online').checked;
+  updateMotOnlineLabel();
+  toast(STATE.motOnline ? '🟢 Você está online!' : '🔴 Você ficou offline.', STATE.motOnline ? 'success' : 'info');
+}
+
+function updateMotOnlineLabel() {
+  var el = document.getElementById('mot-online-label');
+  var badge = document.getElementById('mot-status-badge');
+  if (STATE.motOnline) {
+    el.textContent = '🟢 Você está online e recebendo corridas';
+    badge.textContent = 'Online';
+    badge.className = 'badge badge-green';
+  } else {
+    el.textContent = '🔴 Você está offline. Corridas não serão recebidas.';
+    badge.textContent = 'Offline';
+    badge.className = 'badge';
+    badge.style.background = 'rgba(168,180,204,0.2)';
+    badge.style.color = 'var(--text2)';
+  }
+}
+
+function switchMotTab(tab, el) {
+  document.querySelectorAll('#screen-motorista-painel .tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('mot-tab-corridas').style.display = tab === 'corridas' ? 'block' : 'none';
+  document.getElementById('mot-tab-fila').style.display     = tab === 'fila'     ? 'block' : 'none';
+  document.getElementById('mot-tab-ganhos').style.display   = tab === 'ganhos'   ? 'block' : 'none';
+  document.getElementById('mot-tab-perfil').style.display   = tab === 'perfil'   ? 'block' : 'none';
+  if (tab === 'fila')    updateMotFila();
+  if (tab === 'ganhos')  updateMotGanhos();
+  if (tab === 'perfil')  updateMotPerfil();
+}
+
+function updateMotCorridasList() {
+  var mot = STATE.motoristaLogado;
+
+  // === FILA DE ESPERA — corridas aguardando motorista ===
+  var el = document.getElementById('mot-corridas-list');
+  var disponiveis = DB.corridas.filter(function(c){ return c.status === 'buscando'; });
+
+  if (disponiveis.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Nenhuma corrida na fila no momento</p></div>';
+    document.getElementById('mot-notif').style.display = 'none';
+  } else {
+    document.getElementById('mot-notif').style.display = 'block';
+    // FIFO: garante ordem de chegada (menor id = mais antigo)
+    disponiveis.sort(function(a, b){ return a.id - b.id; });
+    var temCorridaAtiva = DB.corridas.some(function(x){
+      return x.motorista && x.motorista.id === mot.id && (x.status === 'a_caminho' || x.status === 'em_corrida');
+    });
+    el.innerHTML = '<div class="section-label" style="margin-bottom:8px">📋 Fila de espera (' + disponiveis.length + ')</div>' +
+    disponiveis.map(function(c, idx) {
+      var posLabel = (idx + 1) + 'º na fila';
+      var cliNome = c.cliente ? c.cliente.nome.split(' ')[0] : 'Cliente';
+      var cliFoto = c.cliente && c.cliente.foto ? '<img src="'+c.cliente.foto+'" style="width:100%;height:100%;object-fit:cover">' : '👤';
+      
+      if (temCorridaAtiva) {
+        return '<div class="ride-item" id="ride-' + c.id + '">' +
+          '<div class="ride-header">' +
+          '<div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;border-radius:50%;background:#444;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:14px">'+cliFoto+'</div><span class="ride-client">' + cliNome + ' (' + posLabel + ')</span></div>' +
+          '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span>' +
+          '</div>' +
+          '<div class="ride-info"><span>🏁 ' + c.destino + '</span><span>📏 ' + c.dist.toFixed(1) + ' km</span></div>' +
+          '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (c.origem || 'Localização do cliente') + '</span><span>🕐 ' + c.ts + '</span></div>' +
+          '<div style="margin-top:8px;font-size:12px;opacity:0.5">Conclua a corrida atual para aceitar</div>' +
+          '</div>';
+      }
+      return '<div class="ride-item tappable" id="ride-' + c.id + '" onclick="aceitarCorrida(' + c.id + ')">' +
+        '<div style="position:absolute;top:8px;right:10px;font-size:11px;opacity:0.4;font-weight:600">TOQUE PARA ACEITAR</div>' +
+        '<div class="ride-header">' +
+        '<div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;border-radius:50%;background:#444;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:14px">'+cliFoto+'</div><span class="ride-client">' + cliNome + ' (' + posLabel + ')</span></div>' +
+        '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span>' +
+        '</div>' +
+        '<div class="ride-info"><span>🏁 ' + c.destino + '</span><span>📏 ' + c.dist.toFixed(1) + ' km</span></div>' +
+        '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (c.origem || 'Localização do cliente') + '</span><span>🕐 ' + c.ts + '</span></div>' +
+        '<div style="margin-top:10px;background:#22c55e22;border-radius:8px;padding:8px;text-align:center;font-weight:700;color:#22c55e;font-size:14px">✅ Toque para aceitar esta corrida</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  // === CORRIDA ATUAL DO MOTORISTA ===
+  var emAndamento = DB.corridas.find(function(c){
+    return c.motorista && c.motorista.id === mot.id && (c.status === 'a_caminho' || c.status === 'em_corrida');
+  });
+  var elAtual = document.getElementById('mot-corrida-atual');
+  if (emAndamento) {
+    var isACaminho = emAndamento.status === 'a_caminho';
+    var statusLabel = isACaminho ? '🏍️ Indo buscar cliente' : '⚡ Em corrida';
+    var statusCor   = isACaminho ? 'var(--orange)' : 'var(--green)';
+    var cliInfo = emAndamento.cliente ? emAndamento.cliente.nome + ' (' + emAndamento.cliente.tel + ')' : 'Cliente';
+    var emAndFoto = emAndamento.cliente && emAndamento.cliente.foto ? '<img src="'+emAndamento.cliente.foto+'" style="width:100%;height:100%;object-fit:cover">' : '👤';
+
+    elAtual.innerHTML =
+      '<div class="ride-item accepted">' +
+      '<div class="ride-header"><span class="ride-client" style="color:' + statusCor + '">' + statusLabel + '</span>' +
+      '<span class="ride-price">R$ ' + emAndamento.preco.toFixed(2).replace('.',',') + '</span></div>' +
+      '<div class="ride-info" style="margin-bottom:8px;display:flex;align-items:center;gap:12px">' +
+      '<div style="width:40px;height:40px;border-radius:50%;background:#444;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:20px">'+emAndFoto+'</div>' +
+      '<strong>👤 ' + cliInfo + '</strong></div>' +
+      '<div class="ride-info"><span>🏁 ' + emAndamento.destino + '</span><span>📏 ' + emAndamento.dist.toFixed(1) + ' km</span></div>' +
+      '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (emAndamento.origem || 'Localização do cliente') + '</span></div>' +
+      '<div class="ride-actions" style="margin-top:10px">' +
+      '<button class="btn btn-sm flex-1" style="background:#1a73e8;color:white" onclick="abrirMapsCorrida(' + emAndamento.id + ')">📍 Maps</button>' +
+      (isACaminho
+        ? '<button class="btn btn-green btn-sm flex-1" onclick="chegueiCliente(' + emAndamento.id + ')">📣 Cheguei!</button>'
+        : '<button class="btn btn-orange btn-sm flex-1" onclick="concluirCorridaMot(' + emAndamento.id + ')">🏁 Concluir</button>'
+      ) +
+      '</div></div>' +
+      '<div class="fake-map" style="margin-top:12px"><div class="map-grid"></div>' +
+      '<div class="map-road-h" style="top:50%;left:0;right:0"></div>' +
+      '<div class="map-road-v" style="left:40%;top:0;bottom:0"></div>' +
+      '<div class="map-pin" style="top:50%;left:40%">📍</div>' +
+      '<div class="map-moto" style="top:30%;left:60%;animation:none">🏍️</div>' +
+      '<div class="map-label">' + (isACaminho ? 'A caminho do cliente' : 'Corrida em andamento') + '</div></div>';
+  } else {
+    elAtual.innerHTML = '<div class="empty-state" style="padding:20px"><p>Nenhuma corrida em andamento</p></div>';
+  }
+}
+
+function aceitarCorrida(id) {
+  var mot = STATE.motoristaLogado;
+  // Bloqueia se já tem corrida ativa
+  var temAtiva = DB.corridas.some(function(x){
+    return x.motorista && x.motorista.id === mot.id && (x.status === 'a_caminho' || x.status === 'em_corrida');
+  });
+  if (temAtiva) { toast('⚠️ Conclua a corrida atual antes de aceitar outra!', 'error'); return; }
+
+  var c = DB.corridas.find(function(x){ return x.id === id; });
+  if (!c || c.status !== 'buscando') { toast('⚠️ Corrida não está mais disponível.', 'error'); updateMotCorridasList(); return; }
+
+  c.status = 'a_caminho';
+  c.motorista = mot;
+  saveDB();
+
+  // Atualiza STATE do cliente se for o mesmo dispositivo
+  if (STATE.corridaAtual && STATE.corridaAtual.id === id) {
+    STATE.corridaAtual.status    = 'a_caminho';
+    STATE.corridaAtual.motorista = mot;
+    updateClienteRideStatus();
+  }
+
+  toast('✅ Corrida aceita! Abrindo Google Maps...', 'success');
+  updateMotCorridasList();
+
+  // Abre Google Maps com rota até o cliente
+  if (c.clienteLat && c.clienteLng) {
+    var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + c.clienteLat + ',' + c.clienteLng + '&travelmode=driving';
+    setTimeout(function() { window.open(mapsUrl, '_blank'); }, 800);
+  }
+}
+
+function chegueiCliente(id) {
+  var c = DB.corridas.find(function(x){ return x.id === id; });
+  if (!c) return;
+  c.status = 'em_corrida';
+  saveDB();
+  if (STATE.corridaAtual && STATE.corridaAtual.id === id) {
+    STATE.corridaAtual.status = 'em_corrida';
+    updateClienteRideStatus();
+  }
+  toast('📣 Cliente notificado! Corrida iniciada.', 'success');
+  updateMotCorridasList();
+}
+
+function recusarCorrida(id) {
+  var el = document.getElementById('ride-' + id);
+  if (el) el.remove();
+  toast('Corrida recusada.', 'info');
+}
+
+function abrirMapsCorrida(id) {
+  var c = DB.corridas.find(function(x){ return x.id === id; });
+  if (!c || !c.clienteLat || !c.clienteLng) { toast('📍 Localização do cliente não disponível.', 'error'); return; }
+  var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + c.clienteLat + ',' + c.clienteLng + '&travelmode=driving';
+  window.open(mapsUrl, '_blank');
+}
+
+function concluirCorridaMot(id) {
+  var c = DB.corridas.find(function(x){ return x.id === id; });
+  if (!c) return;
+  if (c.status !== 'em_corrida') { toast('⚠️ Clique em "Cheguei!" primeiro para iniciar a corrida.', 'error'); return; }
+  c.status = 'concluida';
+  var mot = STATE.motoristaLogado;
+  var ganho = c.preco * 0.8;
+  mot.ganhos_hoje = (mot.ganhos_hoje || 0) + ganho;
+  mot.ganhos_semana = (mot.ganhos_semana || 0) + ganho;
+  mot.ganhos_mes = (mot.ganhos_mes || 0) + ganho;
+  mot.corridas_hoje = (mot.corridas_hoje || 0) + 1;
+  if (!mot.corridas) mot.corridas = [];
+  mot.corridas.push(c);
+  saveDB();
+  // Atualiza lado cliente
+  if (STATE.corridaAtual && STATE.corridaAtual.id === id) {
+    STATE.corridaAtual.status = 'concluida';
+    updateClienteRideStatus();
+  }
+  toast('🎉 Corrida concluída! +R$ ' + ganho.toFixed(2).replace('.',','), 'success');
+  updateMotCorridasList();
+  updateMotGanhos();
+}
+
+function updateMotFila() {
+  var mot = STATE.motoristaLogado;
+  var onlines = DB.motoristas.filter(function(m){ return m.status === 'autorizado'; });
+  var pos = onlines.findIndex(function(m){ return m.id === mot.id; }) + 1;
+
+  document.getElementById('mot-fila-num').textContent = pos > 0 ? pos + 'º' : '—';
+
+  var el = document.getElementById('mot-fila-list');
+  if (onlines.length === 0) {
+    el.innerHTML = '<div class="empty-state"><p>Nenhum motorista na fila</p></div>';
+    return;
+  }
+  el.innerHTML = onlines.map(function(m, i) {
+    var isMe = m.id === mot.id;
+    return '<div class="queue-item" style="' + (isMe ? 'border:1.5px solid var(--orange)' : '') + '">' +
+      '<div class="queue-pos" style="' + (isMe ? 'background:var(--orange)' : 'background:var(--card2);color:var(--text2)') + '">' + (i+1) + '</div>' +
+      '<div class="queue-info">' +
+      '<div class="queue-name">' + m.nome + (isMe ? ' <span style="color:var(--orange)">(você)</span>' : '') + '</div>' +
+      '<div class="queue-dist">🏍️ ' + m.placa + '</div>' +
+      '</div>' +
+      '<div class="status ' + (m.online ? 'status-online' : 'status-offline') + '">' + (m.online ? 'Online' : 'Offline') + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function updateMotGanhos() {
+  var mot = STATE.motoristaLogado;
+  document.getElementById('mot-ganhos-hoje').textContent = 'R$ ' + (mot.ganhos_hoje || 0).toFixed(2).replace('.',',');
+  document.getElementById('mot-stat-corridas').textContent = mot.corridas_hoje || 0;
+  document.getElementById('mot-stat-avaliacao').textContent = (mot.avaliacao || 5.0).toFixed(1) + ' ⭐';
+  document.getElementById('mot-stat-semana').textContent = 'R$ ' + (mot.ganhos_semana || 0).toFixed(0);
+  document.getElementById('mot-stat-mes').textContent = 'R$ ' + (mot.ganhos_mes || 0).toFixed(0);
+
+  var payEl = document.getElementById('mot-pay-status');
+  var payMap = { ok: { cls: 'pay-ok', txt: '✅ Em dia' }, pend: { cls: 'pay-pend', txt: '⏳ Pendente' }, late: { cls: 'pay-late', txt: '❌ Atrasado' } };
+  var p = payMap[mot.pagamento] || payMap.ok;
+  payEl.className = 'pay-badge ' + p.cls;
+  payEl.textContent = p.txt;
+
+  var hist = (mot.corridas || []).slice(-5).reverse();
+  var el = document.getElementById('mot-historico-list');
+  if (hist.length === 0) {
+    el.innerHTML = '<div class="empty-state" style="padding:20px"><p>Nenhuma corrida concluída ainda</p></div>';
+    return;
+  }
+  el.innerHTML = hist.map(function(c) {
+    return '<div class="ride-item accepted">' +
+      '<div class="ride-header"><span class="ride-client">🏁 ' + c.destino + '</span>' +
+      '<span class="ride-price">+R$ ' + (c.preco * 0.8).toFixed(2).replace('.',',') + '</span></div>' +
+      '<div class="ride-info"><span>🕐 ' + c.ts + '</span><span class="status status-online">Concluída</span></div>' +
+      '</div>';
+  }).join('');
+}
+
+function updateMotPerfil() {
+  var mot = STATE.motoristaLogado;
+  document.getElementById('mot-perfil-nome').textContent = mot.nome;
+  document.getElementById('mot-perfil-placa').textContent = '🏍️ ' + mot.placa;
+  document.getElementById('mot-perfil-dados').innerHTML =
+    '<div class="price-row"><span class="text-sm">CPF</span><span>' + mot.cpf + '</span></div>' +
+    '<div class="price-row"><span class="text-sm">Telefone</span><span>' + mot.tel + '</span></div>' +
+    '<div class="price-row"><span class="text-sm">Placa</span><span>' + mot.placa + '</span></div>' +
+    '<div class="price-row"><span class="text-sm">Status</span><span class="status status-online">' + mot.status + '</span></div>';
+  
+  var elMsg = document.getElementById('mot-msg-admin');
+  if (elMsg) {
+    elMsg.innerHTML = mot.msg_admin ? mot.msg_admin : '<span style="opacity:0.5 italic">Nenhuma mensagem do administrador.</span>';
+    if (mot.msg_admin) elMsg.style.color = 'var(--blue)';
+  }
+}
+
+// =====================================================
+// LOGIN ADMIN
+// =====================================================
+function loginAdmin() {
+  var user = document.getElementById('adm-user').value.trim();
+  var pass = document.getElementById('adm-pass').value.trim();
+  if (!user || !pass) { toast('⚠️ Preencha usuário e senha!', 'error'); return; }
+  var u = user.toLowerCase();
+  if ((u === 'admin' && pass === 'admin123') || (u === 'rodolfo oliveira' && pass === 'Rm290198') || (u === 'rodolfo' && pass === 'Rm290198')) {
+    showScreen('admin-painel');
+    toast('✅ Bem-vindo, Administrador!', 'success');
+  } else {
+    toast('❌ Usuário ou senha incorretos!', 'error');
+  }
+}
+function logoutAdmin() {
+  showHome();
+}
+
+// =====================================================
+// PAINEL ADMIN
+// =====================================================
+function initAdmin() {
+  verificarVencimentos();
+  updateAdminStats();
+  updateAdminMotoristas();
+  updateAdminPrecos();
+  updateAdminPagamentos();
+  updateAdminCorridas();
+}
+
+function verificarVencimentos() {
+  var hoje = new Date();
+  var alterado = false;
+  DB.motoristas.forEach(function(mot) {
+    if (mot.data_pagamento) {
+      var dataPag = new Date(mot.data_pagamento);
+      var diffTime = Math.abs(hoje - dataPag);
+      var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Se passou de 30 dias e ainda está autorizado, bloqueia
+      if (diffDays > 30 && mot.status === 'autorizado') {
+        mot.status = 'bloqueado';
+        mot.msg_admin = 'Sua mensalidade venceu após 30 dias. Realize o pagamento para liberar o acesso.';
+        alterado = true;
+      }
+    }
+  });
+  if (alterado) saveDB();
+}
+
+function updateAdminStats() {
+  var online = DB.motoristas.filter(function(m){ return m.online; }).length;
+  var corridasHoje = DB.corridas.filter(function(c){ return c.status === 'concluida'; }).length;
+  var fat = DB.corridas.filter(function(c){ return c.status === 'concluida'; }).reduce(function(s,c){ return s + c.preco; }, 0);
+
+  document.getElementById('adm-stat-online').textContent = online;
+  document.getElementById('adm-stat-corridas').textContent = corridasHoje;
+  document.getElementById('adm-stat-motoristas').textContent = DB.motoristas.length;
+  document.getElementById('adm-stat-faturamento').textContent = 'R$ ' + fat.toFixed(0);
+}
+
+function switchAdmTab(tab, el) {
+  document.querySelectorAll('#screen-admin-painel .tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('adm-tab-motoristas').style.display  = tab === 'motoristas'  ? 'block' : 'none';
+  document.getElementById('adm-tab-precos').style.display      = tab === 'precos'      ? 'block' : 'none';
+  document.getElementById('adm-tab-pagamentos').style.display  = tab === 'pagamentos'  ? 'block' : 'none';
+  document.getElementById('adm-tab-corridas').style.display    = tab === 'corridas'    ? 'block' : 'none';
+}
+
+function updateAdminMotoristas() {
+  var el = document.getElementById('adm-motoristas-list');
+  if (DB.motoristas.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">🏍️</div><p>Nenhum motorista cadastrado</p></div>';
+    return;
+  }
+  el.innerHTML = DB.motoristas.map(function(m) {
+    var statusMap = {
+      autorizado: { cls: 'status-online', txt: 'Autorizado' },
+      pendente:   { cls: 'status-waiting', txt: 'Pendente' },
+      bloqueado:  { cls: 'status-offline', txt: 'Bloqueado' }
+    };
+    var st = statusMap[m.status] || statusMap.autorizado;
+    return '<div class="user-item">' +
+      '<div class="user-avatar">' + m.nome.charAt(0) + '</div>' +
+      '<div class="user-info">' +
+      '<div class="user-name">' + m.nome + '</div>' +
+      '<div class="user-detail">🏍️ ' + m.placa + ' · ' + m.tel + '</div>' +
+      '<div class="mt-8"><span class="status ' + st.cls + '">' + st.txt + '</span></div>' +
+      '</div>' +
+      '<div class="user-actions">' +
+      '<button class="btn btn-ghost btn-xs" title="Enviar Mensagem" onclick="abrirModalMsgMot(' + m.id + ')">💬</button>' +
+      '<button class="btn btn-' + (m.status === 'autorizado' ? 'ghost' : 'green') + ' btn-xs" onclick="toggleStatusMot(' + m.id + ')">' +
+      (m.status === 'autorizado' ? '🔒' : '✅') + '</button>' +
+      '<button class="btn btn-red btn-xs" onclick="confirmarExcluirMot(' + m.id + ')">🗑️</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+function abrirModalMsgMot(id) {
+  var mot = DB.motoristas.find(function(m){ return m.id === id; });
+  if (!mot) return;
+  STATE.msgId = id;
+  document.getElementById('msg-mot-nome').textContent = mot.nome;
+  document.getElementById('msg-mot-texto').value = mot.msg_admin || '';
+  document.getElementById('modal-msg-mot').classList.add('open');
+}
+
+function enviarMensagemMot() {
+  var mot = DB.motoristas.find(function(m){ return m.id === STATE.msgId; });
+  if (!mot) return;
+  mot.msg_admin = document.getElementById('msg-mot-texto').value.trim();
+  saveDB();
+  fecharModal('modal-msg-mot');
+  toast('✅ Mensagem salva para ' + mot.nome, 'success');
+}
+
+function toggleStatusMot(id) {
+  var mot = DB.motoristas.find(function(m){ return m.id === id; });
+  if (!mot) return;
+  mot.status = mot.status === 'autorizado' ? 'bloqueado' : 'autorizado';
+  saveDB();
+  updateAdminMotoristas();
+  updateAdminStats();
+  toast(mot.status === 'autorizado' ? '✅ Motorista autorizado!' : '🔒 Motorista bloqueado!', mot.status === 'autorizado' ? 'success' : 'info');
+}
+
+function confirmarExcluirMot(id) {
+  var mot = DB.motoristas.find(function(m){ return m.id === id; });
+  if (!mot) return;
+  STATE.excluirId = id;
+  document.getElementById('excluir-nome-confirm').textContent = mot.nome;
+  document.getElementById('excluir-placa-confirm').textContent = '🏍️ ' + mot.placa + ' · ' + mot.cpf;
+  document.getElementById('modal-excluir').classList.add('open');
+}
+
+function confirmarExcluir() {
+  DB.motoristas = DB.motoristas.filter(function(m){ return m.id !== STATE.excluirId; });
+  saveDB();
+  fecharModal('modal-excluir');
+  updateAdminMotoristas();
+  updateAdminStats();
+  updateAdminPagamentos();
+  toast('🗑️ Motorista removido.', 'info');
+}
+
+function cadastrarMotorista() {
+  var nome  = document.getElementById('cad-nome').value.trim();
+  var cpf   = document.getElementById('cad-cpf').value.trim();
+  var tel   = document.getElementById('cad-tel').value.trim();
+  var placa = document.getElementById('cad-placa').value.trim().toUpperCase();
+  var senha = document.getElementById('cad-senha').value.trim();
+  var status = document.getElementById('cad-status').value;
+  var dataPag = document.getElementById('cad-datapag').value;
+
+  if (!nome || !cpf || !tel || !placa || !senha) {
+    toast('⚠️ Preencha todos os campos!', 'error'); return;
+  }
+
+  var novo = {
+    id: Date.now(),
+    nome: nome, cpf: cpf, tel: tel, placa: placa, senha: senha, status: status,
+    data_pagamento: dataPag || null,
+    online: false, ganhos_hoje: 0, ganhos_semana: 0, ganhos_mes: 0,
+    corridas_hoje: 0, avaliacao: 5.0, pagamento: dataPag ? 'ok' : 'pend', msg_admin: '', corridas: []
+  };
+  DB.motoristas.push(novo);
+  saveDB();
+  fecharModal('modal-cadastro');
+  updateAdminMotoristas();
+  updateAdminStats();
+  updateAdminPagamentos();
+  toast('✅ Motorista cadastrado com sucesso!', 'success');
+}
+
+function updateAdminPrecos() {
+  var el = document.getElementById('adm-precos-list');
+  var tipos = [
+    { key: 'basica',   label: '🏍️ Corrida Básica' },
+    { key: 'expressa', label: '⚡ Corrida Expressa' }
+  ];
+  el.innerHTML = tipos.map(function(t) {
+    var tar = DB.precos[t.key] || {};
+    return '<div class="price-row" style="flex-direction:column;align-items:flex-start;gap:4px;padding:12px 0">' +
+      '<span class="price-name" style="font-weight:700">' + t.label + '</span>' +
+      '<span class="text-sm" style="opacity:0.8">Valor fixo: <strong>R$ ' + (tar.valor||0).toFixed(2).replace('.',',') + '</strong>' +
+      ' &nbsp;|&nbsp; Km mín: <strong>' + (tar.km_minimo||3).toFixed(1) + ' km</strong>' +
+      ' &nbsp;|&nbsp; +km: <strong>R$ ' + (tar.km_extra||0).toFixed(2).replace('.',',') + '/km</strong></span>' +
+      '</div>';
+  }).join('') +
+  '<div class="price-row" style="border-top:1px solid rgba(255,255,255,0.1);margin-top:4px;padding-top:10px">' +
+  '<span class="price-name">🚩 Bandeirada</span>' +
+  '<span class="price-val">R$ ' + (DB.precos.bandeirada||3).toFixed(2).replace('.',',') + '</span>' +
+  '</div>';
+
+  // Preenche os campos
+  var p = DB.precos;
+  var set = function(id, val) { var el = document.getElementById(id); if(el) el.value = val; };
+  set('t-basica-valor',   (p.basica.valor     ||8   ).toFixed(2));
+  set('t-basica-kmmin',   (p.basica.km_minimo ||3   ).toFixed(1));
+  set('t-basica-kmex',    (p.basica.km_extra  ||1.50).toFixed(2));
+  set('t-expressa-valor', (p.expressa.valor     ||10  ).toFixed(2));
+  set('t-expressa-kmmin', (p.expressa.km_minimo ||3   ).toFixed(1));
+  set('t-expressa-kmex',  (p.expressa.km_extra  ||2.00).toFixed(2));
+  set('t-bandeirada',     (p.bandeirada         ||3.00).toFixed(2));
+  atualizarPreviewTarifa();
+}
+
+function atualizarPreviewTarifa() {
+  var p = DB.precos || {};
+  var get = function(id, def) {
+    var el = document.getElementById(id);
+    return (el && el.value !== "") ? (parseFloat(el.value) || 0) : def;
+  };
+  
+  var band  = get('t-bandeirada', p.bandeirada || 0);
+  var bVal  = get('t-basica-valor', p.basica ? p.basica.valor : 0);
+  var bMin  = get('t-basica-kmmin', p.basica ? p.basica.km_minimo : 0);
+  var bEx   = get('t-basica-kmex', p.basica ? p.basica.km_extra : 0);
+  
+  var eVal  = get('t-expressa-valor', p.expressa ? p.expressa.valor : 0);
+  var eMin  = get('t-expressa-kmmin', p.expressa ? p.expressa.km_minimo : 0);
+  var eEx   = get('t-expressa-kmex', p.expressa ? p.expressa.km_extra : 0);
+
+  var d = 6.0; 
+  var calc = function(base, min, extra) {
+    return band + base + (Math.max(0, d - min) * extra);
+  };
+
+  var totalB = calc(bVal, bMin, bEx);
+  var totalE = calc(eVal, eMin, eEx);
+
+  var el = document.getElementById('adm-tarifa-preview');
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML = 
+    '<div style="background:rgba(255,107,0,0.15); border-left:4px solid var(--orange); padding:12px; border-radius:8px">' +
+    '<h4 style="margin:0 0 8px; color:var(--orange)">📊 Simulação de Valor (Corrida de 6 km)</h4>' +
+    '<div><b>🏍️ Básica:</b> R$ ' + band.toFixed(2) + ' + R$ ' + bVal.toFixed(2) + ' base + ' + (d-bMin).toFixed(1) + 'km extra = <b>R$ ' + totalB.toFixed(2).replace('.',',') + '</b></div>' +
+    '<div style="margin-top:4px"><b>⚡ Expressa:</b> R$ ' + band.toFixed(2) + ' + R$ ' + eVal.toFixed(2) + ' base + ' + (d-eMin).toFixed(1) + 'km extra = <b>R$ ' + totalE.toFixed(2).replace('.',',') + '</b></div>' +
+    '</div>';
+}
+
+function salvarTarifa() {
+  var get = function(id, def) { var el = document.getElementById(id); return el ? (parseFloat(el.value)||def) : def; };
+  var bVal  = get('t-basica-valor', 0);
+  var bKmMin= get('t-basica-kmmin', 0);
+  var bKmEx = get('t-basica-kmex',  0);
+  var eVal  = get('t-expressa-valor', 0);
+  var eKmMin= get('t-expressa-kmmin', 0);
+  var eKmEx = get('t-expressa-kmex',  0);
+  var band  = get('t-bandeirada', 0);
+  if (!bVal||!bKmMin||!bKmEx||!eVal||!eKmMin||!eKmEx||!band) { toast('⚠️ Preencha todos os campos!', 'error'); return; }
+  DB.precos = {
+    basica:     { valor: bVal,  km_minimo: bKmMin, km_extra: bKmEx },
+    expressa:   { valor: eVal,  km_minimo: eKmMin, km_extra: eKmEx },
+    bandeirada: band
+  };
+  saveDB();
+  updateAdminPrecos();
+  toast('✅ Tarifas salvas com sucesso!', 'success');
+}
+
+function salvarPreco() {
+  var tipo = document.getElementById('edit-preco-tipo').value;
+  var val  = parseFloat(document.getElementById('edit-preco-val').value);
+  if (isNaN(val) || val < 0) { toast('⚠️ Valor inválido!', 'error'); return; }
+  DB.precos[tipo] = val;
+  saveDB();
+  updateAdminPrecos();
+  toast('✅ Preço atualizado!', 'success');
+  document.getElementById('edit-preco-val').value = '';
+}
+
+function abrirEditarTaxa() {
+  document.getElementById('taxa-novo-valor').value = DB.mensalidade_valor || 0;
+  document.getElementById('taxa-edit-form').style.display = 'block';
+}
+function cancelarEditarTaxa() {
+  document.getElementById('taxa-edit-form').style.display = 'none';
+}
+function salvarTaxa() {
+  var val = parseFloat(document.getElementById('taxa-novo-valor').value);
+  if (isNaN(val) || val < 0) { toast('⚠️ Valor inválido', 'error'); return; }
+  DB.mensalidade_valor = val;
+  saveDB();
+  document.getElementById('taxa-valor-display').textContent = 'R$ ' + val.toFixed(2).replace('.', ',');
+  document.getElementById('taxa-edit-form').style.display = 'none';
+  toast('✅ Valor da taxa mensal atualizado!', 'success');
+}
+
+function updateAdminPagamentos() {
+  document.getElementById('taxa-valor-display').textContent = 'R$ ' + (DB.mensalidade_valor || 0).toFixed(2).replace('.', ',');
+  var el = document.getElementById('adm-pagamentos-list');
+  if (DB.motoristas.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">💳</div><p>Nenhum motorista cadastrado</p></div>';
+    return;
+  }
+  var payMap = { ok: { cls: 'pay-ok', txt: '✅ Em dia' }, pend: { cls: 'pay-pend', txt: '⏳ Pendente' }, late: { cls: 'pay-late', txt: '❌ Atrasado' } };
+  el.innerHTML = DB.motoristas.map(function(m) {
+    var p = payMap[m.pagamento] || payMap.ok;
+    var dataPagStr = m.data_pagamento ? new Date(m.data_pagamento).toLocaleDateString('pt-BR') : 'Nunca';
+    return '<div class="user-item">' +
+      '<div class="user-avatar" style="background:linear-gradient(135deg,var(--blue),#357ABD)">' + m.nome.charAt(0) + '</div>' +
+      '<div class="user-info">' +
+      '<div class="user-name">' + m.nome + '</div>' +
+      '<div class="user-detail">Último Pagto: ' + dataPagStr + '</div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">' +
+      '<span class="pay-badge ' + p.cls + '">' + p.txt + '</span>' +
+      '<div style="display:flex;gap:4px">' +
+      '<button class="btn btn-xs btn-green" title="Confirmar Pagamento Hoje" onclick="registrarPagamento(' + m.id + ')">💰</button>' +
+      '<button class="btn btn-xs btn-ghost" onclick="setPayStatus(' + m.id + ',\'pend\')">⏳</button>' +
+      '<button class="btn btn-xs btn-red" onclick="setPayStatus(' + m.id + ',\'late\')">❌</button>' +
+      '</div></div></div>';
+  }).join('');
+}
+
+function registrarPagamento(id) {
+  var mot = DB.motoristas.find(function(m){ return m.id === id; });
+  if (!mot) return;
+  var hoje = new Date().toISOString().split('T')[0];
+  mot.data_pagamento = hoje;
+  mot.pagamento = 'ok';
+  mot.status = 'autorizado'; // Libera automaticamente ao pagar
+  mot.msg_admin = 'Sua mensalidade foi confirmada! Próximo vencimento em 30 dias.';
+  saveDB();
+  updateAdminPagamentos();
+  updateAdminMotoristas();
+  toast('✅ Pagamento registrado e acesso liberado para ' + mot.nome, 'success');
+}
+
+function setPayStatus(id, status) {
+  var mot = DB.motoristas.find(function(m){ return m.id === id; });
+  if (mot) { mot.pagamento = status; saveDB(); updateAdminPagamentos(); toast('Status de pagamento atualizado!', 'success'); }
+}
+
+function updateAdminCorridas() {
+  var el = document.getElementById('adm-corridas-list');
+  if (DB.corridas.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>Nenhuma corrida registrada ainda</p></div>';
+    return;
+  }
+  el.innerHTML = DB.corridas.slice(-10).reverse().map(function(c) {
+    var st = { buscando:'🔍 Aguardando', a_caminho:'🏍️ A caminho', em_corrida:'⚡ Em corrida', concluida:'🎉 Concluída', cancelada:'❌ Cancelada' };
+    return '<div class="ride-item ' + (c.status === 'concluida' ? 'accepted' : c.status === 'cancelada' ? 'completed' : '') + '">' +
+      '<div class="ride-header"><span class="ride-client">🏁 ' + c.destino + '</span>' +
+      '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span></div>' +
+      '<div class="ride-info">' +
+      '<span>' + (st[c.status] || c.status) + '</span>' +
+      (c.motorista ? '<span>🏍️ ' + c.motorista.nome.split(' ')[0] + '</span>' : '') +
+      '<span>🕐 ' + c.ts + '</span>' +
+      '</div></div>';
+  }).join('');
+}
+
+// =====================================================
+// ATUALIZAÇÃO PERIÓDICA
+// =====================================================
+setInterval(function() {
+  if (STATE.screen === 'motorista-painel') updateMotCorridasList();
+  if (STATE.screen === 'admin-painel')     { updateAdminStats(); updateAdminCorridas(); }
+  if (STATE.screen === 'cliente-home' && STATE.corridaAtual) updateClienteRideStatus();
+}, 4000);
+
+// =====================================================
+// START
+// =====================================================
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
