@@ -2193,12 +2193,6 @@ function excluirAdmin(idx) {
   saveDB();
   updateAdminsList();
   toast('🗑️ Administrador removido.', 'info');
-});
-  el.classList.add('active');
-  document.getElementById('adm-tab-motoristas').style.display  = tab === 'motoristas'  ? 'block' : 'none';
-  document.getElementById('adm-tab-precos').style.display      = tab === 'precos'      ? 'block' : 'none';
-  document.getElementById('adm-tab-pagamentos').style.display  = tab === 'pagamentos'  ? 'block' : 'none';
-  document.getElementById('adm-tab-corridas').style.display    = tab === 'corridas'    ? 'block' : 'none';
 }
 
 function updateAdminMotoristas() {
