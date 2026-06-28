@@ -659,6 +659,10 @@
           <label>Senha</label>
           <input type="password" id="mot-pass" placeholder="Sua senha">
         </div>
+        <div class="input-group">
+          <label>🔑 Chave de Ativação</label>
+          <input type="text" id="mot-chave" placeholder="Insira sua chave">
+        </div>
         <button class="btn btn-green mt-16" onclick="loginMotorista()">Entrar</button>
         <p class="text-sm text-center mt-8">Problema de acesso? Fale com o administrador</p>
       </div>
@@ -1006,6 +1010,10 @@
     <div class="input-group">
       <label>Senha de acesso</label>
       <input type="password" id="cad-senha" placeholder="Crie uma senha">
+    </div>
+    <div class="input-group">
+      <label>🔑 Chave de Ativação (Obrigatória)</label>
+      <input type="text" id="cad-chave" placeholder="Ex: VROOM-2024-X">
     </div>
     <div class="input-group">
       <label>Status</label>
@@ -1675,7 +1683,8 @@ function updateClienteHistorico() {
 function loginMotorista() {
   var user = document.getElementById('mot-user').value.trim();
   var pass = document.getElementById('mot-pass').value.trim();
-  if (!user || !pass) { toast('⚠️ Preencha todos os campos!', 'error'); return; }
+  var chave = document.getElementById('mot-chave').value.trim();
+  if (!user || !pass || !chave) { toast('⚠️ Preencha CPF, Senha e Chave!', 'error'); return; }
 
   var mot = DB.motoristas.find(function(m) {
     return (m.cpf === user || m.tel === user || m.nome.toLowerCase() === user.toLowerCase()) && m.senha === pass;
@@ -1772,6 +1781,13 @@ function updateMotCorridasList() {
   // === FILA DE ESPERA — corridas aguardando motorista ===
   var el = document.getElementById('mot-corridas-list');
   var disponiveis = DB.corridas.filter(function(c){ return c.status === 'buscando'; });
+  if (disponiveis.length > (STATE.lastCount || 0)) {
+    var audio = document.getElementById('audio-notif');
+    if(audio) audio.play().catch(function(e){ console.log('Bloqueio de audio:', e); });
+    toast('🔔 Nova corrida disponível!', 'success');
+  }
+  STATE.lastCount = disponiveis.length;
+
 
   if (disponiveis.length === 0) {
     el.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Nenhuma corrida na fila no momento</p></div>';
@@ -2093,7 +2109,7 @@ function updateAdminMotoristas() {
       '<div class="user-avatar">' + m.nome.charAt(0) + '</div>' +
       '<div class="user-info">' +
       '<div class="user-name">' + m.nome + '</div>' +
-      '<div class="user-detail">🏍️ ' + m.placa + ' · ' + m.tel + '</div>' +
+      '<div class="user-detail">🏍️ ' + m.placa + ' · ' + m.tel + '</div>' + '<div class="user-detail" style="color:var(--orange);font-weight:bold">🔑 Chave: ' + (m.chave || '---') + '</div>' +
       '<div class="mt-8"><span class="status ' + st.cls + '">' + st.txt + '</span></div>' +
       '</div>' +
       '<div class="user-actions">' +
@@ -2158,16 +2174,17 @@ function cadastrarMotorista() {
   var tel   = document.getElementById('cad-tel').value.trim();
   var placa = document.getElementById('cad-placa').value.trim().toUpperCase();
   var senha = document.getElementById('cad-senha').value.trim();
+  var chave = document.getElementById('cad-chave').value.trim();
   var status = document.getElementById('cad-status').value;
   var dataPag = document.getElementById('cad-datapag').value;
 
-  if (!nome || !cpf || !tel || !placa || !senha) {
+  if (!nome || !cpf || !tel || !placa || !senha || !chave) {
     toast('⚠️ Preencha todos os campos!', 'error'); return;
   }
 
   var novo = {
     id: Date.now(),
-    nome: nome, cpf: cpf, tel: tel, placa: placa, senha: senha, status: status,
+    nome: nome, cpf: cpf, tel: tel, placa: placa, senha: senha, chave: chave, status: status,
     data_pagamento: dataPag || null,
     online: false, ganhos_hoje: 0, ganhos_semana: 0, ganhos_mes: 0,
     corridas_hoje: 0, avaliacao: 5.0, pagamento: dataPag ? 'ok' : 'pend', msg_admin: '', corridas: []
@@ -2322,5 +2339,6 @@ setInterval(function() {
 // =====================================================
 window.addEventListener('load', init);
 </script>
+<audio id="audio-notif" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 </body>
 </html>
