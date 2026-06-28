@@ -1317,11 +1317,7 @@ function initCliente() {
   // Atualiza os labels das opções com os valores do ADM
   var sel = document.getElementById('tipo-corrida');
   if (sel && DB.precos) {
-    var p = DB.precos;
-    sel.innerHTML = 
-      '<option value="basica">🛵 Básica (R$ ' + p.basica.valor.toFixed(2).replace('.',',') + ')</option>' +
-      '<option value="expressa">🚀 Expressa (R$ ' + p.expressa.valor.toFixed(2).replace('.',',') + ')</option>' +
-      '<option value="bandeirada">🚩 Bandeirada (R$ ' + p.bandeirada.toFixed(2).replace('.',',') + ')</option>';
+    // Mantendo as opções definidas no HTML (Municipal Fixo e Intermunicipal)
   }
 
   updateClienteRideStatus();
