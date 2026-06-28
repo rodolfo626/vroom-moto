@@ -1131,7 +1131,7 @@ var STATE = {
 // =====================================================
 function init() {
   loadDB();
-  verificarVencimentos(); // Bloqueia inadimplentes ao carregar
+  verificarVencimentos(); limparCorridasAntigas(); // Bloqueia inadimplentes ao carregar
   if (DB.motoristas.length === 0) seedMotoristas();
   setTimeout(function() {
     document.getElementById('splash').style.display = 'none';
@@ -2049,12 +2049,30 @@ function logoutAdmin() {
 // PAINEL ADMIN
 // =====================================================
 function initAdmin() {
-  verificarVencimentos();
+  verificarVencimentos(); limparCorridasAntigas();
   updateAdminStats();
   updateAdminMotoristas();
   updateAdminPrecos();
   updateAdminPagamentos();
   updateAdminCorridas();
+}
+
+
+function limparCorridasAntigas() {
+  var hojeStr = new Date().toLocaleDateString('pt-BR');
+  var totalAntes = DB.corridas.length;
+  
+  // Mantemos apenas as que são de hoje OU as que ainda estão em andamento (segurança)
+  DB.corridas = DB.corridas.filter(function(c) {
+    var dataCorrida = c.ts ? c.ts.split(' ')[0] : hojeStr; // ts formato 'DD/MM/YYYY HH:MM'
+    var emAndamento = (c.status === 'buscando' || c.status === 'a_caminho' || c.status === 'em_corrida');
+    return dataCorrida === hojeStr || emAndamento;
+  });
+  
+  if (DB.corridas.length < totalAntes) {
+    saveDB();
+    console.log('🧹 Corridas antigas limpas automaticamente.');
+  }
 }
 
 function verificarVencimentos() {
