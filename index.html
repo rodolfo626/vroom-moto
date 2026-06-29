@@ -35,7 +35,7 @@
         SOU MOTORISTA
       </button>
     </div>
-    <div class="absolute bottom-10 text-[10px] font-black text-slate-300 tracking-[0.4em] uppercase">Gerado por Zapia • Geração 2.0</div>
+    <div class="absolute bottom-10 text-[10px] font-black text-slate-300 tracking-[0.4em] uppercase">Gerado por Zapia • v2.1 - CLOUD LIVE</div>
   </div>
 
   <!-- TELA 2: CLIENTE PEDIDO -->
@@ -118,44 +118,51 @@
       </div>
   </div>
 
+  
   <script>
-    let selectedType = 'municipal';
-    const CONFIG = {
-        precoMunicipal: 7.00,
-        precoKmInter: 2.50
+    // CONFIGURAÇÃO DO BANCO DE DADOS (NUVEM)
+    const CLOUD_URL = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v2_live.json';
+    
+    const DB = {
+      corridas: [],
+      motoristas: []
     };
 
-    function showScreen(id) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      const target = document.getElementById(id);
-      if(target) target.classList.add('active');
-      window.scrollTo(0,0);
+    const STATE = {
+      user: null,
+      role: null, // 'cliente' ou 'motorista'
+      activeRide: null,
+      online: false
+    };
+
+    // SINCRONIZAÇÃO
+    async function syncToCloud() {
+      try {
+        await fetch(CLOUD_URL, { method: 'PUT', body: JSON.stringify(DB) });
+      } catch(e) {}
     }
 
-    function selectType(type) {
-      selectedType = type;
-      document.querySelectorAll('.type-select').forEach(el => el.classList.remove('active'));
-      document.getElementById('opt-' + type).classList.add('active');
-      
-      if(type === 'inter') {
-          const distSimulada = 15.8; 
-          const preco = distSimulada * CONFIG.precoKmInter;
-          document.getElementById('price-inter').innerText = 'R$ ' + preco.toFixed(2).replace('.',',');
-      } else {
-          document.getElementById('price-inter').innerText = '—';
-      }
+    async function syncFromCloud() {
+      try {
+        const res = await fetch(CLOUD_URL + '?t=' + Date.now());
+        if(res.ok) {
+          const data = await res.json();
+          if(!data) return;
+          
+          // Atualizar Corridas
+          DB.corridas = data.corridas || [];
+          // Atualizar Motoristas
+          DB.motoristas = data.motoristas || [];
+          
+          if(STATE.role === 'motorista') renderMotoristaFila();
+          if(STATE.role === 'cliente') checkRideStatus();
+        }
+      } catch(e) {}
     }
 
-    function confirmarPedido() {
-        const dest = document.getElementById('dest-input').value;
-        if(!dest) return alert('Para onde você vai hoje? Digite o destino final.');
-        alert('🚀 TUDO PRONTO!
+    // Iniciar Sincronização Automática (a cada 3 segundos)
+    setInterval(syncFromCloud, 3000);
 
-Destino: ' + dest + '
-Modalidade: ' + selectedType.toUpperCase() + '
-
-O sistema agora está pronto para receber a conexão em nuvem!');
-    }
   </script>
 </body>
 </html>
