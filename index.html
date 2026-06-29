@@ -840,7 +840,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v12.0 - MULTI-DEVICE - REPARO INTERNO - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v13.0 - NUVEM REALTIME - MULTI-DEVICE - REPARO INTERNO - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -1146,25 +1146,60 @@ var DB = {
 // MOTOR DE SINCRONIZAÇÃO EM NUVEM (FIREBASE)
 async function syncToCloud() {
   try {
-    await fetch('https://vroom-moto-default-rtdb.firebaseio.com/db.json', {
+    // Usamos um identificador único para o seu app para evitar conflitos com outros usuários
+    const cloudUrl = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v13.json';
+    await fetch(cloudUrl, {
       method: 'PUT',
       body: JSON.stringify(DB)
     });
-  } catch (e) { console.error('Cloud Sync Error:', e); }
+  } catch (e) { console.error('Erro ao enviar para Nuvem:', e); }
 }
 
 async function syncFromCloud() {
   try {
-    const res = await fetch('https://vroom-moto-default-rtdb.firebaseio.com/db.json');
+    const cloudUrl = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v13.json?t=' + Date.now();
+    const res = await fetch(cloudUrl);
     if (res.ok) {
       const remoteDB = await res.json();
       if (!remoteDB) return;
+
+      // MESCLAGEM INTELIGENTE DE CORRIDAS
+      if (remoteDB.corridas && Array.isArray(remoteDB.corridas)) {
+          var localIds = DB.corridas.map(function(c) { return c.id; });
+          
+          remoteDB.corridas.forEach(function(remoteC) {
+              var localIdx = localIds.indexOf(remoteC.id);
+              if (localIdx === -1) {
+                  // Corrida nova na nuvem -> Adiciona ao local
+                  DB.corridas.push(remoteC);
+              } else {
+                  // Corrida já existe -> Atualiza status se for mais recente
+                  // (Quem manda no status é o motorista ou cliente que alterou por último)
+                  DB.corridas[localIdx].status = remoteC.status;
+                  DB.corridas[localIdx].motorista = remoteC.motorista;
+              }
+          });
+      }
+
+      // SINCRONIZAÇÃO DE MOTORISTAS (Online/Offline)
+      if (remoteDB.motoristas && Array.isArray(remoteDB.motoristas)) {
+          remoteDB.motoristas.forEach(function(remoteM) {
+              var localM = DB.motoristas.find(function(m) { return m.id === remoteM.id; });
+              if (localM) {
+                  localM.online = remoteM.online;
+                  localM.status = remoteM.status;
+              }
+          });
+      }
       
-      // Sincronizar Corridas
-      const localIds = DB.corridas.map(c => c.id);
-      remoteDB.corridas.forEach(c => {
-        if (!localIds.includes(c.id)) DB.corridas.push(c);
-      });
+      localStorage.setItem('vroomDB', JSON.stringify(DB));
+      
+      // FORÇAR ATUALIZAÇÃO VISUAL SE HOUVER MUDANÇA
+      if (STATE.screen === 'motorista-painel') updateMotCorridasList();
+      if (STATE.screen === 'cliente-home' && STATE.corridaAtual) updateClienteRideStatus();
+    }
+  } catch (e) { console.error('Erro ao baixar da Nuvem:', e); }
+});
       
       // Sincronizar Status de Corridas (Aceite/Conclusão)
       DB.corridas.forEach(localC => {
@@ -1202,7 +1237,7 @@ var STATE = {
 // INIT
 // =====================================================
 function init() {
-  loadDB();
+  loadDB(); syncFromCloud();
   verificarVencimentos(); limparCorridasAntigas(); // Bloqueia inadimplentes ao carregar
   if (DB.motoristas.length === 0) seedMotoristas();
   setTimeout(function() {
@@ -1352,7 +1387,8 @@ function toast(msg, type) {
   var el = document.getElementById('toast');
   el.textContent = msg;
   el.className = 'show ' + (type || 'info');
-  setTimeout(function() { el.classList.remove('show'); }, 3000);
+  setTimeout(function() { el.classList.remove('show');   syncFromCloud();
+}, 1500);
 }
 
 // =====================================================
