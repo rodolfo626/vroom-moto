@@ -840,7 +840,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v13.1 - REPARO TOTAL - NUVEM REALTIME - MULTI-DEVICE - REPARO INTERNO - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v14.0 - RESET DE SEGURANÇA - REPARO TOTAL - NUVEM REALTIME - MULTI-DEVICE - REPARO INTERNO - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -1562,12 +1562,8 @@ function animateMoto() {
   var positions = [{t:'20%',l:'20%'},{t:'35%',l:'35%'},{t:'45%',l:'48%'},{t:'50%',l:'50%'}];
   var i = 0;
   var interval = setInterval(function() {
-    if (!document.getElementById('moto-icon')) { clearInterval(interval); return; }
-    moto.style.top  = positions[i % positions.length].t;
-    moto.style.left = positions[i % positions.length].l;
-    i++;
-    if (i > 20) clearInterval(interval);
-  }, 1500);
+  updateClock();
+}, 1000);
 }
 
 function showMotorOnMap(step) {}
@@ -2197,10 +2193,8 @@ function fecharModal(id) {
 }
 
 setInterval(function() {
-  if (STATE.screen === 'motorista-painel') updateMotCorridasList();
-  if (STATE.screen === 'admin-painel') { updateAdminStats(); updateAdminCorridas(); }
-  if (STATE.screen === 'cliente-home' && STATE.corridaAtual) updateClienteRideStatus();
-}, 1500);
+  updateClock();
+}, 1000);
 
 window.addEventListener('load', init);
 </script>
