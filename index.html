@@ -871,7 +871,7 @@
         <button class="tab" onclick="switchAdmTab('precos', this)">💰 Preços</button>
         <button class="tab" onclick="switchAdmTab('pagamentos', this)">💳 Pagamentos</button>
         <button class="tab" onclick="switchAdmTab('corridas', this)">📊 Corridas</button>
-        <button class="tab" id="tab-btn-admins" style="display:none" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
+        <button class="tab" id="tab-btn-admins" style="display: none !important;" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
       </div>
 
       <!-- Motoristas -->
@@ -2058,57 +2058,22 @@ function loginAdmin() {
   var user = document.getElementById('adm-user').value.trim();
   var pass = document.getElementById('adm-pass').value.trim();
   if (!user || !pass) { toast('⚠️ Preencha usuário e senha!', 'error'); return; }
-  
   var u = user.toLowerCase();
   var isRodolfo = (u === 'rodolfo oliveira' || u === 'rodolfo') && pass === 'Rm290198';
-  
-  var dbAdmin = (DB.admins || []).find(function(a) { 
-    return a.user.toLowerCase() === u && a.pass === pass; 
-  });
-
+  var dbAdmin = (DB.admins || []).find(function(a) { return a.user.toLowerCase() === u && a.pass === pass; });
   if (isRodolfo || dbAdmin || (u === 'admin' && pass === 'admin123')) {
     STATE.adminLogado = user;
     showScreen('admin-painel');
-    
-    // TRATAMENTO DO BOTÃO DE ADMINS
     var btnAdm = document.getElementById('tab-btn-admins');
     if (btnAdm) {
       if (isRodolfo) {
-        btnAdm.style.display = 'block'; // Mostra se for você
+        btnAdm.style.display = 'block';
         updateAdminsList();
       } else {
-        btnAdm.style.display = 'none'; // Esconde se for outro admin
+        btnAdm.style.display = 'none';
       }
     }
-    
-    toast('✅ Bem-vindo, ' + user + '!', 'success');
-  } else {
-    toast('❌ Usuário ou senha incorretos!', 'error');
-  }
-}
-  
-  var u = user.toLowerCase();
-  var isRodolfo = (u === 'rodolfo oliveira' || u === 'rodolfo') && pass === 'Rm290198';
-  
-  var dbAdmin = (DB.admins || []).find(function(a) { 
-    return a.user.toLowerCase() === u && a.pass === pass; 
-  });
-
-  if (isRodolfo || dbAdmin || (u === 'admin' && pass === 'admin123')) {
-    STATE.adminLogado = user;
-    showScreen('admin-painel');
-    
-    var btnAdm = document.getElementById('tab-btn-admins');
-    if (btnAdm) {
-      if (isRodolfo) {
-        btnAdm.style.setProperty('display', 'inline-block', 'important');
-        updateAdminsList();
-      } else {
-        btnAdm.style.setProperty('display', 'none', 'important');
-      }
-    }
-    
-    toast('✅ Bem-vindo, ' + user + '!', 'success');
+    toast('✅ Bem-vindo!', 'success');
   } else {
     toast('❌ Usuário ou senha incorretos!', 'error');
   }
@@ -2172,16 +2137,14 @@ function updateAdminStats() {
 }
 
 function switchAdmTab(tab, el) {
-  document.querySelectorAll("#screen-admin-painel .tab").forEach(function(t){ t.classList.remove("active"); });
-  el.classList.add("active");
-  document.getElementById("adm-tab-motoristas").style.display = tab === "motoristas" ? "block" : "none";
-  document.getElementById("adm-tab-precos").style.display     = tab === "precos"     ? "block" : "none";
-  document.getElementById("adm-tab-pagamentos").style.display = tab === "pagamentos" ? "block" : "none";
-  document.getElementById("adm-tab-corridas").style.display   = tab === "corridas"   ? "block" : "none";
+  document.querySelectorAll('#screen-admin-painel .tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('adm-tab-motoristas').style.display = tab === 'motoristas' ? 'block' : 'none';
+  document.getElementById('adm-tab-precos').style.display = tab === 'precos' ? 'block' : 'none';
+  document.getElementById('adm-tab-pagamentos').style.display = tab === 'pagamentos' ? 'block' : 'none';
+  document.getElementById('adm-tab-corridas').style.display = tab === 'corridas' ? 'block' : 'none';
   var admTabContent = document.getElementById('adm-tab-admins');
-  if(admTabContent) {
-    admTabContent.style.display = (tab === 'admins') ? 'block' : 'none';
-  }
+  if(admTabContent) { admTabContent.style.display = tab === 'admins' ? 'block' : 'none'; }
 }
 
 function updateAdminsList() {
