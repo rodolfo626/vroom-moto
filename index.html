@@ -840,7 +840,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v9.0 - SYNC FIX - ESTÁVEL</small></h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v10.0 - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -1204,13 +1204,16 @@ function loadDB() {
 }
 
 function saveDB() {
-  localStorage.setItem('vroomDB', JSON.stringify({
+  var data = {
     motoristas:        DB.motoristas,
     corridas:          DB.corridas,
     precos:            DB.precos,
     admins:            DB.admins,
     mensalidade_valor: DB.mensalidade_valor
-  }));
+  };
+  localStorage.setItem('vroomDB', JSON.stringify(data));
+  // Gatilho visual para depuração
+  console.log('💾 DB Salvo com ' + DB.corridas.length + ' corridas');
 }
 
 function seedMotoristas() {
@@ -1534,7 +1537,9 @@ function confirmarCorrida() {
   document.getElementById('cliente-map').style.display = 'none';
   document.getElementById('cliente-loc-card').style.display = 'none';
   updateClienteRideStatus();
-  toast('🔍 Procurando motorista...', 'info'); if(typeof updateMotCorridasList === 'function') updateMotCorridasList();
+  toast('🔍 Enviando pedido para motoristas...', 'info');
+  // Se estiver no mesmo dispositivo, força atualização da lista
+  if(typeof updateMotCorridasList === 'function') updateMotCorridasList();
 }
 
 function aceitarCorridaSimulado(mot) {} // desativado — apenas motorista real aceita
@@ -1827,8 +1832,9 @@ function updateMotCorridasList() {
     document.getElementById('mot-notif').style.display = 'block';
     // FIFO: garante ordem de chegada (menor id = mais antigo)
     disponiveis.sort(function(a, b){ return a.id - b.id; });
+    var motId = (mot && mot.id) ? mot.id : null;
     var temCorridaAtiva = DB.corridas.some(function(x){
-      return x.motorista && x.motorista.id === mot.id && (x.status === 'a_caminho' || x.status === 'em_corrida');
+      return x.motorista && motId && x.motorista.id === motId && (x.status === 'a_caminho' || x.status === 'em_corrida');
     });
     el.innerHTML = '<div class="section-label" style="margin-bottom:8px">📋 Fila de espera (' + disponiveis.length + ')</div>' +
     disponiveis.map(function(c, idx) {
