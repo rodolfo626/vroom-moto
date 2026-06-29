@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Vroom Moto 2.0 - Maps</title>
+  <title>Vroom Moto 2.0 - Free Maps</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- GOOGLE MAPS API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_SUA_CHAVE_AQUI&libraries=places"></script>
-  
+  <!-- Estilos Leaflet para Autocomplete Simples -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
     :root { --vroom: #FF6B00; }
@@ -21,7 +19,10 @@
     .card { background: white; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
     .type-card { border: 2px solid #E5E7EB; border-radius: 16px; transition: 0.2s; cursor: pointer; padding: 12px; text-align: center; }
     .type-card.active { border-color: var(--vroom); background: #FFF7ED; }
-    .pac-container { border-radius: 12px; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-top: 8px; z-index: 9999; }
+    
+    /* Estilo para lista de sugestões de endereço */
+    #results { position: absolute; background: white; width: calc(100% - 48px); max-height: 200px; overflow-y: auto; z-index: 100; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; }
+    .result-item { padding: 12px 16px; border-bottom: 1px solid #F3F4F6; font-size: 14px; cursor: pointer; font-weight: 600; color: #475569; }
   </style>
 </head>
 <body>
@@ -30,10 +31,10 @@
   <div id="screen-portal" class="screen active p-8 items-center justify-center text-center">
     <div class="text-7xl mb-6">🏍️</div>
     <h1 class="text-5xl font-black italic tracking-tighter mb-2">VROOM<span class="text-orange-600">MOTO</span></h1>
-    <p class="text-slate-400 font-bold text-xs tracking-widest uppercase mb-12">Inteligência Google Maps</p>
+    <p class="text-slate-400 font-bold text-xs tracking-widest uppercase mb-12 italic">Sistema de GPS Gratuito</p>
     <div class="w-full max-w-xs space-y-4">
-      <button onclick="initApp('cliente')" class="w-full vroom-btn py-6 rounded-2xl text-2xl shadow-xl italic">SOU CLIENTE</button>
-      <button onclick="initApp('motorista')" class="w-full bg-slate-900 text-white py-6 rounded-2xl text-2xl shadow-xl italic">SOU MOTORISTA</button>
+      <button onclick="initApp('cliente')" class="w-full vroom-btn py-6 rounded-2xl text-2xl shadow-xl italic uppercase">Sou Cliente</button>
+      <button onclick="initApp('motorista')" class="w-full bg-slate-900 text-white py-6 rounded-2xl text-2xl shadow-xl italic uppercase">Sou Motorista</button>
     </div>
   </div>
 
@@ -41,15 +42,16 @@
   <div id="screen-cliente-home" class="screen">
     <div class="p-6 bg-white flex justify-between items-center shadow-sm">
       <span class="text-2xl font-black italic tracking-tighter">VROOM</span>
-      <button onclick="location.reload()" class="bg-slate-100 p-2 rounded-lg text-slate-500 font-bold text-xs uppercase">Sair</button>
+      <button onclick="location.reload()" class="bg-slate-100 p-2 rounded-lg text-slate-500 font-bold text-xs uppercase italic">Sair</button>
     </div>
-    <div class="p-6 flex-1 overflow-y-auto space-y-6">
+    <div class="p-6 flex-1 overflow-y-auto space-y-6 relative">
       <div id="status-cliente-container">
-          <div id="pedir-box" class="card p-6">
+          <div id="pedir-box" class="card p-6 relative">
             <h3 class="text-lg font-black text-slate-800 mb-4 italic">Para onde vamos?</h3>
-            <div class="space-y-3 mb-6">
+            <div class="space-y-3 mb-6 relative">
                 <input type="text" id="cli-origem" placeholder="Sua localização..." class="w-full bg-slate-50 p-4 rounded-xl border-2 border-slate-100 outline-none font-bold text-sm">
-                <input type="text" id="cli-destino" placeholder="Destino final" class="w-full bg-slate-50 p-4 rounded-xl border-2 border-slate-100 outline-none focus:border-orange-500 font-bold text-sm">
+                <input type="text" id="cli-destino" oninput="searchAddress(this.value)" placeholder="Destino final" class="w-full bg-slate-50 p-4 rounded-xl border-2 border-slate-100 outline-none focus:border-orange-500 font-bold text-sm">
+                <div id="results"></div>
             </div>
             
             <div class="grid grid-cols-2 gap-3 mb-6">
@@ -63,7 +65,7 @@
               </div>
             </div>
             
-            <button onclick="pedirCorrida()" id="btn-chamar" class="w-full vroom-btn py-5 rounded-2xl text-xl shadow-lg uppercase italic">CHAMAR AGORA</button>
+            <button onclick="pedirCorrida()" id="btn-chamar" class="w-full vroom-btn py-5 rounded-2xl text-xl shadow-lg uppercase italic">Solicitar Agora</button>
           </div>
       </div>
     </div>
@@ -81,11 +83,10 @@
   </div>
 
   <script>
-    const CLOUD_URL = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v2_maps_prod.json';
+    const CLOUD_URL = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v2_osm_final.json';
     let DB = { corridas: [] };
-    let STATE = { role: null, online: false, modalidade: 'municipal', activeId: null, distKm: 0 };
-    
-    let autocompleteOrigem, autocompleteDestino;
+    let STATE = { role: null, online: false, modalidade: 'municipal', activeId: null, distKm: 0, 
+                  origCoord: null, destCoord: null };
 
     function showScreen(id) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -95,46 +96,62 @@
     function initApp(role) {
       STATE.role = role;
       showScreen('screen-' + role + '-home');
-      if(role === 'cliente') setTimeout(initMaps, 500);
+      if(role === 'cliente') detectMyLocation();
       startSync();
     }
 
-    function initMaps() {
-      try {
-          autocompleteOrigem = new google.maps.places.Autocomplete(document.getElementById('cli-origem'));
-          autocompleteDestino = new google.maps.places.Autocomplete(document.getElementById('cli-destino'));
-          
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(pos => {
-              const geocoder = new google.maps.Geocoder();
-              geocoder.geocode({ location: {lat: pos.coords.latitude, lng: pos.coords.longitude} }, (res, status) => {
-                if (status === "OK" && res[0]) document.getElementById('cli-origem').value = res[0].formatted_address;
-              });
+    function detectMyLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          STATE.origCoord = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
+            .then(r => r.json())
+            .then(data => {
+              document.getElementById('cli-origem').value = data.display_name.split(',')[0] + ', ' + data.display_name.split(',')[1];
             });
-          }
-
-          autocompleteDestino.addListener('place_changed', calcularDistancia);
-      } catch(e) { console.log('Maps não carregado'); }
+        });
+      }
     }
 
-    function calcularDistancia() {
-      const origem = document.getElementById('cli-origem').value;
-      const destino = document.getElementById('cli-destino').value;
-      if(!origem || !destino) return;
+    async function searchAddress(query) {
+      const resultsDiv = document.getElementById('results');
+      if(query.length < 3) { resultsDiv.style.display = 'none'; return; }
+      
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5&countrycodes=br`);
+        const data = await r.json();
+        if(data.length > 0) {
+          resultsDiv.innerHTML = data.map(item => `
+            <div class="result-item" onclick="selectDestino('${item.display_name}', ${item.lat}, ${item.lon})">
+              ${item.display_name}
+            </div>
+          `).join('');
+          resultsDiv.style.display = 'block';
+        }
+      } catch(e){}
+    }
 
-      const service = new google.maps.DistanceMatrixService();
-      service.getDistanceMatrix({
-        origins: [origem],
-        destinations: [destino],
-        travelMode: 'DRIVING'
-      }, (response, status) => {
-        if (status === 'OK' && response.rows[0].elements[0].status !== "ZERO_RESULTS") {
-          const distValue = response.rows[0].elements[0].distance.value / 1000;
-          STATE.distKm = distValue;
-          const preco = (distValue * 2.5).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    function selectDestino(name, lat, lon) {
+      document.getElementById('cli-destino').value = name;
+      document.getElementById('results').style.display = 'none';
+      STATE.destCoord = { lat: lat, lon: lon };
+      calcularDistanciaOSRM();
+    }
+
+    async function calcularDistanciaOSRM() {
+      if(!STATE.origCoord || !STATE.destCoord) return;
+      
+      const url = `https://router.project-osrm.org/route/v1/driving/${STATE.origCoord.lon},${STATE.origCoord.lat};${STATE.destCoord.lon},${STATE.destCoord.lat}?overview=false`;
+      try {
+        const r = await fetch(url);
+        const data = await r.json();
+        if(data.routes && data.routes[0]) {
+          const dist = data.routes[0].distance / 1000;
+          STATE.distKm = dist;
+          const preco = (dist * 2.5).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
           document.getElementById('price-inter').innerText = preco;
         }
-      });
+      } catch(e){}
     }
 
     function setMod(m) {
@@ -144,9 +161,8 @@
     }
 
     async function pedirCorrida() {
-      const orig = document.getElementById('cli-origem').value;
       const dest = document.getElementById('cli-destino').value;
-      if(!dest) return alert('Digite o destino!');
+      if(!dest) return alert('Escolha o destino!');
       
       let valorFinal = "R$ 7,00";
       if(STATE.modalidade === 'inter') {
@@ -156,7 +172,6 @@
       STATE.activeId = Date.now();
       const nova = { 
         id: STATE.activeId, 
-        origem: orig,
         destino: dest, 
         tipo: STATE.modalidade, 
         valor: valorFinal,
@@ -217,11 +232,11 @@
         <div class="card p-6 border-l-[12px] border-orange-500 shadow-md">
           <div class="mb-4">
             <div class="text-[9px] font-black text-slate-300 uppercase">Distância: ${c.distancia}</div>
-            <div class="text-xl font-black text-slate-800 italic leading-tight">${c.destino}</div>
+            <div class="text-xl font-black text-slate-800 italic leading-none">${c.destino.split(',')[0]}</div>
           </div>
           <div class="flex justify-between items-center">
             <span class="text-orange-600 font-black text-lg italic">${c.valor}</span>
-            <button onclick="aceitarCorrida(${c.id})" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-black uppercase text-xs">Aceitar</button>
+            <button onclick="aceitarCorrida(${c.id})" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-black uppercase text-xs tracking-tighter">Aceitar</button>
           </div>
         </div>
       `).join('');
@@ -235,9 +250,9 @@
     function renderStatusCliente(status) {
       const container = document.getElementById('status-cliente-container');
       if(status === 'buscando') {
-        container.innerHTML = `<div class="card p-10 bg-orange-600 text-white text-center shadow-xl"><div class="text-5xl mb-4 animate-bounce">🔍</div><div class="text-2xl font-black italic uppercase">Buscando Moto...</div><p class="text-[10px] mt-4 opacity-70 uppercase font-black">Calculando rota via Google Maps</p></div>`;
+        container.innerHTML = `<div class="card p-10 bg-orange-600 text-white text-center shadow-xl"><div class="text-5xl mb-4 animate-bounce">🔍</div><div class="text-2xl font-black italic uppercase">Buscando Moto...</div><p class="text-[10px] mt-4 opacity-70 uppercase font-black">Calculando rota via satélite</p></div>`;
       } else if(status === 'aceita') {
-        container.innerHTML = `<div class="card p-10 bg-green-600 text-white text-center shadow-xl"><div class="text-5xl mb-4">🚀</div><div class="text-2xl font-black italic uppercase">A Caminho!</div><p class="text-xs mt-2 opacity-80">Seu motorista aceitou o chamado.</p><button onclick="location.reload()" class="mt-8 bg-white text-green-600 px-8 py-3 rounded-xl font-black text-xs uppercase italic">Cheguei</button></div>`;
+        container.innerHTML = `<div class="card p-10 bg-green-600 text-white text-center shadow-xl"><div class="text-5xl mb-4">🚀</div><div class="text-2xl font-black italic uppercase">A Caminho!</div><p class="text-xs mt-2 opacity-80">Motorista: Rodolfo Oliveira</p><button onclick="location.reload()" class="mt-8 bg-white text-green-600 px-8 py-3 rounded-xl font-black text-xs uppercase italic shadow-md">Cheguei</button></div>`;
       }
     }
   </script>
