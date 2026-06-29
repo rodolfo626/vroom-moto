@@ -8,161 +8,178 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-    :root { --vroom-orange: #FF6B00; }
-    body { font-family: 'Inter', sans-serif; background: #F9FAFB; overflow-x: hidden; }
-    .screen { display: none; min-height: 100vh; }
-    .screen.active { display: flex; flex-direction: column; }
-    .vroom-btn { background: var(--vroom-orange); color: white; transition: all 0.2s; border: none; }
+    :root { --vroom: #FF6B00; }
+    body { font-family: 'Inter', sans-serif; background: #F9FAFB; overflow: hidden; }
+    .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; position: absolute; top:0; left:0; }
+    .screen.active { display: flex; }
+    .vroom-btn { background: var(--vroom); color: white; border: none; }
     .vroom-btn:active { transform: scale(0.96); opacity: 0.9; }
-    .card-vroom { background: white; border-radius: 28px; box-shadow: 0 15px 35px -5px rgba(255, 107, 0, 0.1); }
-    .type-select { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-width: 3px; }
-    .type-select.active { border-color: var(--vroom-orange); background: #FFF7ED; transform: translateY(-2px); }
+    .card { background: white; border-radius: 30px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); }
+    .type-card { border: 3px solid #F3F4F6; transition: 0.3s; cursor: pointer; }
+    .type-card.active { border-color: var(--vroom); background: #FFF7ED; }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
   </style>
 </head>
 <body>
 
-  <!-- TELA 1: PORTAL -->
   <div id="screen-portal" class="screen active p-8 items-center justify-center bg-white text-center">
-    <div class="animate-bounce mb-12 text-9xl">🏍️</div>
-    <h1 class="text-6xl font-black italic tracking-tighter text-slate-900 leading-none">VROOM<br><span class="text-orange-600">MOTO</span></h1>
-    <p class="text-slate-400 mt-6 font-bold text-lg">O app que move a cidade.</p>
-    
+    <div class="text-9xl mb-8 animate-bounce">🏍️</div>
+    <h1 class="text-6xl font-black italic tracking-tighter">VROOM<span class="text-orange-600">MOTO</span></h1>
+    <p class="text-slate-400 mt-4 font-bold tracking-widest text-xs uppercase">The Power of Choice</p>
     <div class="mt-16 w-full max-w-xs space-y-4">
-      <button onclick="showScreen('screen-cliente-login')" class="w-full vroom-btn py-6 rounded-3xl font-black text-2xl shadow-2xl shadow-orange-200">
-        SOU CLIENTE
-      </button>
-      <button onclick="showScreen('screen-motorista-login')" class="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-2xl shadow-2xl">
-        SOU MOTORISTA
-      </button>
+      <button onclick="initApp('cliente')" class="w-full vroom-btn py-6 rounded-3xl font-black text-2xl shadow-xl shadow-orange-100 italic">SOU CLIENTE</button>
+      <button onclick="initApp('motorista')" class="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-2xl shadow-xl italic">SOU MOTORISTA</button>
     </div>
-    <div class="absolute bottom-10 text-[10px] font-black text-slate-300 tracking-[0.4em] uppercase">Gerado por Zapia • v2.1 - CLOUD LIVE</div>
+    <div class="absolute bottom-8 text-[10px] font-black text-slate-200 tracking-widest">v2.0 • RODOLFO OLIVEIRA</div>
   </div>
 
-  <!-- TELA 2: CLIENTE PEDIDO -->
   <div id="screen-cliente-home" class="screen bg-slate-50">
-    <div class="bg-white p-6 shadow-sm flex items-center justify-between border-b border-slate-100">
-      <h2 class="text-3xl font-black italic tracking-tighter">VROOM</h2>
-      <div class="flex gap-4">
-         <button onclick="showScreen('screen-portal')" class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400"><i class="fa-solid fa-bell text-xl"></i></button>
-         <button onclick="showScreen('screen-portal')" class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white"><i class="fa-solid fa-user text-xl"></i></button>
-      </div>
+    <div class="p-6 bg-white flex justify-between items-center border-b border-slate-100 shadow-sm">
+      <span class="text-3xl font-black italic tracking-tighter">VROOM</span>
+      <button onclick="location.reload()" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300"><i class="fa-solid fa-rotate"></i></button>
     </div>
-    
-    <div class="p-6 space-y-6 flex-1 overflow-y-auto">
-      <div class="card-vroom p-8">
-        <h3 class="font-black text-slate-800 text-2xl mb-8">Para onde vamos? 🚀</h3>
-        
-        <div class="space-y-4">
-          <div class="flex items-center bg-slate-50 p-5 rounded-2xl border border-slate-100">
-            <i class="fa-solid fa-location-dot text-orange-500 mr-5 text-xl"></i>
-            <input type="text" value="Minha localização atual" class="bg-transparent text-sm font-bold text-slate-400 w-full outline-none" readonly>
+    <div class="p-6 flex-1 overflow-y-auto space-y-6">
+      <div id="pedir-box" class="card p-8 text-center">
+        <h3 class="text-2xl font-black text-slate-800 mb-8 italic">Para onde vamos?</h3>
+        <div class="relative mb-8">
+            <i class="fa-solid fa-flag-checkered absolute left-5 top-1/2 -translate-y-1/2 text-slate-300"></i>
+            <input type="text" id="cli-destino" placeholder="Digite o destino final" class="w-full bg-slate-50 pl-14 p-5 rounded-2xl border-2 border-slate-100 outline-none focus:border-orange-500 font-black text-lg shadow-inner transition-all">
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-8">
+          <div id="btn-mun" onclick="setMod('municipal')" class="type-card active p-5 rounded-3xl text-center shadow-sm">
+            <div class="font-black text-slate-400 text-[10px] tracking-widest mb-1">MUNICIPAL</div>
+            <div class="text-orange-600 font-black text-2xl italic leading-none">R$ 7,00</div>
           </div>
-          <div class="flex items-center bg-white p-5 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
-            <i class="fa-solid fa-flag-checkered text-slate-300 mr-5 text-xl"></i>
-            <input type="text" id="dest-input" placeholder="Digite o destino..." class="bg-transparent text-lg font-black text-slate-800 w-full outline-none">
+          <div id="btn-inter" onclick="setMod('inter')" class="type-card p-5 rounded-3xl text-center shadow-sm">
+            <div class="font-black text-slate-400 text-[10px] tracking-widest mb-1">INTER</div>
+            <div class="text-orange-600 font-black text-2xl italic leading-none">R$ 2,50/km</div>
           </div>
         </div>
-
-        <div class="mt-10">
-          <label class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">MODALIDADE</label>
-          <div class="grid grid-cols-2 gap-4">
-            <div id="opt-municipal" onclick="selectType('municipal')" class="type-select active p-5 border-2 border-slate-100 rounded-3xl cursor-pointer shadow-sm">
-              <div class="font-black text-slate-800 italic text-sm">MUNICIPAL</div>
-              <div class="text-[10px] text-orange-600 font-black mt-1 uppercase tracking-tighter">Taxa Fixa</div>
-              <div class="text-2xl font-black text-slate-900 mt-3" id="price-municipal">R$ 7,00</div>
-            </div>
-            <div id="opt-inter" onclick="selectType('inter')" class="type-select p-5 border-2 border-slate-100 rounded-3xl cursor-pointer shadow-sm">
-              <div class="font-black text-slate-800 italic text-sm">INTERMUNICIPAL</div>
-              <div class="text-[10px] text-orange-600 font-black mt-1 uppercase tracking-tighter">Por Quilômetro</div>
-              <div class="text-2xl font-black text-slate-900 mt-3" id="price-inter">—</div>
-            </div>
-          </div>
-        </div>
-
-        <button onclick="confirmarPedido()" class="w-full vroom-btn mt-10 py-6 rounded-3xl font-black text-2xl shadow-2xl shadow-orange-200 uppercase tracking-tighter">
-          PEDIR VROOM MOTO
-        </button>
+        <button id="btn-pedir" onclick="pedirCorrida()" class="w-full vroom-btn py-6 rounded-3xl font-black text-2xl shadow-2xl shadow-orange-200 uppercase italic tracking-tighter">CHAMAR AGORA</button>
       </div>
-      
-      <div class="p-4 text-center text-slate-300 text-xs font-bold">
-         Dúvidas? Chame no suporte pelo menu.
+      <div id="cli-status-card" class="hidden card p-10 bg-orange-600 text-white text-center shadow-2xl shadow-orange-300">
+         <div class="text-6xl mb-6 pulse">🔍</div>
+         <div class="text-3xl font-black uppercase tracking-tighter italic leading-none mb-4">Buscando<br>Motorista...</div>
+         <div class="h-1 w-16 bg-white/30 mx-auto rounded-full"></div>
+         <p class="text-xs font-bold mt-4 opacity-70">Aguarde, estamos conectando você.</p>
       </div>
     </div>
   </div>
 
-  <!-- LOGIN CLIENTE -->
-  <div id="screen-cliente-login" class="screen p-10 bg-white justify-center items-center">
-      <button onclick="showScreen('screen-portal')" class="absolute top-12 left-8 text-slate-900 text-2xl"><i class="fa-solid fa-chevron-left"></i></button>
-      <div class="w-full max-w-sm">
-          <h2 class="text-5xl font-black text-slate-900 mb-4 tracking-tighter">Sua conta.</h2>
-          <p class="text-slate-400 mb-12 font-bold text-lg">Informe seu telefone para entrar.</p>
-          <div class="relative mb-8">
-            <span class="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400">🇧🇷 +55</span>
-            <input type="tel" id="login-phone" placeholder="(00) 00000-0000" class="w-full pl-20 p-6 rounded-3xl border-2 border-slate-100 outline-none focus:border-orange-500 font-black text-2xl shadow-sm">
-          </div>
-          <button onclick="showScreen('screen-cliente-home')" class="w-full vroom-btn py-6 rounded-3xl font-black text-2xl shadow-xl">ENTRAR AGORA</button>
+  <div id="screen-motorista-home" class="screen bg-slate-50">
+    <div class="p-6 bg-slate-900 text-white flex justify-between items-center shadow-lg">
+      <div>
+        <div class="text-[10px] font-black opacity-30 uppercase tracking-[0.2em] mb-1">Status</div>
+        <div class="text-2xl font-black italic tracking-tighter uppercase leading-none">Motorista</div>
       </div>
+      <button onclick="toggleOnline()" id="mot-toggle" class="bg-red-500 px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg">Offline</button>
+    </div>
+    <div class="p-6 flex-1 overflow-y-auto space-y-4" id="fila-corridas">
+      <div class="text-center p-20 text-slate-300 font-black italic opacity-40">
+        <i class="fa-solid fa-clock text-4xl mb-4 block"></i>
+        Nenhuma chamada ativa
+      </div>
+    </div>
   </div>
 
-  <!-- LOGIN MOTORISTA -->
-  <div id="screen-motorista-login" class="screen p-10 bg-white justify-center items-center">
-      <button onclick="showScreen('screen-portal')" class="absolute top-12 left-8 text-slate-900 text-2xl"><i class="fa-solid fa-chevron-left"></i></button>
-      <div class="w-full max-w-sm">
-          <h2 class="text-5xl font-black text-slate-900 mb-4 tracking-tighter">Painel.</h2>
-          <p class="text-slate-400 mb-12 font-bold text-lg italic">Área exclusiva para motoristas cadastrados.</p>
-          <div class="space-y-4 mb-10">
-            <input type="text" placeholder="Usuário / CPF" class="w-full p-6 rounded-3xl border-2 border-slate-100 outline-none focus:border-orange-500 font-black text-xl shadow-sm">
-            <input type="password" placeholder="Sua Senha" class="w-full p-6 rounded-3xl border-2 border-slate-100 outline-none focus:border-orange-500 font-black text-xl shadow-sm">
-          </div>
-          <button onclick="alert('Área do Motorista em construção...')" class="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-2xl shadow-xl">ACESSAR CONTA</button>
-      </div>
-  </div>
-
-  
   <script>
-    // CONFIGURAÇÃO DO BANCO DE DADOS (NUVEM)
-    const CLOUD_URL = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v2_live.json';
-    
-    const DB = {
-      corridas: [],
-      motoristas: []
-    };
+    const CLOUD_URL = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v2_final_prod.json';
+    let DB = { corridas: [] };
+    let STATE = { role: null, online: false, modalidade: 'municipal' };
 
-    const STATE = {
-      user: null,
-      role: null, // 'cliente' ou 'motorista'
-      activeRide: null,
-      online: false
-    };
-
-    // SINCRONIZAÇÃO
-    async function syncToCloud() {
-      try {
-        await fetch(CLOUD_URL, { method: 'PUT', body: JSON.stringify(DB) });
-      } catch(e) {}
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
     }
 
-    async function syncFromCloud() {
-      try {
-        const res = await fetch(CLOUD_URL + '?t=' + Date.now());
-        if(res.ok) {
-          const data = await res.json();
-          if(!data) return;
-          
-          // Atualizar Corridas
-          DB.corridas = data.corridas || [];
-          // Atualizar Motoristas
-          DB.motoristas = data.motoristas || [];
-          
-          if(STATE.role === 'motorista') renderMotoristaFila();
-          if(STATE.role === 'cliente') checkRideStatus();
+    function initApp(role) {
+      STATE.role = role;
+      showScreen('screen-' + role + '-home');
+      startSync();
+    }
+
+    function setMod(m) {
+      STATE.modalidade = m;
+      document.getElementById('btn-mun').classList.toggle('active', m === 'municipal');
+      document.getElementById('btn-inter').classList.toggle('active', m === 'inter');
+    }
+
+    async function pedirCorrida() {
+      const dest = document.getElementById('cli-destino').value;
+      if(!dest) return;
+      const nova = { id: Date.now(), destino: dest, tipo: STATE.modalidade, status: 'buscando' };
+      DB.corridas.push(nova);
+      document.getElementById('pedir-box').classList.add('hidden');
+      document.getElementById('cli-status-card').classList.remove('hidden');
+      await syncPush();
+    }
+
+    function toggleOnline() {
+      STATE.online = !STATE.online;
+      const btn = document.getElementById('mot-toggle');
+      btn.innerText = STATE.online ? 'Online' : 'Offline';
+      btn.classList.toggle('bg-green-500', STATE.online);
+      btn.classList.toggle('bg-red-500', !STATE.online);
+    }
+
+    async function aceitarCorrida(id) {
+      const c = DB.corridas.find(x => x.id === id);
+      if(c) {
+        c.status = 'aceita';
+        c.motorista = 'Rodolfo';
+        await syncPush();
+      }
+    }
+
+    async function syncPush() {
+      try { await fetch(CLOUD_URL, { method: 'PUT', body: JSON.stringify(DB) }); } catch(e){}
+    }
+
+    function startSync() {
+      setInterval(async () => {
+        try {
+          const r = await fetch(CLOUD_URL + '?t=' + Date.now());
+          if(r.ok) {
+            const data = await r.json();
+            if(data && data.corridas) {
+                DB = data;
+                if(STATE.role === 'motorista' && STATE.online) renderFila();
+                if(STATE.role === 'cliente') updateClienteStatus();
+            }
+          }
+        } catch(e){}
+      }, 3000);
+    }
+
+    function renderFila() {
+      const container = document.getElementById('fila-corridas');
+      const disp = (DB.corridas || []).filter(c => c.status === 'buscando');
+      if(disp.length === 0) {
+        container.innerHTML = '<div class="text-center p-20 text-slate-300 font-black italic opacity-40"><i class="fa-solid fa-clock text-4xl mb-4 block"></i>Nenhuma chamada ativa</div>';
+        return;
+      }
+      container.innerHTML = disp.map(c => `
+        <div class="card p-8 border-l-[16px] border-orange-500 shadow-xl animate-pulse">
+          <div class="mb-6">
+            <div class="text-[10px] font-black text-slate-300 uppercase mb-1">Destino</div>
+            <div class="text-2xl font-black text-slate-800 leading-tight italic tracking-tighter">${c.destino}</div>
+          </div>
+          <div class="flex justify-between items-center">
+            <div class="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg font-black text-[10px] italic">${c.tipo.toUpperCase()}</div>
+            <button onclick="aceitarCorrida(${c.id})" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg">Aceitar</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateClienteStatus() {
+        const minha = (DB.corridas || []).find(c => c.status === 'aceita');
+        if(minha) {
+            document.getElementById('cli-status-card').innerHTML = `<div class="text-6xl mb-6">🚀</div><div class="text-3xl font-black italic uppercase tracking-tighter">A Caminho!</div><p class="text-xs font-bold mt-4 opacity-70">O motorista já aceitou o seu chamado.</p>`;
+            document.getElementById('cli-status-card').classList.replace('bg-orange-600', 'bg-green-600');
         }
-      } catch(e) {}
     }
-
-    // Iniciar Sincronização Automática (a cada 3 segundos)
-    setInterval(syncFromCloud, 3000);
-
   </script>
 </body>
 </html>
