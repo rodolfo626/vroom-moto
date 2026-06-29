@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v9.2 - Full Integration</title>
+    <title>VROOM MOTO v9.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,262 +13,134 @@
         :root { --vroom: #FF6B00; }
         body { font-family: 'Inter', sans-serif; background: #0F172A; margin: 0; padding: 0; overflow-x: hidden; }
         .screen { display: none; min-height: 100vh; width: 100vw; flex-direction: column; background: #F8FAFC; }
-        .screen.active { display: flex; }
+        .screen.active { display: flex !important; }
         .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; border-radius: 18px; transition: 0.2s; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .input-vroom { background: #F1F5F9; border: 2px solid #E2E8F0; padding: 14px; border-radius: 16px; outline: none; font-weight: 600; width: 100%; color: #1E293B; font-size: 14px; }
         #map { height: 350px; width: 100%; z-index: 1; }
-        
         .driver-panel { position: fixed; top: 10px; left: 10px; right: 10px; background: white; border-radius: 20px; padding: 12px 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 100; display: none; border-left: 5px solid var(--vroom); }
-        .driver-panel.active { display: flex; animation: slideDown 0.4s ease-out; }
-        
-        .card-job { background: white; border-radius: 20px; padding: 20px; border: 2px solid #E2E8F0; position: relative; margin-bottom: 16px; }
-        .card-job.next { border-color: var(--vroom); box-shadow: 0 10px 15px -3px rgba(255, 107, 0, 0.1); }
-        .badge-next { position: absolute; top: 0; right: 0; background: var(--vroom); color: white; font-size: 8px; font-weight: 900; padding: 4px 12px; border-radius: 0 0 0 12px; text-transform: uppercase; }
-        
-        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+        .driver-panel.active { display: flex !important; }
     </style>
 </head>
 <body onload="nav('portal')">
 
-    <!-- ÁUDIO DE BUZINA (BI-BII) -->
     <audio id="audio-buzina" preload="auto">
         <source src="https://assets.mixkit.co/active_storage/sfx/2855/2855-preview.mp3" type="audio/mpeg">
     </audio>
 
     <!-- PORTAL PRINCIPAL -->
-    <div id="screen-portal" class="screen active items-center justify-center p-8 !bg-[#0F172A] text-white">
+    <div id="screen-portal" class="screen items-center justify-center p-8 !bg-[#0F172A] text-white">
         <div class="text-center mb-12">
             <i class="fas fa-motorcycle text-7xl text-orange-500 mb-4"></i>
             <h1 class="text-5xl font-black italic tracking-tighter uppercase leading-none">VROOM<span class="text-orange-500">MOTO</span></h1>
-            <p class="text-slate-500 text-[10px] font-bold uppercase mt-2 italic tracking-[0.2em]">Full Professional v9.2</p>
+            <p class="text-slate-500 text-[10px] font-bold uppercase mt-2 italic tracking-[0.2em]">v9.3 Stable</p>
         </div>
         <div class="w-full max-w-xs space-y-4">
-            <button onclick="nav('cliente-login')" class="w-full vroom-btn py-5 text-lg shadow-2xl shadow-orange-500/20">Pedir uma Moto</button>
+            <button onclick="nav('cliente-login')" class="w-full vroom-btn py-5 text-lg shadow-2xl">Pedir uma Moto</button>
             <button onclick="nav('motorista-login')" class="w-full bg-slate-800 py-5 rounded-2xl font-black uppercase text-xs text-white">Motorista</button>
             <button onclick="nav('adm-login')" class="w-full bg-transparent border-2 border-slate-700 text-slate-500 py-3 rounded-2xl text-[9px] font-black uppercase">Painel Master</button>
         </div>
     </div>
 
-    <!-- TELA: CADASTRO CLIENTE -->
+    <!-- TELA: LOGIN CLIENTE -->
     <div id="screen-cliente-login" class="screen p-8 justify-center items-center">
         <div class="w-full max-w-sm text-center">
-            <h2 class="text-2xl font-black italic mb-6 uppercase">Área do Cliente</h2>
-            <div class="space-y-4">
-                <input type="text" id="cli-nome" placeholder="Seu Nome" class="input-vroom">
-                <input type="tel" id="cli-tel" placeholder="Seu WhatsApp" class="input-vroom">
-                <button onclick="nav('cliente-app')" class="w-full vroom-btn py-5 mt-4">Acessar Mapa</button>
-                <button onclick="nav('portal')" class="mt-4 block w-full text-xs font-black text-slate-400 uppercase">Voltar</button>
-            </div>
+            <h2 class="text-2xl font-black italic mb-6 uppercase">Acesso Cliente</h2>
+            <input type="text" id="cli-nome" placeholder="Seu Nome" class="input-vroom mb-4">
+            <button onclick="nav('cliente-app')" class="w-full vroom-btn py-5">Entrar</button>
+            <button onclick="nav('portal')" class="mt-4 block w-full text-xs font-black text-slate-400">VOLTAR</button>
         </div>
     </div>
 
     <!-- TELA: APP CLIENTE COMPLETA -->
     <div id="screen-cliente-app" class="screen !bg-white">
-        <!-- PAINEL SUPERIOR DO MOTORISTA (Ativa ao aceitar) -->
         <div id="driver-status" class="driver-panel items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center border-2 border-orange-500"><i class="fas fa-user text-slate-400"></i></div>
-                <div>
-                    <p class="text-[10px] font-black uppercase text-slate-400 leading-none">Motorista a caminho</p>
-                    <p class="text-sm font-black italic">Rodolfo Oliveira</p>
-                    <p class="text-[9px] font-bold text-slate-500 uppercase">Moto 160 • ABC-1234</p>
-                </div>
+                <div><p class="text-sm font-black italic">Rodolfo Oliveira</p><p class="text-[9px] font-bold text-slate-500 uppercase">Moto 160 • ABC-1234</p></div>
             </div>
-            <div class="text-right">
-                <p class="text-[8px] font-black uppercase text-slate-400">Chegada</p>
-                <p class="text-lg font-black text-orange-500 italic leading-none">4 min</p>
-            </div>
+            <div class="text-right"><p class="text-lg font-black text-orange-500 italic">4 min</p></div>
         </div>
-
         <div id="map"></div>
-        
-        <div class="flex-1 p-6 space-y-4 -mt-10 bg-white rounded-t-[40px] shadow-2xl z-20 overflow-y-auto pb-12">
-            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-2"></div>
-            
-            <div class="space-y-1">
-                <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Sua Localização</label>
-                <input type="text" id="loc-origem" value="Localizando pelo Google Maps..." readonly class="input-vroom !bg-slate-50 !border-none text-xs">
+        <div class="flex-1 p-6 space-y-4 -mt-10 bg-white rounded-t-[40px] shadow-2xl z-20">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto"></div>
+            <input type="text" id="loc-destino" placeholder="Para onde vamos?" class="input-vroom" oninput="autoCalc()">
+            <div id="price-card" class="hidden p-4 bg-orange-50 border-2 border-orange-100 rounded-3xl flex justify-between items-center">
+                <p class="text-2xl font-black italic" id="ride-price">R$ 7,00</p>
+                <p class="text-[9px] font-black text-orange-600 uppercase italic" id="ride-type">Municipal</p>
             </div>
-
-            <div class="space-y-1">
-                <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Qual o seu destino?</label>
-                <input type="text" id="loc-destino" placeholder="Digite o endereço de destino..." class="input-vroom" oninput="autoCalc()">
-            </div>
-
-            <div id="price-card" class="hidden p-5 bg-orange-50 border-2 border-orange-100 rounded-3xl flex justify-between items-center">
-                <div>
-                    <p class="text-[9px] font-black text-orange-600 uppercase italic" id="ride-type">Municipal (Fixo)</p>
-                    <p class="text-3xl font-black italic" id="ride-price">R$ 7,00</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase">Tempo Estimado</p>
-                    <p class="text-xs font-black uppercase text-slate-800">8 - 12 min</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 gap-3">
-                <button onclick="confirmarPedido()" id="btn-confirm" class="w-full vroom-btn py-5 shadow-xl shadow-orange-500/20">Confirmar Corrida</button>
-                <button onclick="cancelarPedido()" id="btn-cancel" class="hidden w-full bg-slate-100 text-slate-400 py-4 rounded-2xl font-black uppercase text-xs">Cancelar Pedido</button>
-            </div>
-            <button onclick="nav('portal')" class="w-full text-[9px] font-black text-slate-300 uppercase mt-2">Sair do App</button>
+            <button onclick="confirmarPedido()" id="btn-confirm" class="w-full vroom-btn py-5">Confirmar</button>
+            <button onclick="nav('portal')" class="w-full text-xs font-black text-slate-400 uppercase mt-4">Sair</button>
         </div>
     </div>
 
     <!-- TELA: LOGIN MOTORISTA -->
     <div id="screen-motorista-login" class="screen p-8 justify-center items-center">
         <div class="w-full max-w-sm text-center">
-            <h2 class="text-2xl font-black italic mb-8 uppercase text-slate-800">Acesso Motorista</h2>
-            <div class="space-y-4">
-                <input type="text" id="mot-user" placeholder="Usuário" class="input-vroom" value="Rodolfo Oliveira">
-                <input type="password" id="mot-pass" placeholder="Senha" class="input-vroom" value="Rm280198">
-                <button onclick="nav('motorista-app')" class="w-full vroom-btn py-5 shadow-lg">Ficar Online</button>
-                <button onclick="nav('portal')" class="text-slate-400 font-bold uppercase text-[10px] mt-6 block w-full">Voltar</button>
-            </div>
+            <h2 class="text-2xl font-black italic mb-8 uppercase text-slate-800">Motorista</h2>
+            <input type="text" id="mot-user" placeholder="Usuário" class="input-vroom mb-4" value="Rodolfo Oliveira">
+            <input type="password" id="mot-pass" placeholder="Senha" class="input-vroom mb-4" value="Rm280198">
+            <button onclick="nav('motorista-app')" class="w-full vroom-btn py-5">Entrar</button>
+            <button onclick="nav('portal')" class="text-slate-400 font-bold uppercase text-[10px] mt-6 block">Voltar</button>
         </div>
     </div>
 
-    <!-- TELA: APP MOTORISTA (FILA COM BUZINA) -->
     <div id="screen-motorista-app" class="screen !bg-slate-50">
-        <header class="bg-slate-900 text-white p-6 flex justify-between items-center">
-            <span class="font-black italic">VROOM <span class="text-orange-500">OPERATOR</span></span>
-            <span class="text-[10px] font-black uppercase bg-green-500 px-2 py-1 rounded">Disponível</span>
-        </header>
-        <div class="p-6 space-y-4 flex-1 overflow-y-auto">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xs font-black uppercase text-slate-400 italic">Fila Global</h2>
-                <button onclick="document.getElementById('audio-buzina').play()" class="text-[8px] bg-slate-200 px-2 py-1 rounded font-bold uppercase">Testar Buzina</button>
-            </div>
-            <div id="queue-container" class="space-y-4">
-                <!-- Corridas aparecem aqui -->
-                <p class="text-center text-slate-400 text-[10px] py-10 uppercase font-bold">Aguardando novos chamados...</p>
-            </div>
+        <header class="bg-slate-900 text-white p-6 flex justify-between items-center"><span class="font-black italic">VROOM FILA</span><button onclick="nav('portal')">SAIR</button></header>
+        <div class="p-8 text-center">
+            <button onclick="document.getElementById('audio-buzina').play()" class="vroom-btn py-3 px-6 text-xs">Testar Som (Bi-Bii)</button>
         </div>
-        <button onclick="nav('portal')" class="p-6 text-slate-400 text-xs font-black uppercase">Encerrar Turno</button>
     </div>
 
     <!-- TELA ADM -->
     <div id="screen-adm-login" class="screen p-8 justify-center items-center">
-        <div class="w-full max-w-sm text-center">
-            <h2 class="text-2xl font-black italic mb-6">PAINEL ADM</h2>
-            <input type="text" id="adm-user" class="input-vroom mb-4" value="Rodolfo Oliveira">
-            <input type="password" id="adm-pass" placeholder="Senha" class="input-vroom mb-4">
-            <button onclick="alert('Acesso Master Autorizado!')" class="w-full vroom-btn py-4">Entrar</button>
-            <button onclick="nav('portal')" class="mt-4 block w-full text-xs font-black text-slate-400 uppercase">Voltar</button>
-        </div>
+        <h2 class="text-2xl font-black italic mb-6">ADM</h2>
+        <input type="text" value="Rodolfo Oliveira" class="input-vroom mb-4">
+        <button onclick="alert('Master Ativo')" class="vroom-btn py-4 w-full">Acessar</button>
+        <button onclick="nav('portal')" class="mt-4 block w-full text-xs font-black text-slate-400">VOLTAR</button>
     </div>
 
     <script>
-        let map;
-        let globalQueue = [];
-
         function nav(id) {
-            document.querySelectorAll('.screen').forEach(s => {
-                s.classList.remove('active');
-                s.style.display = 'none';
-            });
+            // Esconde todas as telas de forma agressiva
+            const screens = document.getElementsByClassName('screen');
+            for(let i=0; i < screens.length; i++) {
+                screens[i].style.display = 'none';
+                screens[i].classList.remove('active');
+            }
+            // Mostra a tela alvo
             const target = document.getElementById('screen-' + id);
             if(target) {
-                target.classList.add('active');
                 target.style.display = 'flex';
+                target.classList.add('active');
             }
             if(id === 'cliente-app') initMap();
-            if(id === 'motorista-app') updateQueueUI();
         }
 
         function initMap() {
             setTimeout(() => {
-                if(!map) {
-                    map = L.map('map').setView([-23.55, -46.63], 15);
-                    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}').addTo(map);
-                    if(navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(pos => {
-                            const { latitude, longitude } = pos.coords;
-                            map.setView([latitude, longitude], 17);
-                            L.marker([latitude, longitude]).addTo(map);
-                            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
-                                .then(r => r.json()).then(data => {
-                                    document.getElementById('loc-origem').value = data.display_name.split(',')[0] + ', ' + data.display_name.split(',')[1];
-                                });
-                        });
-                    }
+                const mapDiv = document.getElementById('map');
+                if(mapDiv && !mapDiv.innerHTML) {
+                    let m = L.map('map').setView([-23.55, -46.63], 15);
+                    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}').addTo(m);
                 }
-                map.invalidateSize();
             }, 300);
         }
 
         function autoCalc() {
             const d = document.getElementById('loc-destino').value;
-            const card = document.getElementById('price-card');
-            if(d.length > 5) {
-                card.classList.remove('hidden');
-                if(d.toLowerCase().includes('inter') || d.toLowerCase().includes('km')) {
-                    document.getElementById('ride-type').innerText = "Intermunicipal (KM)";
-                    document.getElementById('ride-price').innerText = "R$ 28,50";
-                } else {
-                    document.getElementById('ride-type').innerText = "Municipal (Fixo)";
-                    document.getElementById('ride-price').innerText = "R$ 7,00";
-                }
-            } else card.classList.add('hidden');
+            const c = document.getElementById('price-card');
+            if(d.length > 4) c.classList.remove('hidden');
+            else c.classList.add('hidden');
         }
 
         function confirmarPedido() {
-            const dest = document.getElementById('loc-destino').value;
-            if(!dest) return alert('Por favor, digite o destino!');
-            
-            const btn = document.getElementById('btn-confirm');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Solicitando...';
-            
-            // Adiciona na fila e toca a buzina
-            globalQueue.push({
-                cliente: document.getElementById('cli-nome').value || "Cliente Particular",
-                destino: dest,
-                tipo: document.getElementById('ride-type').innerText,
-                preco: document.getElementById('ride-price').innerText
-            });
-
+            alert('Enviado! Buzina tocando na área do motorista.');
+            document.getElementById('audio-buzina').play();
+            document.getElementById('btn-confirm').innerHTML = 'Aguardando...';
             setTimeout(() => {
-                alert('Pedido enviado para a fila dos motoristas!');
-                btn.innerHTML = 'Aguardando Motorista...';
-                document.getElementById('btn-cancel').classList.remove('hidden');
-                
-                // Simula buzina para o motorista (em um app real seria via servidor)
-                document.getElementById('audio-buzina').play();
-                
-                // Simula aceite após 4 seg
-                setTimeout(() => {
-                    document.getElementById('driver-status').classList.add('active');
-                    btn.innerHTML = 'Motorista Aceitou!';
-                    btn.classList.replace('vroom-btn', 'bg-green-500');
-                }, 4000);
-            }, 1500);
-        }
-
-        function cancelarPedido() {
-            if(confirm('Deseja cancelar?')) window.location.reload();
-        }
-
-        function updateQueueUI() {
-            const container = document.getElementById('queue-container');
-            if(!container) return;
-            container.innerHTML = '';
-            if(globalQueue.length === 0) {
-                container.innerHTML = '<p class="text-center text-slate-400 text-[10px] py-10 uppercase font-bold">Aguardando novos chamados...</p>';
-                return;
-            }
-            globalQueue.forEach((job, index) => {
-                const card = document.createElement('div');
-                card.className = `card-job ${index === 0 ? 'next' : ''}`;
-                card.innerHTML = `
-                    ${index === 0 ? '<div class="badge-next">PRÓXIMA DA FILA</div>' : ''}
-                    <div class="flex justify-between items-start mb-2">
-                        <div><p class="text-[8px] font-black text-slate-400 uppercase">Cliente</p><p class="text-sm font-black italic">${job.cliente}</p></div>
-                        <div class="text-right"><p class="text-[8px] font-black text-orange-500 uppercase">${job.tipo}</p><p class="text-xs font-black">${job.preco}</p></div>
-                    </div>
-                    <p class="text-[10px] text-slate-500 truncate"><i class="fas fa-map-marker-alt"></i> ${job.destino}</p>
-                    ${index === 0 ? '<button onclick="alert('Iniciando corrida!')" class="w-full vroom-btn py-3 mt-4 text-[10px]">Aceitar Corrida</button>' : ''}
-                `;
-                container.appendChild(card);
-            });
+                document.getElementById('driver-status').style.display = 'flex';
+                document.getElementById('driver-status').classList.add('active');
+            }, 3000);
         }
     </script>
 </body>
