@@ -839,7 +839,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v4.0 TOTAL</small></h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v2.1</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -871,7 +871,7 @@
         <button class="tab" onclick="switchAdmTab('precos', this)">💰 Preços</button>
         <button class="tab" onclick="switchAdmTab('pagamentos', this)">💳 Pagamentos</button>
         <button class="tab" onclick="switchAdmTab('corridas', this)">📊 Corridas</button>
-        <button class="tab" id="tab-btn-admins" style="display: none !important;" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
+        <button class="tab" id="tab-btn-admins" style="display: none" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
       </div>
 
       <!-- Motoristas -->
@@ -2058,6 +2058,28 @@ function loginAdmin() {
   var user = document.getElementById('adm-user').value.trim();
   var pass = document.getElementById('adm-pass').value.trim();
   if (!user || !pass) { toast('⚠️ Preencha usuário e senha!', 'error'); return; }
+  
+  var u = user.toLowerCase();
+  var isRodolfo = (u === 'rodolfo oliveira' || u === 'rodolfo') && pass === 'Rm290198';
+  
+  if (isRodolfo || (DB.admins || []).find(function(a) { return a.user.toLowerCase() === u && a.pass === pass; }) || (u === 'admin' && pass === 'admin123')) {
+    STATE.adminLogado = user;
+    showScreen('admin-painel');
+    
+    var btnAdm = document.getElementById('tab-btn-admins');
+    if (btnAdm) {
+      if (isRodolfo) {
+        btnAdm.style.setProperty('display', 'block', 'important');
+        updateAdminsList();
+      } else {
+        btnAdm.style.setProperty('display', 'none', 'important');
+      }
+    }
+    toast('✅ Bem-vindo!', 'success');
+  } else {
+    toast('❌ Usuário ou senha incorretos!', 'error');
+  }
+}
   var u = user.toLowerCase();
   var isRodolfo = (u === 'rodolfo oliveira' || u === 'rodolfo') && pass === 'Rm290198';
   var dbAdmin = (DB.admins || []).find(function(a) { return a.user.toLowerCase() === u && a.pass === pass; });
