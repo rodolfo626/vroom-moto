@@ -3,133 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v4.6</title>
+    <title>VROOM MASTER - Painel de Controle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         :root { --vroom: #FF6B00; }
-        body { font-family: 'Inter', sans-serif; background: #0F172A; margin: 0; padding: 0; }
-        .screen { display: none; min-height: 100vh; width: 100vw; flex-direction: column; background: #F8FAFC; }
-        .screen.active { display: flex; }
-        .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; transition: 0.2s; border-radius: 18px; }
-        .input-vroom { background: #F1F5F9; border: 2px solid #E2E8F0; padding: 14px; border-radius: 16px; outline: none; font-weight: 600; width: 100%; color: #1E293B; text-align: center; }
-        #map { height: 350px; width: 100%; background: #E2E8F0; }
+        body { font-family: 'Inter', sans-serif; background: #F1F5F9; }
+        .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; border-radius: 12px; transition: 0.2s; }
+        .card-adm { background: white; border-radius: 24px; padding: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #E2E8F0; }
+        .input-adm { background: #F8FAFC; border: 2px solid #E2E8F0; padding: 12px; border-radius: 12px; width: 100%; outline: none; font-weight: 600; font-size: 14px; }
+        .input-adm:focus { border-color: var(--vroom); background: white; }
+        .nav-item { padding: 12px; border-radius: 12px; display: flex; items-center; gap: 12px; font-weight: 700; font-size: 12px; text-transform: uppercase; color: #64748B; cursor: pointer; }
+        .nav-item.active { background: #0F172A; color: white; }
     </style>
 </head>
 <body>
 
-    <!-- PORTAL -->
-    <div id="screen-portal" class="screen active items-center justify-center p-8 !bg-[#0F172A] text-white">
-        <h1 class="text-4xl font-black italic mb-10 tracking-tighter uppercase">VROOM<span class="text-orange-500">MOTO</span></h1>
-        <div class="w-full max-w-xs space-y-4">
-            <button onclick="nav('cliente-login')" class="w-full vroom-btn py-5">Pedir uma Moto</button>
-            <button onclick="nav('motorista-login')" class="w-full bg-slate-800 py-5 rounded-2xl font-black uppercase text-xs">Motorista</button>
-            <button onclick="nav('adm-login')" class="w-full bg-transparent border-2 border-slate-700 text-slate-500 py-3 rounded-2xl text-[10px] font-black uppercase">Painel Master</button>
-        </div>
-    </div>
-
-    <!-- LOGIN CLIENTE -->
-    <div id="screen-cliente-login" class="screen p-8 justify-center items-center">
-        <div class="w-full max-w-sm text-center">
-            <h2 class="text-3xl font-black italic mb-8 uppercase text-slate-800">Seja Bem-vindo</h2>
-            <div class="space-y-4">
-                <input type="text" id="cli-nome" placeholder="Seu Nome" class="input-vroom">
-                <input type="text" placeholder="CPF" class="input-vroom">
-                <input type="tel" placeholder="WhatsApp" class="input-vroom">
-                <button onclick="nav('cliente-app')" class="w-full vroom-btn py-5 shadow-xl">Entrar Agora</button>
-                <button onclick="nav('portal')" class="text-slate-400 text-[10px] font-black uppercase mt-10 block w-full">Voltar</button>
+    <!-- SIDEBAR / MENU (Para Desktop/Tablet) ou TOP BAR (Mobile) -->
+    <div class="flex flex-col min-h-screen">
+        <header class="bg-slate-900 text-white p-6 flex justify-between items-center sticky top-0 z-50">
+            <div class="flex flex-col">
+                <h1 class="text-xl font-black italic italic tracking-tighter uppercase">VROOM<span class="text-orange-500">MASTER</span></h1>
+                <p class="text-[8px] font-bold text-slate-500 uppercase tracking-[0.2em]">Rodolfo Oliveira - Administrador</p>
             </div>
-        </div>
-    </div>
+            <button onclick="window.location.reload()" class="bg-slate-800 p-3 rounded-xl text-slate-400"><i class="fas fa-sign-out-alt"></i></button>
+        </header>
 
-    <!-- ÁREA DO CLIENTE (MAPA) -->
-    <div id="screen-cliente-app" class="screen">
-        <div class="p-4 bg-white flex justify-between items-center border-b">
-            <span class="text-xl font-black italic">VROOM<span class="text-orange-500">MOTO</span></span>
-            <button onclick="nav('portal')" class="text-slate-400"><i class="fas fa-sign-out-alt"></i></button>
-        </div>
-        <div id="map"></div>
-        <div class="p-6 bg-slate-50 flex-1 space-y-4">
-            <div class="bg-white p-4 rounded-2xl shadow-sm">
-                <input type="text" id="destino" placeholder="Para onde vamos?" class="w-full font-bold outline-none text-slate-800">
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="alert('Solicitando Corrida Municipal (Fixo)...')" class="bg-white p-4 rounded-2xl border-2 border-slate-100 font-black text-xs uppercase text-slate-600 italic">Municipal</button>
-                <button onclick="alert('Calculando Corrida por KM...')" class="bg-white p-4 rounded-2xl border-2 border-slate-100 font-black text-xs uppercase text-slate-600 italic">Intermunicipal</button>
-            </div>
-        </div>
-    </div>
+        <nav class="bg-white border-b p-2 flex overflow-x-auto gap-2 sticky top-[84px] z-40 shadow-sm">
+            <div onclick="tab('motoristas')" id="tab-btn-motoristas" class="nav-item active flex-shrink-0"><i class="fas fa-motorcycle"></i> Motoristas</div>
+            <div onclick="tab('tarifas')" id="tab-btn-tarifas" class="nav-item flex-shrink-0"><i class="fas fa-tag"></i> Tarifas</div>
+            <div onclick="tab('mensalidade')" id="tab-btn-mensalidade" class="nav-item flex-shrink-0"><i class="fas fa-calendar-check"></i> Mensalidade</div>
+            <div onclick="tab('adms')" id="tab-btn-adms" class="nav-item flex-shrink-0"><i class="fas fa-users-cog"></i> Equipe ADM</div>
+        </nav>
 
-    <!-- LOGIN ADM (CORRIGIDO: Rodolfo Oliveira / Rm290198) -->
-    <div id="screen-adm-login" class="screen p-8 justify-center items-center">
-        <div class="w-full max-w-sm bg-white p-10 rounded-[40px] shadow-2xl text-center">
-            <h2 class="text-2xl font-black italic mb-8 uppercase text-slate-800">Painel ADM</h2>
-            <div class="space-y-4">
-                <input type="text" id="adm-user" placeholder="Usuário" class="input-vroom" value="Rodolfo Oliveira">
-                <input type="password" id="adm-pass" placeholder="Senha" class="input-vroom">
-                <button onclick="checkAdm()" class="w-full vroom-btn py-4">Entrar no Sistema</button>
-                <button onclick="nav('portal')" class="text-slate-400 text-[10px] font-black uppercase mt-6 block">Voltar</button>
-            </div>
-        </div>
-    </div>
+        <main class="p-6 space-y-6 flex-1 pb-20">
 
-    <!-- PAINEL ADM -->
-    <div id="screen-adm-dashboard" class="screen !bg-slate-50">
-        <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
-            <span class="font-black italic">VROOM <span class="text-orange-500">MASTER</span></span>
-            <button onclick="nav('portal')" class="text-slate-400"><i class="fas fa-sign-out-alt"></i></button>
-        </div>
-        <div class="p-6">
-            <div class="bg-white p-8 rounded-[32px] shadow-sm text-center">
-                <h3 class="font-black uppercase text-xs text-slate-400 mb-6 italic">Cadastro de Motoristas</h3>
-                <div class="space-y-4">
-                    <input type="text" placeholder="Nome do Motorista" class="input-vroom !text-sm">
-                    <input type="text" placeholder="CPF" class="input-vroom !text-sm">
-                    <button class="w-full vroom-btn py-4">Salvar Motorista</button>
+            <!-- A) CADASTRO DE MOTORISTA E MOTOCICLETA -->
+            <div id="tab-motoristas" class="tab-content space-y-6">
+                <div class="card-adm">
+                    <h2 class="text-sm font-black uppercase text-slate-400 mb-6 italic tracking-widest border-b pb-2"><i class="fas fa-plus-circle mr-2"></i>Aprovar Novo Parceiro</h2>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Dados do Condutor</label>
+                                <div class="space-y-2 mt-2">
+                                    <input type="text" placeholder="Nome Completo" class="input-adm">
+                                    <input type="text" placeholder="CPF" class="input-adm">
+                                    <input type="text" placeholder="CNH (Categoria A)" class="input-adm">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button class="bg-slate-100 p-3 rounded-xl text-[9px] font-black uppercase text-slate-500"><i class="fas fa-id-card mr-1"></i> Foto CNH</button>
+                                        <button class="bg-slate-100 p-3 rounded-xl text-[9px] font-black uppercase text-slate-500"><i class="fas fa-home mr-1"></i> Comprovante</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Dados da Moto</label>
+                                <div class="space-y-2 mt-2">
+                                    <input type="text" placeholder="Marca/Modelo" class="input-adm">
+                                    <input type="text" placeholder="Placa da Moto" class="input-adm">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" placeholder="Ano" class="input-adm">
+                                        <input type="text" placeholder="Cor" class="input-adm">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="w-full vroom-btn py-4 mt-4 shadow-lg shadow-orange-500/20 italic">Aprovar e Ativar Motorista</button>
+                    </div>
+                </div>
+
+                <div class="card-adm !p-0 overflow-hidden">
+                    <div class="p-4 bg-slate-50 border-b">
+                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Status da Frota</h3>
+                    </div>
+                    <div class="divide-y">
+                        <div class="p-4 flex justify-between items-center bg-white">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-orange-100 rounded-full"></div>
+                                <div>
+                                    <p class="text-xs font-black text-slate-800 uppercase">João Silva</p>
+                                    <p class="text-[9px] font-bold text-slate-400">Placa: ABC-1234 • <span class="text-green-500 uppercase">Aprovado</span></p>
+                                </div>
+                            </div>
+                            <button class="text-slate-300"><i class="fas fa-edit"></i></button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- LOGIN MOTORISTA -->
-    <div id="screen-motorista-login" class="screen p-8 justify-center items-center">
-        <div class="w-full max-w-sm text-center space-y-6">
-            <h2 class="text-3xl font-black italic uppercase">Motorista</h2>
-            <input type="text" placeholder="Usuário" class="input-vroom">
-            <input type="password" placeholder="Senha" class="input-vroom">
-            <button class="w-full vroom-btn py-5">Entrar</button>
-            <button onclick="nav('portal')" class="text-slate-400 font-bold uppercase text-[10px]">Voltar</button>
-        </div>
+            <!-- B) CADASTRO E CONFIGURAÇÃO DE PREÇO -->
+            <div id="tab-tarifas" class="tab-content hidden space-y-6">
+                <div class="card-adm">
+                    <h2 class="text-sm font-black uppercase text-slate-400 mb-6 italic tracking-widest border-b pb-2"><i class="fas fa-dollar-sign mr-2"></i>Módulo de Precificação</h2>
+                    <div class="space-y-6">
+                        <div class="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                            <p class="text-[10px] font-black text-orange-700 uppercase mb-3">Corrida Municipal (Fixo)</p>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3 text-orange-600 font-black">R$</span>
+                                <input type="number" value="7.00" class="input-adm !pl-10 !text-xl !text-orange-600 font-black">
+                            </div>
+                            <p class="text-[9px] text-orange-600/70 mt-2 font-bold italic">* Valor único cobrado dentro da cidade.</p>
+                        </div>
+
+                        <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                            <p class="text-[10px] font-black text-blue-700 uppercase mb-3">Corrida Intermunicipal (Cálculo OSRM)</p>
+                            <div class="grid grid-cols-1 gap-4">
+                                <div class="relative">
+                                    <label class="text-[9px] font-black text-blue-600/70 ml-1 uppercase">Valor por KM</label>
+                                    <div class="relative mt-1">
+                                        <span class="absolute left-4 top-3 text-blue-600 font-black">R$</span>
+                                        <input type="number" value="2.00" class="input-adm !pl-10 !text-xl !text-blue-600 font-black">
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <label class="text-[9px] font-black text-blue-600/70 ml-1 uppercase">Taxa Base de Partida</label>
+                                    <div class="relative mt-1">
+                                        <span class="absolute left-4 top-3 text-blue-600 font-black">R$</span>
+                                        <input type="number" value="3.00" class="input-adm !pl-10 !text-xl !text-blue-600 font-black">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-xl italic">Salvar Configurações</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- C) PRECIFICAÇÃO E CONTROLE DA MENSALIDADE -->
+            <div id="tab-mensalidade" class="tab-content hidden space-y-6">
+                <div class="card-adm">
+                    <h2 class="text-sm font-black uppercase text-slate-400 mb-6 italic tracking-widest border-b pb-2"><i class="fas fa-calendar-alt mr-2"></i>Gestão de Mensalidades</h2>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Valor da Mensalidade</label>
+                                <div class="relative mt-1">
+                                    <span class="absolute left-3 top-3 text-slate-400 font-black">R$</span>
+                                    <input type="number" value="70.00" class="input-adm !pl-9">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1">Vencimento (Dia)</label>
+                                <input type="number" value="10" class="input-adm mt-1">
+                            </div>
+                        </div>
+                        
+                        <div class="bg-red-50 p-4 rounded-2xl border border-red-100 mt-4">
+                            <div class="flex gap-3">
+                                <i class="fas fa-robot text-red-500 text-xl"></i>
+                                <div>
+                                    <p class="text-[10px] font-black text-red-700 uppercase">Regra de Bloqueio Automático</p>
+                                    <p class="text-[9px] text-red-600/80 font-bold leading-tight mt-1 uppercase italic">Script diário ativo: Se o sistema detectar inadimplência, o status mudará automaticamente para "Inativo por Inadimplência", bloqueando o acesso às corridas.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="w-full vroom-btn py-4 mt-2 italic shadow-orange-500/10 shadow-lg">Atualizar Regras Financeiras</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- D) CADASTRO DE NOVOS ADMINISTRADORES (ADMs) -->
+            <div id="tab-adms" class="tab-content hidden space-y-6">
+                <div class="card-adm">
+                    <h2 class="text-sm font-black uppercase text-slate-400 mb-6 italic tracking-widest border-b pb-2"><i class="fas fa-shield-alt mr-2"></i>Gestão de Equipe Master</h2>
+                    <div class="space-y-4">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase italic mb-4">Atenção: Apenas o perfil principal (Rodolfo Oliveira) pode remover outros administradores.</p>
+                        <input type="text" placeholder="Nome do Novo Admin" class="input-adm">
+                        <input type="email" placeholder="E-mail" class="input-adm">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" placeholder="Usuário" class="input-adm">
+                            <input type="password" placeholder="Senha" class="input-adm">
+                        </div>
+                        <button class="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase italic tracking-widest">Criar Acesso ADM</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
     </div>
 
     <script>
-        let map;
-        function nav(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('screen-' + id).classList.add('active');
-            if(id === 'cliente-app') {
-                setTimeout(() => {
-                    if(!map) {
-                        map = L.map('map').setView([-23.55, -46.63], 13);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                    }
-                    map.invalidateSize();
-                }, 200);
-            }
-        }
-
-        function checkAdm() {
-            const u = document.getElementById('adm-user').value;
-            const p = document.getElementById('adm-pass').value;
-            // Rodolfo: O sistema diferencia MAIÚSCULAS de minúsculas. Ajustado para Rodolfo Oliveira.
-            if(u === 'Rodolfo Oliveira' && p === 'Rm290198') {
-                nav('adm-dashboard');
-            } else {
-                alert('Acesso Negado! Verifique Usuário e Senha.');
-            }
+        function tab(id) {
+            // Esconde todas as abas
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            // Remove active de todos os botões
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            
+            // Mostra a aba clicada
+            document.getElementById('tab-' + id).classList.remove('hidden');
+            // Ativa o botão clicado
+            document.getElementById('tab-btn-' + id).classList.add('active');
         }
     </script>
 </body>
