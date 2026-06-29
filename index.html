@@ -840,7 +840,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v8.1 - ESTÁVEL</small></h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v9.0 - SYNC FIX - ESTÁVEL</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -1524,7 +1524,7 @@ function confirmarCorrida() {
     dist: dist,
     status: 'buscando',
     motorista: null,
-    ts: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
+    ts: new Date().toLocaleString('pt-BR')
   };
 
   DB.corridas.push(STATE.corridaAtual);
@@ -1716,7 +1716,7 @@ function loginMotorista() {
   if (!mot) { toast('❌ Usuário ou senha incorretos!', 'error'); return; }
   
   // Permite login mesmo bloqueado para ver o aviso, mas redireciona
-  STATE.motoristaLogado = mot;
+  STATE.motoristaLogado = mot; STATE.motOnline = (mot.status === 'autorizado');
   if (mot.status !== 'autorizado') {
     mot.online = false;
   } else {
@@ -2097,16 +2097,20 @@ function initAdmin() {
 }
 
 function limparCorridasAntigas() {
-  var hojeStr = new Date().toLocaleDateString('pt-BR');
+  var hoje = new Date();
   var totalAntes = DB.corridas.length;
   DB.corridas = DB.corridas.filter(function(c) {
-    var dataCorrida = c.ts ? c.ts.split(' ')[0] : hojeStr;
+    // Mantém se for de hoje, se estiver em andamento ou se não tiver data (nova)
     var emAndamento = (c.status === 'buscando' || c.status === 'a_caminho' || c.status === 'em_corrida');
-    return dataCorrida === hojeStr || emAndamento;
+    if (emAndamento) return true;
+    if (!c.ts) return true;
+    
+    // Tenta extrair a data do ts (formato DD/MM/YYYY, HH:MM:SS)
+    var dataPart = c.ts.split(',')[0];
+    return dataPart === hoje.toLocaleDateString('pt-BR');
   });
   if (DB.corridas.length < totalAntes) {
     saveDB();
-    console.log('🧹 Corridas antigas limpas.');
   }
 }
 
