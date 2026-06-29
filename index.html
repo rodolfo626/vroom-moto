@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Vroom Moto 2.0</title>
+  <title>Vroom Moto 2.0 - FIX</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -27,19 +27,17 @@
   <div id="screen-portal" class="screen active p-8 items-center justify-center text-center">
     <div class="text-7xl mb-6">🏍️</div>
     <h1 class="text-5xl font-black italic tracking-tighter mb-2">VROOM<span class="text-orange-600">MOTO</span></h1>
-    <p class="text-slate-400 font-bold text-xs tracking-widest uppercase mb-12 italic">Escolha seu Perfil</p>
+    <p class="text-slate-400 font-bold text-xs tracking-widest uppercase mb-12 italic">Acesso v2.1</p>
     <div class="w-full max-w-xs space-y-4">
       <button onclick="initApp('cliente')" class="w-full vroom-btn py-6 rounded-2xl text-xl shadow-xl italic uppercase">Sou Cliente</button>
       <button onclick="initApp('motorista')" class="w-full bg-slate-900 text-white py-6 rounded-2xl text-xl shadow-xl italic uppercase">Sou Motorista</button>
-      
-      <!-- BOTÃO DA CENTRAL ADM -->
-      <button onclick="initApp('adm')" class="w-full bg-white border-2 border-slate-200 text-slate-500 py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
+      <button onclick="initApp('adm')" class="w-full bg-white border-2 border-slate-200 text-slate-500 py-4 rounded-2xl text-xs font-black uppercase flex items-center justify-center gap-2">
         <i class="fas fa-lock"></i> Central ADM
       </button>
     </div>
   </div>
 
-  <!-- TELAS RESTANTES (CLIENTE, MOTORISTA, ADM) -->
+  <!-- CLIENTE -->
   <div id="screen-cliente-home" class="screen">
     <div class="p-6 bg-white flex justify-between items-center shadow-sm">
       <span class="text-2xl font-black italic tracking-tighter">VROOM</span>
@@ -71,35 +69,44 @@
   </div>
 
   <div id="screen-motorista-home" class="screen">
-    <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
+    <div class="p-6 bg-slate-900 text-white flex justify-between items-center shadow-lg">
       <span class="text-xl font-black italic tracking-tighter">MOTORISTA</span>
-      <button onclick="toggleOnline()" id="mot-toggle" class="bg-red-500 px-6 py-2 rounded-xl font-black text-xs uppercase">Offline</button>
+      <button onclick="toggleOnline()" id="mot-toggle" class="bg-red-500 px-6 py-2 rounded-xl font-black text-xs uppercase shadow-md transition-all">Offline</button>
     </div>
-    <div class="p-6 flex-1 overflow-y-auto space-y-4" id="lista-chamadas">
-      <div class="text-center p-20 text-slate-400 font-bold italic opacity-60">Fique online...</div>
+    <div class="p-6 flex-1 overflow-y-auto" id="lista-chamadas">
+      <div class="text-center p-20 text-slate-400 font-bold italic opacity-60">Aguardando pedidos...</div>
     </div>
   </div>
 
   <div id="screen-adm-home" class="screen">
-    <div class="p-6 bg-slate-800 text-white flex justify-between items-center">
-      <span class="text-xl font-black italic tracking-tighter uppercase">Painel ADM</span>
+    <div class="p-6 bg-slate-800 text-white flex justify-between items-center shadow-lg">
+      <span class="text-xl font-black italic tracking-tighter uppercase">Central ADM</span>
       <button onclick="location.reload()" class="bg-slate-700 p-2 rounded-lg text-xs uppercase font-black tracking-widest">Sair</button>
     </div>
     <div class="p-6 flex-1 overflow-y-auto space-y-6">
       <div class="card p-6 border-t-4 border-orange-500">
-        <h3 class="text-xs font-black text-slate-400 uppercase mb-4 text-center">Tarifas Atuais</h3>
+        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 italic text-center">Configuração de Preços</h3>
         <div class="grid grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-black uppercase">Fixo (R$)</label><input type="number" id="adm-fixo" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-black"></div>
-          <div><label class="text-[10px] font-black uppercase">KM (R$)</label><input type="number" step="0.1" id="adm-km" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-black"></div>
+          <div>
+            <label class="text-[10px] font-black text-slate-500 uppercase">Fixo Municipal</label>
+            <input type="number" id="adm-fixo" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-black text-orange-600 outline-none">
+          </div>
+          <div>
+            <label class="text-[10px] font-black text-slate-500 uppercase">KM Intermunicipal</label>
+            <input type="number" step="0.1" id="adm-km" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-black text-orange-600 outline-none">
+          </div>
         </div>
-        <button onclick="saveSettings()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs mt-4 italic">Salvar Configurações</button>
+        <button onclick="saveSettings()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs mt-4">Salvar Alterações</button>
       </div>
-      <div id="adm-monitor" class="space-y-3"></div>
+      <div class="space-y-4">
+        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest italic">Monitor de Atividades</h3>
+        <div id="adm-monitor" class="space-y-3"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    const CLOUD_URL = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v2_ultimate.json';
+    const CLOUD_URL = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v2_final_fix.json';
     let DB = { corridas: [], settings: { fixo: 7.00, km: 2.50 } };
     let STATE = { role: null, online: false, modalidade: 'municipal', activeId: null, distKm: 0, 
                   origCoord: null, destCoord: null };
@@ -178,9 +185,12 @@
     }
 
     function updatePrices() {
-      document.getElementById('price-mun').innerText = 'R$ ' + DB.settings.fixo.toFixed(2).replace('.', ',');
-      const precoInter = (STATE.distKm * DB.settings.km).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      document.getElementById('price-inter').innerText = precoInter;
+      if(document.getElementById('price-mun')) 
+        document.getElementById('price-mun').innerText = 'R$ ' + DB.settings.fixo.toFixed(2).replace('.', ',');
+      if(document.getElementById('price-inter')) {
+        const precoInter = (STATE.distKm * DB.settings.km).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        document.getElementById('price-inter').innerText = precoInter;
+      }
     }
 
     function setMod(m) {
@@ -214,7 +224,10 @@
     }
 
     async function syncPush() {
-      try { await fetch(CLOUD_URL, { method: 'PUT', body: JSON.stringify(DB) }); } catch(e){}
+      try { 
+        const res = await fetch(CLOUD_URL, { method: 'PUT', body: JSON.stringify(DB) }); 
+        if(res.ok) console.log('Sync OK');
+      } catch(e){ console.error('Sync Error', e); }
     }
 
     function startSync() {
@@ -232,7 +245,7 @@
             }
           }
         } catch(e){}
-      }, 3000);
+      }, 2000);
     }
 
     function renderFilaMotorista() {
@@ -241,7 +254,6 @@
       if(disp.length === 0) { container.innerHTML = '<div class="text-center p-20 text-slate-400 font-bold italic">Aguardando...</div>'; return; }
       container.innerHTML = disp.map(c => `
         <div class="card p-6 border-l-[12px] border-orange-500 shadow-md mb-4">
-          <div class="text-[9px] font-black text-slate-300 uppercase">PEDIDO</div>
           <div class="text-xl font-black text-slate-800 italic">${c.destino.split(',')[0]}</div>
           <div class="flex justify-between items-center mt-4">
             <span class="text-orange-600 font-black text-lg italic">${c.valor}</span>
@@ -256,7 +268,7 @@
       if(todas.length === 0) { container.innerHTML = '<div class="text-center p-10 text-slate-300 font-bold italic">Sem atividade...</div>'; return; }
       container.innerHTML = todas.map(c => `
         <div class="bg-white p-4 rounded-xl border flex justify-between items-center">
-          <div><div class="text-xs font-black text-slate-800">${c.destino.split(',')[0]}</div></div>
+          <div class="text-xs font-black text-slate-800">${c.destino.split(',')[0]}</div>
           <div class="text-right">
             <div class="text-[10px] font-black ${c.status === 'aceita' ? 'text-green-500' : 'text-orange-500'} uppercase">${c.status}</div>
             <div class="text-xs font-black text-slate-800">${c.valor}</div>
@@ -272,9 +284,9 @@
     function renderStatusCliente(status) {
       const container = document.getElementById('status-cliente-container');
       if(status === 'buscando') {
-        container.innerHTML = `<div class="card p-10 bg-orange-600 text-white text-center shadow-xl"><div class="text-2xl font-black italic uppercase">Buscando Moto...</div></div>`;
+        container.innerHTML = `<div class="card p-10 bg-orange-600 text-white text-center shadow-xl"><div class="text-2xl font-black italic uppercase animate-pulse">Buscando Moto...</div></div>`;
       } else if(status === 'aceita') {
-        container.innerHTML = `<div class="card p-10 bg-green-600 text-white text-center shadow-xl"><div class="text-2xl font-black italic uppercase">Motorista a Caminho!</div><button onclick="location.reload()" class="mt-8 bg-white text-green-600 px-8 py-3 rounded-xl font-black text-xs uppercase shadow-md">Cheguei</button></div>`;
+        container.innerHTML = `<div class="card p-10 bg-green-600 text-white text-center shadow-xl"><div class="text-2xl font-black italic uppercase">Motorista a Caminho!</div><button onclick="location.reload()" class="mt-8 bg-white text-green-600 px-8 py-3 rounded-xl font-black text-xs uppercase">Cheguei</button></div>`;
       }
     }
   </script>
