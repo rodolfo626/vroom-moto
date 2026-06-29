@@ -9,88 +9,94 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
     :root { --vroom: #FF6B00; }
-    body { font-family: 'Inter', sans-serif; background: #F9FAFB; overflow: hidden; }
-    .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; position: absolute; top:0; left:0; }
-    .screen.active { display: flex; }
-    .vroom-btn { background: var(--vroom); color: white; border: none; }
-    .vroom-btn:active { transform: scale(0.96); opacity: 0.9; }
-    .card { background: white; border-radius: 30px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); }
-    .type-card { border: 3px solid #F3F4F6; transition: 0.3s; cursor: pointer; }
+    body { font-family: 'Inter', sans-serif; background: #F9FAFB; margin: 0; padding: 0; height: 100vh; width: 100vw; overflow: hidden; }
+    
+    /* Sistema de Telas Robusto */
+    .screen { display: none !important; height: 100vh; width: 100vw; flex-direction: column; position: fixed; top: 0; left: 0; background: #F9FAFB; z-index: 10; }
+    .screen.active { display: flex !important; }
+    
+    .vroom-btn { background: var(--vroom); color: white; border: none; cursor: pointer; transition: 0.2s; }
+    .vroom-btn:active { transform: scale(0.95); }
+    .card { background: white; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+    .type-card { border: 3px solid #F3F4F6; border-radius: 20px; transition: 0.3s; cursor: pointer; }
     .type-card.active { border-color: var(--vroom); background: #FFF7ED; }
-    .pulse { animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    .pulse { animation: pulse 1.5s infinite; }
   </style>
 </head>
 <body>
 
-  <div id="screen-portal" class="screen active p-8 items-center justify-center bg-white text-center">
-    <div class="text-9xl mb-8 animate-bounce">🏍️</div>
-    <h1 class="text-6xl font-black italic tracking-tighter">VROOM<span class="text-orange-600">MOTO</span></h1>
-    <p class="text-slate-400 mt-4 font-bold tracking-widest text-xs uppercase">The Power of Choice</p>
-    <div class="mt-16 w-full max-w-xs space-y-4">
-      <button onclick="initApp('cliente')" class="w-full vroom-btn py-6 rounded-3xl font-black text-2xl shadow-xl shadow-orange-100 italic">SOU CLIENTE</button>
-      <button onclick="initApp('motorista')" class="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-2xl shadow-xl italic">SOU MOTORISTA</button>
+  <!-- TELA 1: PORTAL -->
+  <div id="screen-portal" class="screen active p-8 items-center justify-center text-center" style="background: white;">
+    <div class="text-8xl mb-6">🏍️</div>
+    <h1 class="text-5xl font-black italic tracking-tighter">VROOM<span class="text-orange-600">MOTO</span></h1>
+    <p class="text-slate-400 mt-2 font-bold uppercase text-[10px] tracking-[0.3em]">Versão 2.0</p>
+    
+    <div class="mt-12 w-full max-w-xs space-y-4">
+      <button onclick="initApp('cliente')" class="w-full vroom-btn py-6 rounded-3xl font-black text-xl shadow-xl shadow-orange-100 italic">SOU CLIENTE</button>
+      <button onclick="initApp('motorista')" class="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-xl shadow-xl italic">SOU MOTORISTA</button>
     </div>
-    <div class="absolute bottom-8 text-[10px] font-black text-slate-200 tracking-widest">v2.0 • RODOLFO OLIVEIRA</div>
   </div>
 
-  <div id="screen-cliente-home" class="screen bg-slate-50">
+  <!-- TELA 2: HOME CLIENTE -->
+  <div id="screen-cliente-home" class="screen">
     <div class="p-6 bg-white flex justify-between items-center border-b border-slate-100 shadow-sm">
-      <span class="text-3xl font-black italic tracking-tighter">VROOM</span>
-      <button onclick="location.reload()" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300"><i class="fa-solid fa-rotate"></i></button>
+      <span class="text-2xl font-black italic tracking-tighter">VROOM</span>
+      <button onclick="location.reload()" class="text-slate-300 px-4 py-2 bg-slate-50 rounded-xl font-bold text-xs uppercase">Sair</button>
     </div>
     <div class="p-6 flex-1 overflow-y-auto space-y-6">
-      <div id="pedir-box" class="card p-8 text-center">
-        <h3 class="text-2xl font-black text-slate-800 mb-8 italic">Para onde vamos?</h3>
-        <div class="relative mb-8">
-            <i class="fa-solid fa-flag-checkered absolute left-5 top-1/2 -translate-y-1/2 text-slate-300"></i>
-            <input type="text" id="cli-destino" placeholder="Digite o destino final" class="w-full bg-slate-50 pl-14 p-5 rounded-2xl border-2 border-slate-100 outline-none focus:border-orange-500 font-black text-lg shadow-inner transition-all">
-        </div>
-        <div class="grid grid-cols-2 gap-4 mb-8">
-          <div id="btn-mun" onclick="setMod('municipal')" class="type-card active p-5 rounded-3xl text-center shadow-sm">
-            <div class="font-black text-slate-400 text-[10px] tracking-widest mb-1">MUNICIPAL</div>
-            <div class="text-orange-600 font-black text-2xl italic leading-none">R$ 7,00</div>
+      <div id="pedir-box" class="card p-8">
+        <h3 class="text-xl font-black text-slate-800 mb-6 italic text-center">Para onde vamos?</h3>
+        <input type="text" id="cli-destino" placeholder="Digite o destino final" class="w-full bg-slate-50 p-5 rounded-2xl border-2 border-slate-100 outline-none focus:border-orange-500 font-bold text-lg mb-6">
+        
+        <div class="grid grid-cols-2 gap-3 mb-6">
+          <div id="btn-mun" onclick="setMod('municipal')" class="type-card active p-4 text-center">
+            <div class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">MUNICIPAL</div>
+            <div class="text-orange-600 font-black text-lg leading-none">R$ 7,00</div>
           </div>
-          <div id="btn-inter" onclick="setMod('inter')" class="type-card p-5 rounded-3xl text-center shadow-sm">
-            <div class="font-black text-slate-400 text-[10px] tracking-widest mb-1">INTER</div>
-            <div class="text-orange-600 font-black text-2xl italic leading-none">R$ 2,50/km</div>
+          <div id="btn-inter" onclick="setMod('inter')" class="type-card p-4 text-center">
+            <div class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">INTER</div>
+            <div class="text-orange-600 font-black text-lg leading-none">R$ 2,50/km</div>
           </div>
         </div>
-        <button id="btn-pedir" onclick="pedirCorrida()" class="w-full vroom-btn py-6 rounded-3xl font-black text-2xl shadow-2xl shadow-orange-200 uppercase italic tracking-tighter">CHAMAR AGORA</button>
+        
+        <button onclick="pedirCorrida()" class="w-full vroom-btn py-5 rounded-3xl font-black text-xl shadow-lg uppercase italic tracking-tighter">Pedir Agora</button>
       </div>
-      <div id="cli-status-card" class="hidden card p-10 bg-orange-600 text-white text-center shadow-2xl shadow-orange-300">
-         <div class="text-6xl mb-6 pulse">🔍</div>
-         <div class="text-3xl font-black uppercase tracking-tighter italic leading-none mb-4">Buscando<br>Motorista...</div>
-         <div class="h-1 w-16 bg-white/30 mx-auto rounded-full"></div>
-         <p class="text-xs font-bold mt-4 opacity-70">Aguarde, estamos conectando você.</p>
+
+      <div id="cli-status-card" class="hidden card p-10 bg-orange-600 text-white text-center shadow-2xl">
+         <div class="text-5xl mb-4 pulse">🔍</div>
+         <div class="text-2xl font-black uppercase tracking-tighter italic mb-2">Buscando Moto...</div>
+         <p class="text-xs opacity-80">Aguarde, estamos conectando você.</p>
       </div>
     </div>
   </div>
 
-  <div id="screen-motorista-home" class="screen bg-slate-50">
+  <!-- TELA 3: PAINEL MOTORISTA -->
+  <div id="screen-motorista-home" class="screen">
     <div class="p-6 bg-slate-900 text-white flex justify-between items-center shadow-lg">
-      <div>
-        <div class="text-[10px] font-black opacity-30 uppercase tracking-[0.2em] mb-1">Status</div>
-        <div class="text-2xl font-black italic tracking-tighter uppercase leading-none">Motorista</div>
-      </div>
-      <button onclick="toggleOnline()" id="mot-toggle" class="bg-red-500 px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg">Offline</button>
+      <span class="text-xl font-black italic tracking-tighter">MOTORISTA</span>
+      <button onclick="toggleOnline()" id="mot-toggle" class="bg-red-500 px-6 py-2 rounded-xl font-black text-xs uppercase tracking-widest shadow-md">Offline</button>
     </div>
     <div class="p-6 flex-1 overflow-y-auto space-y-4" id="fila-corridas">
-      <div class="text-center p-20 text-slate-300 font-black italic opacity-40">
-        <i class="fa-solid fa-clock text-4xl mb-4 block"></i>
-        Nenhuma chamada ativa
-      </div>
+      <div class="text-center p-20 text-slate-300 font-black italic opacity-50">Nenhuma chamada ativa...</div>
     </div>
   </div>
 
   <script>
-    const CLOUD_URL = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v2_final_prod.json';
+    const CLOUD_URL = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v2_final_new.json';
     let DB = { corridas: [] };
     let STATE = { role: null, online: false, modalidade: 'municipal' };
 
     function showScreen(id) {
+      console.log('Navegando para:', id);
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+      const el = document.getElementById(id);
+      if(el) {
+        el.classList.add('active');
+      } else {
+        alert('Erro: Tela não encontrada - ' + id);
+      }
     }
 
     function initApp(role) {
@@ -107,11 +113,14 @@
 
     async function pedirCorrida() {
       const dest = document.getElementById('cli-destino').value;
-      if(!dest) return;
+      if(!dest) return alert('Digite o destino!');
+      
       const nova = { id: Date.now(), destino: dest, tipo: STATE.modalidade, status: 'buscando' };
       DB.corridas.push(nova);
-      document.getElementById('pedir-box').classList.add('hidden');
+      
+      document.getElementById('pedir-box').style.display = 'none';
       document.getElementById('cli-status-card').classList.remove('hidden');
+      
       await syncPush();
     }
 
@@ -119,8 +128,8 @@
       STATE.online = !STATE.online;
       const btn = document.getElementById('mot-toggle');
       btn.innerText = STATE.online ? 'Online' : 'Offline';
-      btn.classList.toggle('bg-green-500', STATE.online);
-      btn.classList.toggle('bg-red-500', !STATE.online);
+      btn.style.backgroundColor = STATE.online ? '#22c55e' : '#ef4444';
+      if(STATE.online) renderFila();
     }
 
     async function aceitarCorrida(id) {
@@ -129,14 +138,18 @@
         c.status = 'aceita';
         c.motorista = 'Rodolfo';
         await syncPush();
+        alert('CORRIDA ACEITA!');
       }
     }
 
     async function syncPush() {
-      try { await fetch(CLOUD_URL, { method: 'PUT', body: JSON.stringify(DB) }); } catch(e){}
+      try { 
+        await fetch(CLOUD_URL, { method: 'PUT', body: JSON.stringify(DB) }); 
+      } catch(e) { console.error('Erro de push:', e); }
     }
 
     function startSync() {
+      console.log('Sync iniciado...');
       setInterval(async () => {
         try {
           const r = await fetch(CLOUD_URL + '?t=' + Date.now());
@@ -156,18 +169,18 @@
       const container = document.getElementById('fila-corridas');
       const disp = (DB.corridas || []).filter(c => c.status === 'buscando');
       if(disp.length === 0) {
-        container.innerHTML = '<div class="text-center p-20 text-slate-300 font-black italic opacity-40"><i class="fa-solid fa-clock text-4xl mb-4 block"></i>Nenhuma chamada ativa</div>';
+        container.innerHTML = '<div class="text-center p-20 text-slate-300 font-black italic opacity-50">Nenhuma chamada ativa...</div>';
         return;
       }
       container.innerHTML = disp.map(c => `
-        <div class="card p-8 border-l-[16px] border-orange-500 shadow-xl animate-pulse">
-          <div class="mb-6">
-            <div class="text-[10px] font-black text-slate-300 uppercase mb-1">Destino</div>
-            <div class="text-2xl font-black text-slate-800 leading-tight italic tracking-tighter">${c.destino}</div>
+        <div class="card p-6 border-l-[12px] border-orange-500">
+          <div class="mb-4">
+            <div class="text-[9px] font-black text-slate-300 uppercase">Destino</div>
+            <div class="text-xl font-black text-slate-800 leading-tight italic">${c.destino}</div>
           </div>
           <div class="flex justify-between items-center">
-            <div class="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg font-black text-[10px] italic">${c.tipo.toUpperCase()}</div>
-            <button onclick="aceitarCorrida(${c.id})" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg">Aceitar</button>
+            <div class="bg-orange-100 text-orange-600 px-3 py-1 rounded font-black text-[9px]">${c.tipo.toUpperCase()}</div>
+            <button onclick="aceitarCorrida(${c.id})" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px]">Aceitar</button>
           </div>
         </div>
       `).join('');
@@ -176,8 +189,8 @@
     function updateClienteStatus() {
         const minha = (DB.corridas || []).find(c => c.status === 'aceita');
         if(minha) {
-            document.getElementById('cli-status-card').innerHTML = `<div class="text-6xl mb-6">🚀</div><div class="text-3xl font-black italic uppercase tracking-tighter">A Caminho!</div><p class="text-xs font-bold mt-4 opacity-70">O motorista já aceitou o seu chamado.</p>`;
-            document.getElementById('cli-status-card').classList.replace('bg-orange-600', 'bg-green-600');
+            document.getElementById('cli-status-card').innerHTML = `<div class="text-5xl mb-4">🚀</div><div class="text-xl font-black italic uppercase">Motorista a Caminho!</div><p class="text-xs font-bold mt-2 opacity-70">O chamado foi aceito.</p>`;
+            document.getElementById('cli-status-card').style.backgroundColor = '#22c55e';
         }
     }
   </script>
