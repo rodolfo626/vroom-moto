@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v6.0 - Professional</title>
+    <title>VROOM MOTO v6.1 - Smart Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -11,150 +11,165 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         :root { --vroom: #FF6B00; }
-        body { font-family: 'Inter', sans-serif; background: #0F172A; margin: 0; padding: 0; overflow: hidden; }
+        body { font-family: 'Inter', sans-serif; background: #0F172A; margin: 0; padding: 0; overflow-x: hidden; }
         .screen { display: none; min-height: 100vh; width: 100vw; flex-direction: column; background: #F8FAFC; }
         .screen.active { display: flex; }
         .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; border-radius: 18px; transition: 0.2s; }
         .input-vroom { background: #F1F5F9; border: 2px solid #E2E8F0; padding: 14px; border-radius: 16px; outline: none; font-weight: 600; width: 100%; color: #1E293B; font-size: 14px; }
         #map { height: 300px; width: 100%; z-index: 1; border-bottom: 4px solid var(--vroom); }
-        .status-pill { padding: 4px 12px; border-radius: 100px; font-size: 10px; font-weight: 900; text-transform: uppercase; }
         .modal-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-radius: 32px 32px 0 0; padding: 24px; z-index: 100; transform: translateY(100%); transition: 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67); box-shadow: 0 -10px 25px rgba(0,0,0,0.1); }
         .modal-bottom.show { transform: translateY(0); }
+        .loading-screen { position: fixed; inset: 0; background: #0F172A; z-index: 999; display: flex; flex-direction: column; items-center; justify-center; }
     </style>
 </head>
-<body>
+<body onload="checkFirstAccess()">
 
-    <!-- TELA 1: PORTAL -->
-    <div id="screen-portal" class="screen active items-center justify-center p-8 !bg-[#0F172A] text-white">
+    <!-- SPLASH / LOADING -->
+    <div id="splash" class="loading-screen">
+        <i class="fas fa-motorcycle text-6xl text-orange-500 animate-bounce mb-4"></i>
+        <h1 class="text-3xl font-black italic text-white uppercase tracking-tighter">VROOM<span class="text-orange-500">MOTO</span></h1>
+    </div>
+
+    <!-- TELA 1: PORTAL (SÓ APARECE SE NÃO FOR CLIENTE LOGADO) -->
+    <div id="screen-portal" class="screen items-center justify-center p-8 !bg-[#0F172A] text-white">
         <div class="text-center mb-12">
             <i class="fas fa-motorcycle text-7xl text-orange-500 mb-4"></i>
             <h1 class="text-5xl font-black italic tracking-tighter uppercase">VROOM<span class="text-orange-500">MOTO</span></h1>
-            <p class="text-slate-500 text-[10px] font-bold uppercase mt-2 italic">Professional v6.0</p>
+            <p class="text-slate-500 text-[10px] font-bold uppercase mt-2 italic">Versão 6.1</p>
         </div>
-        <button onclick="nav('cliente-login')" class="w-full max-w-xs vroom-btn py-5 text-lg">Pedir uma Moto</button>
+        <div class="w-full max-w-xs space-y-4">
+            <button onclick="nav('cliente-login')" class="w-full vroom-btn py-5 text-lg">Pedir uma Moto</button>
+            <button onclick="nav('motorista-login')" class="w-full bg-slate-800 py-5 rounded-2xl font-black uppercase text-xs tracking-widest">Motorista</button>
+            <button onclick="nav('adm-login')" class="w-full bg-transparent border-2 border-slate-700 text-slate-500 py-3 rounded-2xl text-[9px] font-black uppercase">Painel Master</button>
+        </div>
     </div>
 
-    <!-- TELA 2: LOGIN CLIENTE -->
+    <!-- TELA 2: CADASTRO CLIENTE (PRIMEIRO ACESSO) -->
     <div id="screen-cliente-login" class="screen p-8 justify-center items-center">
         <div class="w-full max-w-sm text-center">
-            <h2 class="text-2xl font-black italic mb-6 uppercase">Seja Bem-vindo</h2>
+            <h2 class="text-2xl font-black italic mb-2 uppercase">Bem-vindo</h2>
+            <p class="text-slate-400 text-xs mb-8 uppercase font-bold">Cadastro de Primeiro Acesso</p>
             <div class="space-y-3">
                 <input type="text" id="cli-nome" placeholder="Seu Nome" class="input-vroom">
-                <input type="tel" id="cli-tel" placeholder="WhatsApp" class="input-vroom">
-                <button onclick="iniciarAppCliente()" class="w-full vroom-btn py-5 mt-4">Entrar Agora</button>
+                <input type="tel" id="cli-tel" placeholder="WhatsApp (DDD + Número)" class="input-vroom">
+                <button onclick="registrarCliente()" class="w-full vroom-btn py-5 mt-4">Concluir e Entrar</button>
             </div>
         </div>
     </div>
 
-    <!-- TELA 3: MAPA E PEDIDO (COMPLETO) -->
+    <!-- TELA 3: APP CLIENTE (AUTENTICADO) -->
     <div id="screen-cliente-app" class="screen !bg-white">
         <div class="p-4 flex justify-between items-center border-b">
             <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-black">R</div>
-                <span class="font-black text-xs italic uppercase">Rodolfo</span>
+                <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-[10px] font-black" id="user-initial">U</div>
+                <span class="font-black text-xs italic uppercase" id="user-display-name">Usuário</span>
             </div>
-            <span class="status-pill bg-green-100 text-green-600">Online</span>
+            <button onclick="logout()" class="text-slate-300 text-xs font-bold uppercase">Sair</button>
         </div>
         
         <div id="map"></div>
 
         <div class="p-6 space-y-4 overflow-y-auto pb-32">
-            <!-- ORIGEM (AUTO) -->
             <div class="space-y-1">
-                <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Minha Localização</label>
+                <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Sua Localização (GPS)</label>
                 <div class="relative">
                     <i class="fas fa-crosshairs absolute left-4 top-4 text-orange-500"></i>
                     <input type="text" id="loc-origem" value="Localizando..." readonly class="input-vroom !pl-10 !bg-slate-100 !border-none">
                 </div>
             </div>
-
-            <!-- DESTINO -->
             <div class="space-y-1">
-                <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Para onde vamos?</label>
-                <div class="relative">
-                    <i class="fas fa-map-marker-alt absolute left-4 top-4 text-slate-400"></i>
-                    <input type="text" id="loc-destino" placeholder="Digite o destino..." class="input-vroom !pl-10">
-                </div>
+                <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Destino</label>
+                <input type="text" id="loc-destino" placeholder="Para onde vamos hoje?" class="input-vroom">
             </div>
-
-            <!-- TIPO DE CORRIDA -->
             <div class="grid grid-cols-2 gap-3">
-                <button onclick="calc('M')" class="p-4 rounded-2xl border-2 border-slate-100 flex flex-col items-center">
-                    <span class="text-[9px] font-black uppercase text-slate-400">Municipal</span>
-                    <span class="text-sm font-black italic">R$ 7,00</span>
+                <button onclick="solicitar('Municipal')" class="p-4 rounded-2xl border-2 border-slate-100 text-center">
+                    <p class="text-[9px] font-black text-slate-400 uppercase">Municipal</p>
+                    <p class="text-sm font-black italic">R$ 7,00</p>
                 </button>
-                <button onclick="calc('I')" class="p-4 rounded-2xl border-2 border-slate-100 flex flex-col items-center">
-                    <span class="text-[9px] font-black uppercase text-slate-400">Inter (KM)</span>
-                    <span class="text-sm font-black italic">R$ 2,00/KM</span>
+                <button onclick="solicitar('Inter')" class="p-4 rounded-2xl border-2 border-slate-100 text-center">
+                    <p class="text-[9px] font-black text-slate-400 uppercase">Inter (KM)</p>
+                    <p class="text-sm font-black italic">R$ 2,00/KM</p>
                 </button>
             </div>
-
-            <!-- PAGAMENTO -->
-            <div class="space-y-1">
-                <label class="text-[9px] font-black text-slate-400 uppercase ml-2">Forma de Pagamento</label>
-                <select id="pagamento" class="input-vroom">
-                    <option>PIX</option>
-                    <option>Dinheiro</option>
-                    <option>Cartão (Maquineta)</option>
-                </select>
-            </div>
-
-            <button onclick="confirmarPedido()" class="w-full vroom-btn py-5 shadow-xl shadow-orange-500/20">Solicitar Vroom agora</button>
+            <button onclick="solicitar('Vroom')" class="w-full vroom-btn py-5 shadow-xl shadow-orange-500/20 mt-4">Confirmar Pedido</button>
         </div>
     </div>
 
-    <!-- MODAL DE CORRIDA ACEITA (DETALHES) -->
+    <!-- MODAL MOTORISTA (SIMULAÇÃO) -->
     <div id="modal-corrida" class="modal-bottom">
         <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
         <div class="flex items-center justify-between mb-6">
             <div>
-                <h4 class="text-xs font-black uppercase text-slate-400">Motorista a caminho</h4>
+                <h4 class="text-[10px] font-black uppercase text-slate-400">Motorista a caminho</h4>
                 <p class="text-xl font-black italic">Marcos Silva</p>
             </div>
             <div class="text-right">
                 <span class="text-[10px] font-black bg-orange-100 text-orange-600 px-3 py-1 rounded-full uppercase">4.9 ★</span>
             </div>
         </div>
-
         <div class="grid grid-cols-3 gap-4 mb-6">
             <div class="bg-slate-50 p-3 rounded-2xl text-center">
-                <i class="fas fa-motorcycle text-slate-400 mb-1"></i>
-                <p class="text-[9px] font-bold text-slate-500 uppercase">Moto</p>
+                <p class="text-[8px] font-bold text-slate-500 uppercase">Moto</p>
                 <p class="text-[10px] font-black uppercase">Titan 160</p>
             </div>
             <div class="bg-slate-50 p-3 rounded-2xl text-center">
-                <i class="fas fa-id-card text-slate-400 mb-1"></i>
-                <p class="text-[9px] font-bold text-slate-500 uppercase">Placa</p>
+                <p class="text-[8px] font-bold text-slate-500 uppercase">Placa</p>
                 <p class="text-[10px] font-black uppercase">ABC-1234</p>
             </div>
             <div class="bg-slate-50 p-3 rounded-2xl text-center">
-                <i class="fas fa-clock text-slate-400 mb-1"></i>
-                <p class="text-[9px] font-bold text-slate-500 uppercase">Chegada</p>
+                <p class="text-[8px] font-bold text-slate-500 uppercase">Chegada</p>
                 <p class="text-[10px] font-black uppercase">5 min</p>
             </div>
         </div>
-
-        <div class="flex gap-2">
-            <button onclick="window.open('https://wa.me/550000000')" class="flex-1 bg-green-500 text-white py-4 rounded-2xl font-black text-xs uppercase italic"><i class="fab fa-whatsapp mr-2"></i> Chat</button>
-            <button onclick="document.getElementById('modal-corrida').classList.remove('show')" class="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase italic">Cancelar</button>
-        </div>
+        <button onclick="document.getElementById('modal-corrida').classList.remove('show')" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase italic">Fechar Detalhes</button>
     </div>
 
     <script>
-        let map, userMarker;
+        let map;
+
+        function checkFirstAccess() {
+            const cliente = localStorage.getItem('vroom_cliente');
+            setTimeout(() => {
+                document.getElementById('splash').style.display = 'none';
+                if (cliente) {
+                    const dados = JSON.parse(cliente);
+                    loginAutomatico(dados);
+                } else {
+                    nav('portal');
+                }
+            }, 1500);
+        }
+
+        function registrarCliente() {
+            const nome = document.getElementById('cli-nome').value;
+            const tel = document.getElementById('cli-tel').value;
+            if(!nome || !tel) { alert('Preencha os dados!'); return; }
+            
+            const dados = { nome, tel };
+            localStorage.setItem('vroom_cliente', JSON.stringify(dados));
+            
+            // Envio do WhatsApp (Boas-vindas)
+            const msg = "Seja bem vindo ao vroom moto esperamos que goste do nossos serviço. Obrigado pela confiança";
+            window.open(`https://api.whatsapp.com/send?phone=55${tel.replace(/\D/g,'')}&text=${encodeURIComponent(msg)}`, '_blank');
+            
+            loginAutomatico(dados);
+        }
+
+        function loginAutomatico(dados) {
+            document.getElementById('user-display-name').innerText = dados.nome;
+            document.getElementById('user-initial').innerText = dados.nome.charAt(0).toUpperCase();
+            nav('cliente-app');
+            initMap();
+        }
+
+        function logout() {
+            localStorage.removeItem('vroom_cliente');
+            window.location.reload();
+        }
 
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-' + id).classList.add('active');
-        }
-
-        function iniciarAppCliente() {
-            const nome = document.getElementById('cli-nome').value;
-            const tel = document.getElementById('cli-tel').value;
-            if(!nome || !tel) { alert('Preencha os dados!'); return; }
-            nav('cliente-app');
-            initMap();
-            getGeo();
         }
 
         function initMap() {
@@ -162,41 +177,25 @@
                 if(!map) {
                     map = L.map('map').setView([-23.55, -46.63], 15);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(pos => {
+                            const { latitude, longitude } = pos.coords;
+                            map.setView([latitude, longitude], 17);
+                            L.marker([latitude, longitude]).addTo(map).bindPopup('Você está aqui').openPopup();
+                            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+                                .then(r => r.json()).then(data => {
+                                    document.getElementById('loc-origem').value = data.display_name.split(',')[0] + ', ' + data.display_name.split(',')[1];
+                                });
+                        });
+                    }
                 }
                 map.invalidateSize();
             }, 300);
         }
 
-        function getGeo() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    const { latitude, longitude } = pos.coords;
-                    map.setView([latitude, longitude], 17);
-                    if(userMarker) map.removeLayer(userMarker);
-                    userMarker = L.marker([latitude, longitude]).addTo(map).bindPopup('Você está aqui').openPopup();
-                    document.getElementById('loc-origem').value = `Lat: ${latitude.toFixed(4)}, Log: ${longitude.toFixed(4)}`;
-                    
-                    // Simulação de endereço reverso
-                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
-                        .then(r => r.json())
-                        .then(data => {
-                            document.getElementById('loc-origem').value = data.display_name.split(',')[0] + ', ' + data.display_name.split(',')[1];
-                        });
-                }, () => {
-                    alert('Por favor, ative o GPS para localizar sua posição exata.');
-                });
-            }
-        }
-
-        function calc(tipo) {
-            const destino = document.getElementById('loc-destino').value;
-            if(!destino) { alert('Digite um destino primeiro!'); return; }
-            alert(`Cálculo ${tipo === 'M' ? 'Municipal' : 'Intermunicipal'} realizado!`);
-        }
-
-        function confirmarPedido() {
+        function solicitar(t) {
             if(!document.getElementById('loc-destino').value) { alert('Informe o destino!'); return; }
-            alert('Solicitando motorista mais próximo...');
+            alert('Buscando motoristas para corrida ' + t + '...');
             setTimeout(() => {
                 document.getElementById('modal-corrida').classList.add('show');
             }, 2000);
