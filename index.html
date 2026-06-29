@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v11.1 - GPS Google Precise</title>
+    <title>VROOM MOTO v12.0 - Professional Mobility</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -15,75 +15,263 @@
         body { font-family: 'Inter', sans-serif; background: #0F172A; overflow: hidden; height: 100vh; width: 100vw; }
         .screen { display: none; height: 100%; width: 100%; position: fixed; top: 0; left: 0; flex-direction: column; background: #F8FAFC; z-index: 10; }
         .screen.active { display: flex !important; z-index: 100 !important; }
-        #screen-portal { background: #0F172A !important; justify-content: center; align-items: center; padding: 30px; }
-        .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; border-radius: 20px; padding: 20px; width: 100%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(255, 107, 0, 0.3); font-size: 16px; }
-        .input-vroom { background: #F1F5F9; border: 2px solid #E2E8F0; padding: 16px; border-radius: 18px; outline: none; font-weight: 600; width: 100%; color: #1E293B; font-size: 15px; }
+        
         #map { height: 100%; width: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
-        .panel-client { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-radius: 35px 35px 0 0; padding: 25px; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); z-index: 150; }
-        .loc-badge { background: #eff6ff; color: #3b82f6; padding: 4px 10px; border-radius: 10px; font-size: 9px; font-weight: 900; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 8px; }
+        
+        /* HUD Superior */
+        .hud-top { 
+            position: fixed; top: 20px; left: 15px; right: 15px; 
+            background: white; border-radius: 20px; padding: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 200; 
+            display: none; border-left: 5px solid var(--vroom);
+            animation: slideDown 0.5s ease-out;
+        }
+        @keyframes slideDown { from { transform: translateY(-100px); } to { transform: translateY(0); } }
+
+        /* Painel Inferior */
+        .panel-bottom { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: white; border-radius: 30px 30px 0 0; padding: 20px; 
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.15); z-index: 150; 
+        }
+
+        .vroom-btn { 
+            background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; 
+            border-radius: 18px; padding: 18px; width: 100%; border: none; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            box-shadow: 0 8px 15px rgba(255, 107, 0, 0.3); font-size: 15px;
+        }
+        
+        .btn-cancel { background: #F1F5F9; color: #94A3B8; box-shadow: none; margin-top: 10px; }
+
+        .input-vroom { 
+            background: #F8FAFC; border: 2px solid #F1F5F9; padding: 15px; 
+            border-radius: 15px; outline: none; font-weight: 600; width: 100%; 
+            color: #1E293B; font-size: 14px; transition: 0.3s;
+        }
+        .input-vroom:focus { border-color: var(--vroom); background: white; }
+
+        .price-card { 
+            background: #FFF7ED; border: 2px solid #FFEDD5; border-radius: 18px; 
+            padding: 15px; margin: 15px 0; display: none; 
+            justify-content: space-between; align-items: center;
+        }
+        
+        .badge-city { background: #FF6B00; color: white; padding: 3px 8px; border-radius: 6px; font-size: 9px; font-weight: 900; text-transform: uppercase; }
+        .badge-inter { background: #4F46E5; color: white; padding: 3px 8px; border-radius: 6px; font-size: 9px; font-weight: 900; text-transform: uppercase; }
     </style>
 </head>
 <body>
-    <div id="screen-portal" class="screen active">
+
+    <audio id="snd-buzina" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2855/2855-preview.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- TELA 1: PORTAL -->
+    <div id="screen-portal" class="screen active !bg-slate-900 justify-center items-center p-10">
         <div class="text-center mb-12">
-            <i class="fas fa-motorcycle text-8xl text-orange-500 mb-4"></i>
-            <h1 class="text-5xl font-black italic tracking-tighter uppercase text-white">VROOM<span class="text-orange-500">MOTO</span></h1>
-            <p class="text-slate-500 text-[10px] font-black uppercase mt-2 italic tracking-[0.3em]">VERSION 11.1 - GPS FIX</p>
+            <i class="fas fa-motorcycle text-7xl text-orange-500 mb-4"></i>
+            <h1 class="text-5xl font-black italic text-white tracking-tighter">VROOM<span class="text-orange-500">MOTO</span></h1>
+            <p class="text-slate-500 text-[9px] font-bold tracking-[0.4em] mt-2">SISTEMA DE MOBILIDADE v12.0</p>
         </div>
         <div class="w-full max-w-xs space-y-4">
-            <button onclick="nav('cliente-app')" class="vroom-btn">Pedir uma Moto</button>
-            <button onclick="nav('motorista-app')" class="w-full bg-slate-800 text-white py-5 rounded-2xl font-black uppercase text-xs">Motorista</button>
+            <button onclick="nav('cliente')" class="vroom-btn">Pedir uma Moto</button>
+            <button onclick="nav('motorista')" class="w-full bg-slate-800 text-slate-400 py-5 rounded-2xl font-black uppercase text-xs">Área do Motorista</button>
         </div>
     </div>
 
-    <div id="screen-cliente-app" class="screen">
-        <div id="map"></div>
-        <div class="panel-client">
-            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4"></div>
-            <div class="loc-badge"><i class="fas fa-crosshairs animate-pulse"></i> GPS GOOGLE ATIVO</div>
-            <div class="space-y-4">
-                <div class="relative">
-                    <i class="fas fa-dot-circle text-blue-500 absolute left-4 top-4"></i>
-                    <input type="text" id="loc-origem" value="Localizando..." readonly class="input-vroom !pl-10 !bg-slate-50 !border-none text-xs">
+    <!-- TELA 2: ÁREA CLIENTE -->
+    <div id="screen-cliente" class="screen">
+        <!-- HUD SUPERIOR (Aparece quando aceita) -->
+        <div id="hud-status" class="hud-top">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-slate-100 rounded-full border-2 border-orange-500 flex items-center justify-center">
+                        <i class="fas fa-user-ninja text-slate-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-[8px] font-black text-slate-400 uppercase leading-none">Motorista a caminho</p>
+                        <p id="driver-name" class="text-sm font-black italic text-slate-800">Rodolfo Oliveira</p>
+                    </div>
                 </div>
-                <div class="relative">
-                    <i class="fas fa-map-marker-alt text-slate-400 absolute left-4 top-4"></i>
-                    <input type="text" id="loc-destino" placeholder="Para onde você vai?" class="input-vroom !pl-10">
+                <div class="text-right">
+                    <p class="text-[8px] font-black text-slate-400 uppercase leading-none">Chegada em</p>
+                    <p id="eta-time" class="text-xl font-black text-orange-500 italic">4 min</p>
                 </div>
-                <button onclick="alert('Confirmado!')" class="vroom-btn">Confirmar Corrida</button>
-                <button onclick="nav('portal')" class="w-full text-center text-[10px] font-black text-slate-300 uppercase mt-2">Sair</button>
             </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="panel-bottom">
+            <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4"></div>
+            
+            <div class="space-y-3">
+                <div class="relative">
+                    <i class="fas fa-crosshairs text-blue-500 absolute left-4 top-4"></i>
+                    <input type="text" id="inp-origem" value="Detectando sua posição..." readonly class="input-vroom !pl-11 !bg-slate-50 border-none text-[12px]">
+                </div>
+                
+                <div class="relative">
+                    <i class="fas fa-map-marker-alt text-slate-300 absolute left-4 top-4"></i>
+                    <input type="text" id="inp-destino" placeholder="Para onde vamos hoje?" class="input-vroom !pl-11" oninput="calcRide()">
+                </div>
+
+                <!-- Card de Valor -->
+                <div id="card-price" class="price-card">
+                    <div>
+                        <span id="label-categoria" class="badge-city">Municipal</span>
+                        <p id="val-ride" class="text-3xl font-black italic text-slate-800">R$ 0,00</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Tempo Médio</p>
+                        <p id="label-time" class="text-sm font-black text-slate-600">-- min</p>
+                    </div>
+                </div>
+
+                <div id="actions-request">
+                    <button onclick="requestRide()" id="btn-main" class="vroom-btn">Confirmar Corrida</button>
+                    <button onclick="cancelRide()" class="vroom-btn btn-cancel">Cancelar</button>
+                </div>
+            </div>
+            
+            <button onclick="nav('portal')" class="w-full text-center text-[9px] font-black text-slate-300 uppercase mt-5 tracking-widest">Sair do Aplicativo</button>
+        </div>
+    </div>
+
+    <!-- TELA 3: ÁREA MOTORISTA -->
+    <div id="screen-motorista" class="screen !bg-slate-50">
+        <header class="bg-slate-900 text-white p-6 flex justify-between items-center">
+            <div class="flex flex-col">
+                <span class="font-black italic uppercase text-lg">VROOM <span class="text-orange-500">PRO</span></span>
+                <span class="text-[8px] font-bold text-slate-400">OPERADOR: RODOLFO OLIVEIRA</span>
+            </div>
+            <span class="bg-green-500 text-white text-[9px] font-black px-4 py-2 rounded-full animate-pulse">ONLINE</span>
+        </header>
+
+        <div class="p-6 flex-1 overflow-y-auto">
+            <h3 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Fila de Espera (FIFO)</h3>
+            
+            <div id="driver-queue" class="space-y-4 text-center py-10">
+                <i class="fas fa-circle-notch fa-spin text-3xl text-slate-200 mb-3"></i>
+                <p class="text-slate-400 font-bold text-sm">Aguardando novos chamados...</p>
+            </div>
+        </div>
+        
+        <div class="p-4 bg-white border-t">
+            <button onclick="nav('portal')" class="w-full py-4 text-slate-400 font-black text-[10px] uppercase">Encerrar Turno</button>
         </div>
     </div>
 
     <script>
-        let map;
-        let marker;
+        let map, userMarker, rideData = {};
+
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-' + id).classList.add('active');
-            if(id === 'cliente-app') { initMap(); getGPS(); }
+            if(id === 'cliente') { initMap(); getGPS(); }
         }
+
         function initMap() {
             if(!map) {
                 map = L.map('map', { zoomControl: false }).setView([-23.55, -46.63], 15);
                 L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}').addTo(map);
             }
-            map.invalidateSize();
+            setTimeout(() => map.invalidateSize(), 200);
         }
+
         function getGPS() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((p) => {
                     const lat = p.coords.latitude;
                     const lng = p.coords.longitude;
-                    map.setView([lat, lng], 17);
-                    if(marker) map.removeLayer(marker);
-                    marker = L.circleMarker([lat, lng], { radius: 8, color: '#3b82f6', fillOpacity: 0.8 }).addTo(map);
+                    map.setView([lat, lng], 16);
+                    if(userMarker) map.removeLayer(userMarker);
+                    userMarker = L.circleMarker([lat, lng], { radius: 8, color: '#3b82f6', fillOpacity: 0.8 }).addTo(map);
+                    
                     fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
                         .then(r => r.json()).then(d => {
-                            document.getElementById('loc-origem').value = d.display_name.split(',')[0] + ', ' + d.display_name.split(',')[1];
+                            document.getElementById('inp-origem').value = d.display_name.split(',')[0] + ", " + (d.address.suburb || '');
                         });
                 }, null, { enableHighAccuracy: true });
+            }
+        }
+
+        function calcRide() {
+            const dest = document.getElementById('inp-destino').value;
+            const card = document.getElementById('card-price');
+            const valLabel = document.getElementById('val-ride');
+            const catLabel = document.getElementById('label-categoria');
+            const timeLabel = document.getElementById('label-time');
+
+            if(dest.length > 3) {
+                card.style.display = 'flex';
+                
+                // LÓGICA DE CATEGORIA INTELIGENTE
+                // Simulação: Se o destino contiver vírgula ou nomes de cidades vizinhas, é Intermunicipal
+                const isInter = dest.toLowerCase().includes(',') || dest.toLowerCase().includes('shopping') || dest.length > 15;
+                
+                if(!isInter) {
+                    catLabel.innerText = "Municipal";
+                    catLabel.className = "badge-city";
+                    valLabel.innerText = "R$ 7,00";
+                    timeLabel.innerText = "8-12 min";
+                    rideData = { type: 'Municipal', price: '7,00' };
+                } else {
+                    catLabel.innerText = "Intermunicipal";
+                    catLabel.className = "badge-inter";
+                    valLabel.innerText = "R$ 15,50";
+                    timeLabel.innerText = "20-25 min";
+                    rideData = { type: 'Intermunicipal', price: '15,50' };
+                }
+            } else {
+                card.style.display = 'none';
+            }
+        }
+
+        function requestRide() {
+            const btn = document.getElementById('btn-main');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chamando Vroom...';
+            
+            // 1. Toca Buzina para o Motorista
+            document.getElementById('snd-buzina').play();
+            
+            // 2. Envia para a Fila do Motorista
+            const queue = document.getElementById('driver-queue');
+            const dest = document.getElementById('inp-destino').value;
+            
+            queue.innerHTML = `
+                <div class="bg-white p-5 rounded-2xl border-2 border-orange-500 text-left shadow-lg animate-bounce">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="badge-city">NOVA CORRIDA</span>
+                        <span class="font-black text-orange-500 italic">R$ ${rideData.price}</span>
+                    </div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Destino:</p>
+                    <p class="font-bold text-slate-800 text-sm mb-4">${dest}</p>
+                    <button onclick="acceptRide()" class="vroom-btn !py-3">Aceitar Corrida</button>
+                </div>
+            `;
+
+            setTimeout(() => {
+                alert('Solicitação enviada com sucesso! Aguarde o motorista.');
+                btn.innerText = "Aguardando Aceite...";
+                btn.style.opacity = "0.5";
+            }, 1000);
+        }
+
+        function acceptRide() {
+            alert('Você aceitou a corrida! O cliente foi notificado.');
+            // No app real isso seria via Firebase/Socket, aqui simulamos a volta pro cliente
+            nav('cliente');
+            document.getElementById('hud-status').style.display = 'block';
+            document.getElementById('btn-main').innerText = "Motorista a caminho";
+            document.getElementById('btn-main').style.background = "#22c55e";
+            document.getElementById('btn-main').style.opacity = "1";
+        }
+
+        function cancelRide() {
+            if(confirm('Deseja cancelar esta solicitação?')) {
+                window.location.reload();
             }
         }
     </script>
