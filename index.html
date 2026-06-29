@@ -3,196 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v14.0 - Cadastro</title>
+    <title>VROOM MOTO v14.1 - Driver Area</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        :root { --vroom: #FF6B00; }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', sans-serif; background: #0F172A; overflow: hidden; height: 100vh; width: 100vw; }
+        :root { --vroom: #FF6B00; --vroom-dark: #0F172A; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { font-family: 'Inter', sans-serif; background: var(--vroom-dark); overflow: hidden; height: 100vh; width: 100vw; color: white; }
         
         .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 10; }
         .screen.active { display: flex !important; z-index: 1000 !important; }
         
-        #screen-portal { background: #0F172A; justify-content: center; align-items: center; padding: 30px; }
-        #screen-cadastro { background: white; padding: 30px; overflow-y: auto; }
-        
+        /* Portal & Forms */
+        .portal-bg { background: var(--vroom-dark); justify-content: center; align-items: center; padding: 30px; }
         .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; border-radius: 18px; padding: 18px; width: 100%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; box-shadow: 0 8px 15px rgba(255, 107, 0, 0.3); }
-        .input-vroom { background: #F8FAFC; border: 2px solid #F1F5F9; padding: 15px; border-radius: 15px; outline: none; font-weight: 600; width: 100%; color: #1E293B; font-size: 14px; margin-bottom: 15px; }
+        .input-vroom { background: #1E293B; border: 2px solid #334155; padding: 15px; border-radius: 15px; font-weight: 600; width: 100%; color: white; font-size: 14px; margin-bottom: 15px; }
         
-        #map { height: 100%; width: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #e5e7eb; }
-        .panel-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-radius: 30px 30px 0 0; padding: 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.15); z-index: 1500; }
+        /* Maps & UI Elements */
+        #map { height: 100%; width: 100%; position: absolute; top: 0; left: 0; z-index: 1; filter: grayscale(0.5); opacity: 0.8; }
+        .panel-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-radius: 30px 30px 0 0; padding: 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); z-index: 1500; color: #1E293B; }
         
-        .type-selector { display: flex; gap: 10px; margin-bottom: 15px; }
-        .type-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #F1F5F9; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #94A3B8; transition: all 0.2s; cursor: pointer; text-align: center; }
-        .type-btn.active-m { border-color: #FF6B00; color: #FF6B00; background: #FFF7ED; }
-        .type-btn.active-i { border-color: #4F46E5; color: #4F46E5; background: #EEF2FF; }
+        /* Driver Dashboard */
+        .status-badge { padding: 8px 15px; border-radius: 50px; font-size: 10px; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
+        .status-online { background: #DCFCE7; color: #15803D; }
+        .status-offline { background: #FEE2E2; color: #B91C1C; }
         
-        .delivery-toggle { display: none; align-items: center; justify-content: space-between; padding: 12px 18px; background: #F1F5F9; border-radius: 15px; margin-bottom: 10px; cursor: pointer; }
-        .delivery-toggle.active { border-color: #22c55e; background: #f0fdf4; color: #15803d; border: 2px solid #22c55e; }
-        
-        .price-card { background: #FFF7ED; border: 2px solid #FFEDD5; border-radius: 18px; padding: 15px; margin-bottom: 15px; display: none; justify-content: space-between; align-items: center; border-left: 6px solid #FF6B00; }
-        
-        /* Upload de Foto */
-        .photo-upload { 
-            width: 120px; height: 120px; background: #F1F5F9; border: 3px dashed #CBD5E1; 
-            border-radius: 60px; margin: 0 auto 20px; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; position: relative; overflow: hidden;
-            cursor: pointer;
+        /* Ride Alert Overlay */
+        #alert-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(15, 23, 42, 0.95); z-index: 9999; 
+            display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+            animation: fadeIn 0.3s ease;
         }
-        .photo-preview { position: absolute; width: 100%; height: 100%; object-fit: cover; display: none; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .alert-card { 
+            background: white; width: 100%; max-width: 350px; border-radius: 30px; 
+            padding: 25px; text-align: center; color: #1E293B; 
+            box-shadow: 0 0 50px rgba(255, 107, 0, 0.5); border: 4px solid var(--vroom);
+        }
+        .pulse-alert { animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
-    <div id="screen-portal" class="screen active">
-        <div class="text-center mb-10"><i class="fas fa-motorcycle text-7xl text-orange-500 mb-4"></i><h1 class="text-5xl font-black italic text-white tracking-tighter uppercase">VROOM<span class="text-orange-500">MOTO</span></h1></div>
+
+    <!-- PORTAL INICIAL -->
+    <div id="screen-portal" class="screen active portal-bg">
+        <div class="text-center mb-10">
+            <i class="fas fa-motorcycle text-7xl text-orange-500 mb-4"></i>
+            <h1 class="text-5xl font-black italic text-white tracking-tighter uppercase">VROOM<span class="text-orange-500">MOTO</span></h1>
+        </div>
         <div class="w-full max-w-xs space-y-4">
-            <button onclick="checkAccess()" class="vroom-btn"><i class="fas fa-motorcycle"></i> Pedir uma Moto</button>
-            <button class="w-full bg-slate-800 text-slate-400 py-5 rounded-2xl font-black uppercase text-xs">Área do Motorista</button>
+            <button onclick="checkAccess()" class="vroom-btn"><i class="fas fa-motorcycle"></i> Área do Cliente</button>
+            <button onclick="nav('driver-login')" class="w-full bg-slate-800 text-white py-5 rounded-2xl font-black uppercase text-xs flex items-center justify-center gap-2">
+                <i class="fas fa-user-tie"></i> Área do Motorista
+            </button>
         </div>
     </div>
 
-    <div id="screen-cadastro" class="screen">
-        <div class="mb-8">
-            <h2 class="text-3xl font-black italic uppercase text-slate-800">Seja Bem-vindo!</h2>
-            <p class="text-slate-400 font-bold text-xs uppercase">Complete seu perfil para começar</p>
+    <!-- LOGIN MOTORISTA -->
+    <div id="screen-driver-login" class="screen portal-bg">
+        <div class="w-full max-w-xs">
+            <h2 class="text-2xl font-black italic uppercase mb-6 text-center">Login Motorista</h2>
+            <input type="text" id="driver-user" placeholder="Usuário" class="input-vroom">
+            <input type="password" id="driver-pass" placeholder="Senha" class="input-vroom">
+            <button onclick="doDriverLogin()" class="vroom-btn">Entrar no Sistema</button>
+            <button onclick="nav('portal')" class="w-full mt-4 text-slate-400 font-black text-[10px] uppercase">Voltar</button>
         </div>
-        
-        <div class="photo-upload" onclick="document.getElementById('file-input').click()">
-            <i class="fas fa-camera text-2xl text-slate-400"></i>
-            <span class="text-[8px] font-black uppercase text-slate-400 mt-1">Foto do Rosto</span>
-            <img id="photo-preview" class="photo-preview">
+    </div>
+
+    <!-- HOME MOTORISTA (DASHBOARD) -->
+    <div id="screen-driver-home" class="screen">
+        <!-- Header Motorista -->
+        <div class="p-6 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-20">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center border-2 border-white overflow-hidden">
+                    <img src="https://i.pravatar.cc/100?u=rodolfo" alt="Avatar">
+                </div>
+                <div>
+                    <p class="text-[10px] font-black text-orange-500 uppercase">Motorista Oficial</p>
+                    <p class="text-lg font-black italic">Rodolfo Oliveira</p>
+                </div>
+            </div>
+            <div id="status-toggle" onclick="toggleOnline()" class="status-badge status-offline">
+                <i class="fas fa-circle text-[6px]"></i> <span>Offline</span>
+            </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="panel-bottom">
+            <div class="flex justify-around mb-4">
+                <div class="text-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Ganhos Hoje</p>
+                    <p class="text-xl font-black text-slate-800">R$ 0,00</p>
+                </div>
+                <div class="w-[1px] bg-slate-100"></div>
+                <div class="text-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Corridas</p>
+                    <p class="text-xl font-black text-slate-800">0</p>
+                </div>
+            </div>
+            <p id="driver-hint" class="text-center text-xs font-bold text-slate-400 uppercase py-4">Fique Online para receber chamados</p>
+        </div>
+    </div>
+
+    <!-- ALERTA DE CORRIDA (OVERLAY) -->
+    <div id="alert-overlay">
+        <div class="alert-card pulse-alert">
+            <div class="flex justify-between items-start mb-4">
+                <span id="alert-type" class="bg-orange-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">Nova Viagem</span>
+                <span class="text-orange-500 font-black italic text-xl">R$ <span id="alert-price">7,00</span></span>
+            </div>
+            
+            <div class="flex items-center gap-4 text-left mb-6 bg-slate-50 p-4 rounded-2xl">
+                <img id="alert-photo" src="https://i.pravatar.cc/100?u=user1" class="w-14 h-14 rounded-full border-2 border-white shadow-sm">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Cliente</p>
+                    <p id="alert-name" class="text-lg font-black italic">Nome do Cliente</p>
+                    <div class="flex items-center gap-1 text-green-600">
+                        <i class="fas fa-star text-[8px]"></i><span class="text-[10px] font-black">5.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3 mb-8 text-left">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-map-marker-alt text-orange-500"></i>
+                    <div><p class="text-[8px] font-black text-slate-400 uppercase">Origem (Coleta)</p><p id="alert-origin" class="text-xs font-bold truncate w-48">Localizando...</p></div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-flag-checkered text-slate-800"></i>
+                    <div><p class="text-[8px] font-black text-slate-400 uppercase">Destino (Entrega)</p><p id="alert-dest" class="text-xs font-bold truncate w-48">Destino Informado</p></div>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="acceptRide()" class="vroom-btn flex-1 !bg-green-600">Aceitar</button>
+                <button onclick="rejectRide()" class="bg-slate-200 text-slate-600 font-black uppercase px-6 py-4 rounded-2xl text-xs">Recusar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA CADASTRO CLIENTE (Igual v14.0) -->
+    <div id="screen-cadastro" class="screen bg-white p-8">
+        <h2 class="text-3xl font-black italic uppercase mb-8">Cadastro Cliente</h2>
+        <div class="photo-upload w-24 h-24 bg-slate-100 rounded-full mx-auto mb-6 flex items-center justify-center border-2 border-dashed border-slate-300 overflow-hidden" onclick="document.getElementById('file-input').click()">
+            <img id="photo-preview" class="hidden w-full h-full object-cover">
+            <i id="cam-icon" class="fas fa-camera text-slate-400"></i>
         </div>
         <input type="file" id="file-input" hidden accept="image/*" onchange="previewPhoto(event)">
-
-        <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Nome Completo</label>
-        <input type="text" id="reg-name" placeholder="Ex: João da Silva" class="input-vroom">
-        
-        <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Telefone / WhatsApp</label>
-        <input type="tel" id="reg-phone" placeholder="(00) 00000-0000" class="input-vroom">
-
-        <button onclick="saveProfile()" class="vroom-btn">Salvar e Continuar</button>
-        <button onclick="nav('portal')" class="w-full mt-4 text-slate-400 font-black text-[10px] uppercase">Voltar</button>
+        <input type="text" id="reg-name" placeholder="Nome Completo" class="input-vroom !text-slate-800 !bg-slate-50">
+        <input type="tel" id="reg-phone" placeholder="WhatsApp" class="input-vroom !text-slate-800 !bg-slate-50">
+        <button onclick="saveProfile()" class="vroom-btn">Cadastrar</button>
     </div>
 
+    <!-- TELA CLIENTE (Igual v14.0) -->
     <div id="screen-cliente" class="screen">
-        <div id="map"><iframe id="google-iframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>
+        <div id="map-client" style="height:100%; width:100%; background:#e2e8f0"></div>
         <div class="panel-bottom">
-            <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4"></div>
             <div class="type-selector">
-                <div id="btn-m" class="type-btn active-m" onclick="setType('m')"><i class="fas fa-city mb-1 block"></i> Municipal</div>
-                <div id="btn-i" class="type-btn" onclick="setType('i')"><i class="fas fa-road mb-1 block"></i> Intermunicipal</div>
+                <div id="btn-m" class="type-btn active-m" onclick="setType('m')">Municipal</div>
+                <div id="btn-i" class="type-btn" onclick="setType('i')">Intermunicipal</div>
             </div>
-            <div id="delivery-box" class="delivery-toggle" onclick="toggleDelivery()">
-                <div class="flex items-center gap-3"><i class="fas fa-box text-xl"></i><div><p class="text-[10px] font-black uppercase">Serviço de Entrega</p><p class="text-[9px] font-bold opacity-70">Objeto para enviar?</p></div></div>
-                <i id="delivery-check" class="far fa-circle text-xl"></i>
+            <input type="text" id="inp-destino" placeholder="Para onde vamos?" class="input-vroom !bg-slate-50 !text-slate-800">
+            <div id="price-box" class="price-card mb-4 hidden p-4 border rounded-xl flex justify-between items-center">
+                <div><p id="label-cat-client" class="text-[9px] font-black uppercase">Viagem</p><p id="label-price-client" class="text-2xl font-black italic">R$ --</p></div>
+                <i class="fas fa-motorcycle text-xl text-orange-500"></i>
             </div>
-            <input type="text" id="inp-origem" value="Localizando..." readonly class="input-vroom !bg-slate-50">
-            <input type="text" id="inp-destino" placeholder="Para onde vamos?" class="input-vroom">
-            <div id="price-box" class="price-card">
-                <div style="flex:1">
-                    <span id="label-cat" class="bg-orange-500 text-white px-2 py-1 rounded text-[9px] font-black uppercase">Calculando...</span>
-                    <p id="label-price" class="text-3xl font-black italic">R$ --</p>
-                    <p id="label-detail" class="text-[10px] font-bold text-slate-400 uppercase mt-1">--</p>
-                </div>
-                <div class="text-right text-orange-500"><i id="price-icon" class="fas fa-motorcycle text-2xl"></i></div>
-            </div>
-            <button onclick="checkRide()" id="btn-check" class="bg-slate-900 text-white font-black uppercase rounded-2xl p-4 w-full mb-2">Conferir Valor</button>
-            <button onclick="confirmRide()" id="btn-main" class="vroom-btn" style="display:none">Confirmar Corrida</button>
-            <button onclick="location.reload()" class="w-full mt-3 text-slate-400 font-black text-[10px] uppercase">Cancelar</button>
+            <button onclick="checkRide()" id="btn-check" class="check-btn !bg-slate-900">Conferir Valor</button>
+            <button onclick="simulateOrder()" id="btn-main" class="vroom-btn" style="display:none">Confirmar Corrida</button>
+            <button onclick="location.reload()" class="w-full mt-2 text-slate-400 font-black text-[9px] uppercase">Cancelar</button>
         </div>
     </div>
 
     <script>
-        let currentType = 'm';
-        let isDelivery = false;
-        const PRECO_POR_KM = 3.00;
+        let isOnline = false;
+        let alertInterval;
+        const sound = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'); // Som de bi-bii
 
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-' + id).classList.add('active');
-            if(id === 'cliente') initMap();
         }
 
-        function checkAccess() {
-            const profile = localStorage.getItem('vroom_profile');
-            if(!profile) nav('cadastro');
-            else nav('cliente');
+        function doDriverLogin() {
+            const u = document.getElementById('driver-user').value;
+            const p = document.getElementById('driver-pass').value;
+            if(u === 'Rodolfo Oliveira' && p === 'Rm290198') nav('driver-home');
+            else alert('Acesso Negado!');
         }
 
-        function previewPhoto(event) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const preview = document.getElementById('photo-preview');
-                preview.src = reader.result;
-                preview.style.display = 'block';
-            };
-            reader.readAsDataURL(event.target.files[0]);
-        }
-
-        function saveProfile() {
-            const name = document.getElementById('reg-name').value;
-            const phone = document.getElementById('reg-phone').value;
-            if(!name || !phone) return alert('Por favor, preencha todos os campos!');
-            
-            localStorage.setItem('vroom_profile', JSON.stringify({name, phone}));
-            nav('cliente');
-        }
-
-        function initMap() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    const lat = position.coords.latitude; const lng = position.coords.longitude;
-                    document.getElementById('google-iframe').src = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
-                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
-                        .then(r => r.json()).then(d => document.getElementById('inp-origem').value = d.display_name.split(',')[0]);
-                });
+        function toggleOnline() {
+            isOnline = !isOnline;
+            const badge = document.getElementById('status-toggle');
+            const hint = document.getElementById('driver-hint');
+            if(isOnline) {
+                badge.className = 'status-badge status-online';
+                badge.innerHTML = '<i class="fas fa-circle text-[6px]"></i> <span>Online</span>';
+                hint.innerText = 'Buscando corridas próximas...';
+                // Simula pedido após 5 segundos online para teste
+                setTimeout(triggerAlert, 5000);
+            } else {
+                badge.className = 'status-badge status-offline';
+                badge.innerHTML = '<i class="fas fa-circle text-[6px]"></i> <span>Offline</span>';
+                hint.innerText = 'Fique Online para receber chamados';
+                stopAlert();
             }
         }
 
-        function setType(t) {
-            currentType = t;
-            document.getElementById('btn-m').classList.remove('active-m');
-            document.getElementById('btn-i').classList.remove('active-i');
-            document.getElementById('price-box').style.display = 'none';
-            document.getElementById('btn-main').style.display = 'none';
-            document.getElementById('btn-check').style.display = 'block';
-            if(t === 'm') { document.getElementById('btn-m').classList.add('active-m'); document.getElementById('delivery-box').style.display = 'flex'; }
-            else { document.getElementById('btn-i').classList.add('active-i'); document.getElementById('delivery-box').style.display = 'none'; isDelivery = false; }
+        function triggerAlert() {
+            if(!isOnline) return;
+            document.getElementById('alert-overlay').style.display = 'flex';
+            sound.loop = true;
+            sound.play();
         }
 
-        function toggleDelivery() { isDelivery = !isDelivery; this.classList.toggle('active'); }
+        function stopAlert() {
+            document.getElementById('alert-overlay').style.display = 'none';
+            sound.pause();
+            sound.currentTime = 0;
+        }
+
+        function acceptRide() {
+            stopAlert();
+            alert('Corrida Aceita! Navegando para o cliente...');
+        }
+
+        function rejectRide() {
+            stopAlert();
+            setTimeout(triggerAlert, 10000); // Tenta de novo depois
+        }
+
+        // CLIENTE LOGIC
+        function checkAccess() { 
+            if(localStorage.getItem('vroom_profile')) nav('cliente'); 
+            else nav('cadastro'); 
+        }
+        function previewPhoto(e) {
+            const f = e.target.files[0];
+            if(f) {
+                const reader = new FileReader();
+                reader.onload = (re) => { 
+                    const img = document.getElementById('photo-preview');
+                    img.src = re.target.result; img.classList.remove('hidden');
+                    document.getElementById('cam-icon').classList.add('hidden');
+                };
+                reader.readAsDataURL(f);
+            }
+        }
+        function saveProfile() {
+            const n = document.getElementById('reg-name').value;
+            const p = document.getElementById('reg-phone').value;
+            if(n && p) { localStorage.setItem('vroom_profile', JSON.stringify({n,p})); nav('cliente'); }
+            else alert('Preencha tudo!');
+        }
+
+        function setType(t) {
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active-m', 'active-i'));
+            document.getElementById('btn-'+t).classList.add('active-'+t);
+            document.getElementById('price-box').classList.add('hidden');
+            document.getElementById('btn-main').style.display = 'none';
+            document.getElementById('btn-check').style.display = 'block';
+        }
 
         function checkRide() {
-            const destino = document.getElementById('inp-destino').value;
-            if(destino.length < 3) return alert('Insira o destino!');
-            
             document.getElementById('btn-check').innerText = 'Consultando...';
             setTimeout(() => {
-                document.getElementById('price-box').style.display = 'flex';
+                document.getElementById('price-box').classList.remove('hidden');
                 document.getElementById('btn-check').style.display = 'none';
                 document.getElementById('btn-main').style.display = 'flex';
-                if(currentType === 'm') {
-                    document.getElementById('label-cat').innerText = isDelivery ? 'Entrega Municipal' : 'Viagem Municipal';
-                    document.getElementById('label-price').innerText = 'R$ 7,00';
-                    document.getElementById('label-detail').innerText = 'Taxa Local Fixa';
-                } else {
-                    const kmGoogle = 25.5; 
-                    const total = kmGoogle * PRECO_POR_KM;
-                    document.getElementById('label-cat').innerText = 'Intermunicipal (GPS)';
-                    document.getElementById('label-price').innerText = 'R$ ' + total.toFixed(2).replace('.', ',');
-                    document.getElementById('label-detail').innerText = kmGoogle + ' KM confirmados via Google';
-                }
+                document.getElementById('label-price-client').innerText = 'R$ 7,00';
             }, 1500);
         }
 
-        function confirmRide() {
-            const profile = JSON.parse(localStorage.getItem('vroom_profile'));
-            alert('CONFIRMADO! Motorista Rodolfo Oliveira está a caminho para atender ' + profile.name);
+        function simulateOrder() {
+            alert('Pedido enviado ao motorista!');
+            nav('portal');
         }
-
-        setType('m');
     </script>
 </body>
 </html>
