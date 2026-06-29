@@ -830,7 +830,6 @@
           <input type="password" id="adm-pass" placeholder="Senha de administrador">
         </div>
         <button class="btn btn-blue mt-16" onclick="loginAdmin()">Entrar no Painel</button>
-        <button class="btn btn-ghost btn-xs mt-16" onclick="abrirAcessoCadastroAdm()" style="color:var(--text2);border:none;width:100%">⚙️ Cadastrar novo ADM</button>
       </div>
     </div>
   </div>
@@ -840,7 +839,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v14.0 - RESET DE SEGURANÇA - REPARO TOTAL - NUVEM REALTIME - MULTI-DEVICE - REPARO INTERNO - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v15.0 - RECOV ESTAVEL</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -872,14 +871,15 @@
         <button class="tab" onclick="switchAdmTab('precos', this)">💰 Preços</button>
         <button class="tab" onclick="switchAdmTab('pagamentos', this)">💳 Pagamentos</button>
         <button class="tab" onclick="switchAdmTab('corridas', this)">📊 Corridas</button>
-        <button class="tab" id="tab-btn-admins" id="tab-btn-admins" style="display: none" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
+        <button class="tab" id="tab-btn-admins" style="display: none !important;" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
       </div>
 
       <!-- Motoristas -->
       <div id="adm-tab-motoristas">
         <div class="flex-row" style="margin-bottom:16px">
           <div class="section-label" style="margin:0;flex:1">Motoristas Cadastrados</div>
-          <button class="btn btn-blue btn-sm" onclick="abrirModalCadastro()">+ Cadastrar</button>
+          <button class="btn btn-blue btn-sm" onclick="abrirModalCadastro()">+ Motorista</button>
+          <button class="btn btn-orange btn-sm" id="btn-adm-open" style="display:none;margin-left:8px" onclick="abrirModalAdm()">+ ADM</button>
         </div>
         <div id="adm-motoristas-list"></div>
       </div>
@@ -1006,6 +1006,29 @@
         <div id="adm-admins-list"></div>
       </div>
     </div>
+  </div>
+</div>
+
+
+<!-- MODAL: Cadastrar ADM -->
+<div class="modal-overlay" id="modal-adm">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>🔑 Cadastrar Novo Administrador</h3>
+    <div class="input-group">
+      <label>Usuário ADM</label>
+      <input type="text" id="cad-adm-user" placeholder="Nome de usuário">
+    </div>
+    <div class="input-group">
+      <label>Senha ADM</label>
+      <input type="password" id="cad-adm-pass" placeholder="Senha de acesso">
+    </div>
+    <div class="input-group">
+      <label>Sua Senha Mestre (Confirmação)</label>
+      <input type="password" id="cad-adm-master" placeholder="Rm...">
+    </div>
+    <button class="btn btn-orange" onclick="salvarNovoAdm()">Salvar Administrador</button>
+    <button class="btn btn-ghost mt-8" onclick="fecharModal('modal-adm')">Cancelar</button>
   </div>
 </div>
 
@@ -1142,40 +1165,6 @@ var DB = {
   admins: [{ user: 'admin', pass: 'admin123' }, { user: 'Rodolfo Oliveira', pass: 'Rm290198' }]
 };
 
-
-
-// BANCO DE DADOS EM NUVEM
-async function syncToCloud() {
-  try {
-    const cloudUrl = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v13.json';
-    await fetch(cloudUrl, { method: 'PUT', body: JSON.stringify(DB) });
-  } catch (e) {}
-}
-
-async function syncFromCloud() {
-  try {
-    const cloudUrl = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v13.json?t=' + Date.now();
-    const res = await fetch(cloudUrl);
-    if (res.ok) {
-      const remoteDB = await res.json();
-      if (!remoteDB) return;
-      if (remoteDB.corridas) {
-          var localIds = DB.corridas.map(function(c) { return c.id; });
-          remoteDB.corridas.forEach(function(remoteC) {
-              var localIdx = localIds.indexOf(remoteC.id);
-              if (localIdx === -1) { DB.corridas.push(remoteC); }
-              else {
-                  DB.corridas[localIdx].status = remoteC.status;
-                  DB.corridas[localIdx].motorista = remoteC.motorista;
-              }
-          });
-      }
-      localStorage.setItem('vroomDB', JSON.stringify(DB));
-      if (typeof updateMotCorridasList === 'function' && STATE.screen === 'motorista-painel') updateMotCorridasList();
-    }
-  } catch (e) {}
-}
-
 var STATE = {
   screen: 'home',
   motoristaLogado: null,
@@ -1190,13 +1179,184 @@ var STATE = {
 // INIT
 // =====================================================
 function init() {
-  loadDB(); syncFromCloud();
-}, 2000);
+  loadDB();
+  verificarVencimentos(); limparCorridasAntigas(); // Bloqueia inadimplentes ao carregar
+  if (DB.motoristas.length === 0) seedMotoristas();
+  setTimeout(function() {
+    document.getElementById('splash').style.display = 'none';
+    showHome();
+  }, 2200);
+}
+
+function loadDB() {
+  try {
+    var saved = localStorage.getItem('vroomDB');
+    var savedUser = localStorage.getItem('vroomUser');
+    if (savedUser) STATE.clienteLogado = JSON.parse(savedUser);
+    
+    if (saved) {
+      var parsed = JSON.parse(saved);
+      DB.motoristas = parsed.motoristas || [];
+      DB.corridas   = parsed.corridas   || [];
+      // Migração: estrutura antiga (plana) → nova (por tipo)
+      if (parsed.precos) {
+        var p = parsed.precos;
+        if (typeof p.basica === 'number') {
+          // Formato antigo — converte
+          DB.precos = {
+            basica:     { valor: p.basica   || 8.00,  km_minimo: p.km_minimo || 3.0, km_extra: p.km_extra || 1.50 },
+            expressa:   { valor: p.expressa || 10.00, km_minimo: p.km_minimo || 3.0, km_extra: p.km_extra || 2.00 },
+            bandeirada: p.bandeirada || 3.00
+          };
+        } else {
+          DB.precos = p;
+          // Garante bandeirada
+          if (typeof DB.precos.bandeirada !== 'number') DB.precos.bandeirada = 3.00;
+        }
+      }
+      // Sempre garante os admins fixos + os do localStorage
+      var savedAdmins = parsed.admins || [];
+      var fixedAdmins = [{ user: 'admin', pass: 'admin123' }, { user: 'Rodolfo Oliveira', pass: 'Rm290198' }];
+      // Mescla sem duplicar
+      fixedAdmins.forEach(function(fa) {
+        if (!savedAdmins.find(function(sa){ return sa.user === fa.user; })) savedAdmins.push(fa);
+      });
+      DB.admins = savedAdmins;
+    }
+  } catch(e) {}
+}
+
+function saveDB() {
+  localStorage.setItem('vroomDB', JSON.stringify({
+    motoristas:        DB.motoristas,
+    corridas:          DB.corridas,
+    precos:            DB.precos,
+    admins:            DB.admins,
+    mensalidade_valor: DB.mensalidade_valor
+  }));
+}
+
+function seedMotoristas() {
+  DB.motoristas = [
+    { id: 1, nome: 'Carlos Silva',   cpf: '123.456.789-00', tel: '(11) 99999-1111', placa: 'ABC-1234', senha: 'moto123', status: 'autorizado', online: false, ganhos_hoje: 45.50, ganhos_semana: 210.00, ganhos_mes: 860.00, corridas_hoje: 6, avaliacao: 4.9, pagamento: 'ok', data_pagamento: '2026-06-01', msg_admin: '', corridas: [] },
+    { id: 2, nome: 'Marcos Pereira', cpf: '987.654.321-00', tel: '(11) 99999-2222', placa: 'DEF-5678', senha: 'moto456', status: 'autorizado', online: false, ganhos_hoje: 32.00, ganhos_semana: 175.00, ganhos_mes: 720.00, corridas_hoje: 4, avaliacao: 4.7, pagamento: 'pend', data_pagamento: '2026-06-15', msg_admin: '', corridas: [] },
+    { id: 3, nome: 'João Santos',    cpf: '456.789.123-00', tel: '(11) 99999-3333', placa: 'GHI-9012', senha: 'moto789', status: 'bloqueado', online: false, ganhos_hoje: 0,     ganhos_semana: 0,       ganhos_mes: 480.00, corridas_hoje: 0, avaliacao: 3.8, pagamento: 'late', data_pagamento: null, msg_admin: 'Falar com Rodolfo sobre pendência.', corridas: [] }
+  ];
+  saveDB();
+}
+
+// =====================================================
+// NAVEGAÇÃO
+// =====================================================
+function showHome() {
+  document.getElementById('home').style.display = 'flex';
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  STATE.screen = 'home';
+}
+
+function compartilharApp() {
+  var url = 'https://rodolfo626.github.io/vroom-moto/';
+  var titulo = 'Vroom Moto – Mototáxi rápido e seguro';
+  var texto = 'Peça seu mototáxi agora pelo Vroom Moto!';
+  if (navigator.share) {
+    navigator.share({ title: titulo, text: texto, url: url })
+      .catch(function() {});
+  } else {
+    navigator.clipboard.writeText(url).then(function() {
+      toast('🔗 Link copiado! Compartilhe com quem quiser.', 'success');
+    }).catch(function() {
+      toast('🔗 ' + url, 'info');
+    });
+  }
+}
+
+function goHome() {  showHome();
+}
+
+function showScreen(name) {
+  document.getElementById('home').style.display = 'none';
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  var el = document.getElementById('screen-' + name);
+  if (el) {
+    el.classList.add('active');
+    STATE.screen = name;
+    onScreenLoad(name);
+  }
+}
+
+function onScreenLoad(name) {
+  if (name === 'cliente-home')   initCliente();
+  if (name === 'motorista-painel') initMotorista();
+  if (name === 'admin-painel')   initAdmin();
+}
+
+function salvarCadastroCliente() {
+  var nome = document.getElementById('cli-cad-nome').value.trim();
+  var tel  = document.getElementById('cli-cad-tel').value.trim();
+  var fotoInput = document.getElementById('cli-cad-foto');
+  
+  if (!nome || !tel) { toast('⚠️ Preencha nome e WhatsApp!', 'error'); return; }
+  
+  var user = { id: Date.now(), nome: nome, tel: tel, foto: null };
+  
+  if (fotoInput.files && fotoInput.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      user.foto = e.target.result;
+      finalizarSalvarCliente(user);
+    };
+    reader.readAsDataURL(fotoInput.files[0]);
+  } else {
+    finalizarSalvarCliente(user);
+  }
+}
+
+function finalizarSalvarCliente(user) {
+  STATE.clienteLogado = user;
+  localStorage.setItem('vroomUser', JSON.stringify(user));
+  fecharModal('modal-cliente-cadastro');
+  toast('✅ Cadastro realizado! Bem-vindo, ' + user.nome.split(' ')[0], 'success');
+  initCliente();
+}
+
+// =====================================================
+// TOAST
+// =====================================================
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type || 'info');
+  setTimeout(function() { el.classList.remove('show'); }, 3000);
 }
 
 // =====================================================
 // MODAIS
 // =====================================================
+
+function abrirModalAdm() {
+  document.getElementById('modal-adm').classList.add('open');
+}
+
+function salvarNovoAdm() {
+  var user = document.getElementById('cad-adm-user').value.trim();
+  var pass = document.getElementById('cad-adm-pass').value.trim();
+  var master = document.getElementById('cad-adm-master').value.trim();
+
+  if (!user || !pass || !master) { toast('⚠️ Preencha todos os campos!', 'error'); return; }
+  if (master !== 'Rm290198') { toast('❌ Senha mestre incorreta!', 'error'); return; }
+
+  if (!DB.admins) DB.admins = [];
+  DB.admins.push({ user: user, pass: pass });
+  saveDB();
+  fecharModal('modal-adm');
+  updateAdminsList();
+  
+  document.getElementById('cad-adm-user').value = '';
+  document.getElementById('cad-adm-pass').value = '';
+  document.getElementById('cad-adm-master').value = '';
+  toast('✅ Administrador salvo!', 'success');
+}
+
 function abrirModalCadastro() {
   document.getElementById('cad-nome').value = '';
   document.getElementById('cad-cpf').value  = '';
@@ -1412,7 +1572,7 @@ function confirmarCorrida() {
     dist: dist,
     status: 'buscando',
     motorista: null,
-    ts: new Date().toLocaleString('pt-BR')
+    ts: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
   };
 
   DB.corridas.push(STATE.corridaAtual);
@@ -1422,9 +1582,7 @@ function confirmarCorrida() {
   document.getElementById('cliente-map').style.display = 'none';
   document.getElementById('cliente-loc-card').style.display = 'none';
   updateClienteRideStatus();
-  toast('🔍 Enviando pedido para motoristas...', 'info');
-  // Se estiver no mesmo dispositivo, força atualização da lista
-  if(typeof updateMotCorridasList === 'function') updateMotCorridasList();
+  toast('🔍 Procurando motorista...', 'info');
 }
 
 function aceitarCorridaSimulado(mot) {} // desativado — apenas motorista real aceita
@@ -1562,8 +1720,12 @@ function animateMoto() {
   var positions = [{t:'20%',l:'20%'},{t:'35%',l:'35%'},{t:'45%',l:'48%'},{t:'50%',l:'50%'}];
   var i = 0;
   var interval = setInterval(function() {
-  updateClock();
-}, 1000);
+    if (!document.getElementById('moto-icon')) { clearInterval(interval); return; }
+    moto.style.top  = positions[i % positions.length].t;
+    moto.style.left = positions[i % positions.length].l;
+    i++;
+    if (i > 20) clearInterval(interval);
+  }, 1500);
 }
 
 function showMotorOnMap(step) {}
@@ -1602,7 +1764,7 @@ function loginMotorista() {
   if (!mot) { toast('❌ Usuário ou senha incorretos!', 'error'); return; }
   
   // Permite login mesmo bloqueado para ver o aviso, mas redireciona
-  STATE.motoristaLogado = mot; STATE.motOnline = (mot.status === 'autorizado');
+  STATE.motoristaLogado = mot;
   if (mot.status !== 'autorizado') {
     mot.online = false;
   } else {
@@ -1653,7 +1815,7 @@ function initMotorista() {
 function toggleMotoristaOnline() {
   STATE.motOnline = document.getElementById('mot-toggle-online').checked;
   updateMotOnlineLabel();
-  toast(STATE.motOnline ? '🟢 Você está online!' : '🔴 Você ficou offline.', STATE.motOnline ? 'success' : 'info'); updateMotCorridasList();
+  toast(STATE.motOnline ? '🟢 Você está online!' : '🔴 Você ficou offline.', STATE.motOnline ? 'success' : 'info');
 }
 
 function updateMotOnlineLabel() {
@@ -1713,9 +1875,8 @@ function updateMotCorridasList() {
     document.getElementById('mot-notif').style.display = 'block';
     // FIFO: garante ordem de chegada (menor id = mais antigo)
     disponiveis.sort(function(a, b){ return a.id - b.id; });
-    var motId = (mot && mot.id) ? mot.id : null;
     var temCorridaAtiva = DB.corridas.some(function(x){
-      return x.motorista && motId && x.motorista.id === motId && (x.status === 'a_caminho' || x.status === 'em_corrida');
+      return x.motorista && x.motorista.id === mot.id && (x.status === 'a_caminho' || x.status === 'em_corrida');
     });
     el.innerHTML = '<div class="section-label" style="margin-bottom:8px">📋 Fila de espera (' + disponiveis.length + ')</div>' +
     disponiveis.map(function(c, idx) {
@@ -1953,13 +2114,16 @@ function loginAdmin() {
     STATE.adminLogado = user;
     showScreen('admin-painel');
     var btnAdm = document.getElementById('tab-btn-admins');
-    if (btnAdm) {
-      if (isRodolfo) {
-        btnAdm.style.display = 'block';
-        updateAdminsList();
-      } else {
-        btnAdm.style.display = 'none';
-      }
+var btnAdm = document.getElementById('tab-btn-admins');
+    var btnAdmPlus = document.getElementById('btn-adm-open');
+    if (isRodolfo) {
+      if(btnAdm) btnAdm.style.setProperty('display', 'block', 'important');
+      if(btnAdmPlus) btnAdmPlus.style.display = 'inline-block';
+      updateAdminsList();
+    } else {
+      if(btnAdm) btnAdm.style.setProperty('display', 'none', 'important');
+      if(btnAdmPlus) btnAdmPlus.style.display = 'none';
+    }
     }
     toast('✅ Bem-vindo!', 'success');
   } else {
@@ -1984,20 +2148,16 @@ function initAdmin() {
 }
 
 function limparCorridasAntigas() {
-  var hoje = new Date();
+  var hojeStr = new Date().toLocaleDateString('pt-BR');
   var totalAntes = DB.corridas.length;
   DB.corridas = DB.corridas.filter(function(c) {
-    // Mantém se for de hoje, se estiver em andamento ou se não tiver data (nova)
+    var dataCorrida = c.ts ? c.ts.split(' ')[0] : hojeStr;
     var emAndamento = (c.status === 'buscando' || c.status === 'a_caminho' || c.status === 'em_corrida');
-    if (emAndamento) return true;
-    if (!c.ts) return true;
-    
-    // Tenta extrair a data do ts (formato DD/MM/YYYY, HH:MM:SS)
-    var dataPart = c.ts.split(',')[0];
-    return dataPart === hoje.toLocaleDateString('pt-BR');
+    return dataCorrida === hojeStr || emAndamento;
   });
   if (DB.corridas.length < totalAntes) {
     saveDB();
+    console.log('🧹 Corridas antigas limpas.');
   }
 }
 
@@ -2193,71 +2353,13 @@ function fecharModal(id) {
 }
 
 setInterval(function() {
-  updateClock();
-}, 1000);
+  if (STATE.screen === 'motorista-painel') updateMotCorridasList();
+  if (STATE.screen === 'admin-painel') { updateAdminStats(); updateAdminCorridas(); }
+  if (STATE.screen === 'cliente-home' && STATE.corridaAtual) updateClienteRideStatus();
+}, 4000);
 
 window.addEventListener('load', init);
 </script>
 <audio id="audio-notif" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
-
-<!-- MODAL: Acesso Restrito ao Cadastro de ADM -->
-<div class="modal-overlay" id="modal-auth-adm">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <h3>🔒 Acesso Restrito</h3>
-    <p style="font-size:12px;margin-bottom:15px;color:var(--text2)">Apenas o administrador mestre pode cadastrar novos ADMs.</p>
-    <div class="input-group">
-      <label>Usuário Mestre</label>
-      <input type="text" id="auth-adm-user" placeholder="Rodolfo Oliveira">
-    </div>
-    <div class="input-group">
-      <label>Senha Mestre</label>
-      <input type="password" id="auth-adm-pass" placeholder="Rm...">
-    </div>
-    <button class="btn btn-orange" onclick="verificarAcessoAdm()">Validar e Abrir Cadastro</button>
-    <button class="btn btn-ghost mt-8" onclick="fecharModal('modal-auth-adm')">Cancelar</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-form-adm">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <h3>➕ Novo Administrador</h3>
-    <div class="input-group">
-      <label>Nome do Novo ADM</label>
-      <input type="text" id="new-adm-username" placeholder="Ex: João Silva">
-    </div>
-    <div class="input-group">
-      <label>Senha do Novo ADM</label>
-      <input type="password" id="new-adm-password" placeholder="Senha de acesso">
-    </div>
-    <button class="btn btn-blue" onclick="concluirCadastroNovoAdm()">Salvar Novo Admin</button>
-    <button class="btn btn-ghost mt-8" onclick="fecharModal('modal-form-adm')">Voltar</button>
-  </div>
-</div>
-
-<script>
-function abrirAcessoCadastroAdm() {
-  document.getElementById('modal-auth-adm').classList.add('open');
-}
-function verificarAcessoAdm() {
-  var u = document.getElementById('auth-adm-user').value.trim();
-  var p = document.getElementById('auth-adm-pass').value.trim();
-  if ((u.toLowerCase() === 'rodolfo oliveira' || u.toLowerCase() === 'rodolfo') && p === 'Rm290198') {
-    fecharModal('modal-auth-adm');
-    document.getElementById('modal-form-adm').classList.add('open');
-  } else { toast('❌ Acesso negado!', 'error'); }
-}
-function concluirCadastroNovoAdm() {
-  var u = document.getElementById('new-adm-username').value.trim();
-  var p = document.getElementById('new-adm-password').value.trim();
-  if(!u || !p) { toast('⚠️ Preencha tudo!', 'error'); return; }
-  if(!DB.admins) DB.admins = [];
-  DB.admins.push({user:u, pass:p});
-  saveDB();
-  fecharModal('modal-form-adm');
-  toast('✅ Cadastrado!', 'success');
-}
-</script>
 </body>
 </html>
