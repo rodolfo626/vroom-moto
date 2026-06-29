@@ -839,7 +839,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração</h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v2.1</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -871,7 +871,7 @@
         <button class="tab" onclick="switchAdmTab('precos', this)">💰 Preços</button>
         <button class="tab" onclick="switchAdmTab('pagamentos', this)">💳 Pagamentos</button>
         <button class="tab" onclick="switchAdmTab('corridas', this)">📊 Corridas</button>
-        <button class="tab" id="tab-btn-admins" style="display:none" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
+        <button class="tab" id="tab-btn-admins" style="display: none !important;" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
       </div>
 
       <!-- Motoristas -->
@@ -2072,8 +2072,12 @@ function loginAdmin() {
     
     var btnAdm = document.getElementById('tab-btn-admins');
     if (btnAdm) {
-      btnAdm.style.setProperty('display', isRodolfo ? 'block' : 'none', 'important');
-      if (isRodolfo) updateAdminsList();
+      if (isRodolfo) {
+        btnAdm.style.setProperty('display', 'inline-block', 'important');
+        updateAdminsList();
+      } else {
+        btnAdm.style.setProperty('display', 'none', 'important');
+      }
     }
     
     toast('✅ Bem-vindo, ' + user + '!', 'success');
@@ -2146,8 +2150,10 @@ function switchAdmTab(tab, el) {
   document.getElementById("adm-tab-precos").style.display     = tab === "precos"     ? "block" : "none";
   document.getElementById("adm-tab-pagamentos").style.display = tab === "pagamentos" ? "block" : "none";
   document.getElementById("adm-tab-corridas").style.display   = tab === "corridas"   ? "block" : "none";
-  if(document.getElementById("adm-tab-admins")) 
-    document.getElementById("adm-tab-admins").style.display   = tab === "admins"     ? "block" : "none";
+  var admTabContent = document.getElementById('adm-tab-admins');
+  if(admTabContent) {
+    admTabContent.style.display = (tab === 'admins') ? 'block' : 'none';
+  }
 }
 
 function updateAdminsList() {
