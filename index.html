@@ -840,7 +840,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v10.0 - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v10.1 - REPARO INTERNO - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -1772,7 +1772,7 @@ function initMotorista() {
 function toggleMotoristaOnline() {
   STATE.motOnline = document.getElementById('mot-toggle-online').checked;
   updateMotOnlineLabel();
-  toast(STATE.motOnline ? '🟢 Você está online!' : '🔴 Você ficou offline.', STATE.motOnline ? 'success' : 'info');
+  toast(STATE.motOnline ? '🟢 Você está online!' : '🔴 Você ficou offline.', STATE.motOnline ? 'success' : 'info'); updateMotCorridasList();
 }
 
 function updateMotOnlineLabel() {
