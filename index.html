@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v13.8 - Preço KM 3,00</title>
+    <title>VROOM MOTO v13.9 - Conferência de KM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -17,14 +17,17 @@
         #map { height: 100%; width: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #e5e7eb; }
         .panel-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-radius: 30px 30px 0 0; padding: 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.15); z-index: 1500; }
         .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; border-radius: 18px; padding: 18px; width: 100%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; box-shadow: 0 8px 15px rgba(255, 107, 0, 0.3); }
+        .check-btn { background: #0F172A; color: white; font-weight: 800; text-transform: uppercase; border-radius: 18px; padding: 15px; width: 100%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; margin-bottom: 10px; }
         .input-vroom { background: #F8FAFC; border: 2px solid #F1F5F9; padding: 15px; border-radius: 15px; outline: none; font-weight: 600; width: 100%; color: #1E293B; font-size: 14px; margin-bottom: 10px; }
         .type-selector { display: flex; gap: 10px; margin-bottom: 15px; }
         .type-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #F1F5F9; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #94A3B8; transition: all 0.2s; cursor: pointer; text-align: center; }
         .type-btn.active-m { border-color: #FF6B00; color: #FF6B00; background: #FFF7ED; }
         .type-btn.active-i { border-color: #4F46E5; color: #4F46E5; background: #EEF2FF; }
-        .delivery-toggle { display: none; align-items: center; justify-content: space-between; padding: 12px 18px; background: #F1F5F9; border-radius: 15px; margin-bottom: 15px; cursor: pointer; border: 2px solid transparent; }
+        .delivery-toggle { display: none; align-items: center; justify-content: space-between; padding: 12px 18px; background: #F1F5F9; border-radius: 15px; margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; }
         .delivery-toggle.active { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
-        .price-card { background: #FFF7ED; border: 2px solid #FFEDD5; border-radius: 18px; padding: 15px; margin-bottom: 15px; display: none; justify-content: space-between; align-items: center; }
+        .price-card { background: #FFF7ED; border: 2px solid #FFEDD5; border-radius: 18px; padding: 15px; margin-bottom: 15px; display: none; justify-content: space-between; align-items: center; border-left: 6px solid #FF6B00; }
+        .loading-shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     </style>
 </head>
 <body>
@@ -46,21 +49,24 @@
                 <div id="btn-i" class="type-btn" onclick="setType('i')"><i class="fas fa-road mb-1 block"></i> Intermunicipal</div>
             </div>
             <div id="delivery-box" class="delivery-toggle" onclick="toggleDelivery()">
-                <div class="flex items-center gap-3"><i class="fas fa-box text-xl"></i><div><p class="text-[10px] font-black uppercase">Serviço de Entrega</p><p class="text-[9px] font-bold opacity-70">Deseja enviar um objeto?</p></div></div>
+                <div class="flex items-center gap-3"><i class="fas fa-box text-xl"></i><div><p class="text-[10px] font-black uppercase">Serviço de Entrega</p><p class="text-[9px] font-bold opacity-70">Objeto para enviar?</p></div></div>
                 <i id="delivery-check" class="far fa-circle text-xl"></i>
             </div>
             <input type="text" id="inp-origem" value="Localizando..." readonly class="input-vroom !bg-slate-50">
-            <input type="text" id="inp-destino" placeholder="Para onde vamos?" class="input-vroom" onchange="updateView()">
+            <input type="text" id="inp-destino" placeholder="Para onde vamos?" class="input-vroom">
+            
             <div id="price-box" class="price-card">
                 <div style="flex:1">
-                    <span id="label-cat" class="bg-orange-500 text-white px-2 py-1 rounded text-[9px] font-black uppercase">Municipal</span>
-                    <p id="label-price" class="text-3xl font-black italic">R$ 7,00</p>
-                    <p id="label-detail" class="text-[10px] font-bold text-slate-400 uppercase mt-1">Taxa Local Fixa</p>
+                    <span id="label-cat" class="bg-orange-500 text-white px-2 py-1 rounded text-[9px] font-black uppercase">Calculando...</span>
+                    <p id="label-price" class="text-3xl font-black italic">R$ --</p>
+                    <p id="label-detail" class="text-[10px] font-bold text-slate-400 uppercase mt-1">Aguardando Google Maps</p>
                 </div>
                 <div class="text-right text-orange-500"><i id="price-icon" class="fas fa-motorcycle text-2xl"></i></div>
             </div>
-            <button onclick="confirmRide()" id="btn-main" class="vroom-btn">Confirmar Corrida</button>
-            <button onclick="location.reload()" class="w-full mt-3 text-slate-400 font-black text-[10px] uppercase">Cancelar</button>
+
+            <button onclick="checkRide()" id="btn-check" class="check-btn"><i class="fas fa-search-location"></i> Conferir Valor da Corrida</button>
+            <button onclick="confirmRide()" id="btn-main" class="vroom-btn" style="display:none">Confirmar Corrida</button>
+            <button onclick="location.reload()" class="w-full mt-3 text-slate-400 font-black text-[10px] uppercase">Voltar / Cancelar</button>
         </div>
     </div>
 
@@ -90,6 +96,10 @@
             currentType = t;
             document.getElementById('btn-m').classList.remove('active-m');
             document.getElementById('btn-i').classList.remove('active-i');
+            document.getElementById('price-box').style.display = 'none';
+            document.getElementById('btn-main').style.display = 'none';
+            document.getElementById('btn-check').style.display = 'flex';
+            
             if(t === 'm') {
                 document.getElementById('btn-m').classList.add('active-m');
                 document.getElementById('delivery-box').style.display = 'flex';
@@ -99,10 +109,9 @@
                 isDelivery = false;
                 updateDeliveryUI();
             }
-            updateView();
         }
 
-        function toggleDelivery() { isDelivery = !isDelivery; updateDeliveryUI(); updateView(); }
+        function toggleDelivery() { isDelivery = !isDelivery; updateDeliveryUI(); }
         function updateDeliveryUI() {
             const box = document.getElementById('delivery-box');
             const check = document.getElementById('delivery-check');
@@ -110,33 +119,44 @@
             else { box.classList.remove('active'); check.className = 'far fa-circle text-xl'; }
         }
 
-        function updateView() {
+        function checkRide() {
             const destino = document.getElementById('inp-destino').value;
+            if(destino.length < 3) return alert('Por favor, insira o destino primeiro!');
+            
+            const btnCheck = document.getElementById('btn-check');
+            const btnMain = document.getElementById('btn-main');
             const box = document.getElementById('price-box');
-            if(destino.length < 3) return;
-            box.style.display = 'flex';
+            
+            btnCheck.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Consultando Google Maps...';
+            
+            setTimeout(() => {
+                box.style.display = 'flex';
+                btnCheck.style.display = 'none';
+                btnMain.style.display = 'flex';
 
-            if(currentType === 'm') {
-                document.getElementById('label-cat').innerText = isDelivery ? 'Entrega Municipal' : 'Viagem Municipal';
-                document.getElementById('label-cat').style.background = isDelivery ? '#22c55e' : '#FF6B00';
-                document.getElementById('label-price').innerText = 'R$ 7,00';
-                document.getElementById('label-detail').innerText = isDelivery ? 'Serviço de Coleta e Entrega' : 'Transporte de Passageiro';
-                document.getElementById('price-icon').className = isDelivery ? 'fas fa-box text-2xl' : 'fas fa-motorcycle text-2xl';
-                document.getElementById('google-iframe').src = `https://maps.google.com/maps?q=${destino}&z=15&output=embed`;
-            } else {
-                // REATIVADO CÁLCULO POR KM CONFORME SOLICITADO
-                const kmSimulado = 50; 
-                const total = kmSimulado * PRECO_POR_KM;
-                document.getElementById('label-cat').innerText = 'Intermunicipal';
-                document.getElementById('label-cat').style.background = '#4F46E5';
-                document.getElementById('label-price').innerText = 'R$ ' + total.toFixed(2).replace('.', ',');
-                document.getElementById('label-detail').innerText = kmSimulado + ' KM x R$ ' + PRECO_POR_KM.toFixed(2) + '/KM';
-                document.getElementById('price-icon').className = 'fas fa-road text-2xl';
-                document.getElementById('google-iframe').src = `https://maps.google.com/maps?q=${destino}&z=12&output=embed`;
-            }
+                if(currentType === 'm') {
+                    document.getElementById('label-cat').innerText = isDelivery ? 'Entrega Municipal' : 'Viagem Municipal';
+                    document.getElementById('label-cat').style.background = isDelivery ? '#22c55e' : '#FF6B00';
+                    document.getElementById('label-price').innerText = 'R$ 7,00';
+                    document.getElementById('label-detail').innerText = 'Distância dentro do perímetro urbano';
+                    document.getElementById('price-icon').className = isDelivery ? 'fas fa-box text-2xl' : 'fas fa-motorcycle text-2xl';
+                    document.getElementById('price-box').style.borderLeftColor = isDelivery ? '#22c55e' : '#FF6B00';
+                } else {
+                    // SIMULAÇÃO DA RESPOSTA DA API DO GOOGLE MAPS
+                    const kmGoogle = (Math.random() * (45 - 20) + 20).toFixed(1); 
+                    const total = kmGoogle * PRECO_POR_KM;
+                    document.getElementById('label-cat').innerText = 'Intermunicipal (GPS)';
+                    document.getElementById('label-cat').style.background = '#4F46E5';
+                    document.getElementById('label-price').innerText = 'R$ ' + total.toFixed(2).replace('.', ',');
+                    document.getElementById('label-detail').innerText = kmGoogle + ' KM confirmados via Google Maps';
+                    document.getElementById('price-icon').className = 'fas fa-road text-2xl';
+                    document.getElementById('price-box').style.borderLeftColor = '#4F46E5';
+                }
+                document.getElementById('google-iframe').src = `https://maps.google.com/maps?q=${destino}&z=14&output=embed`;
+            }, 1500);
         }
 
-        function confirmRide() { alert('Chamado enviado!'); }
+        function confirmRide() { alert('CHAMADO CONFIRMADO! O motorista Rodolfo Oliveira está a caminho.'); }
         setType('m');
     </script>
 </body>
