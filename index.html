@@ -830,6 +830,7 @@
           <input type="password" id="adm-pass" placeholder="Senha de administrador">
         </div>
         <button class="btn btn-blue mt-16" onclick="loginAdmin()">Entrar no Painel</button>
+        <button class="btn btn-ghost btn-xs mt-16" onclick="abrirAcessoCadastroAdm()" style="color:var(--text2);border:none;width:100%">⚙️ Cadastrar novo ADM</button>
       </div>
     </div>
   </div>
@@ -839,7 +840,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v2.1</small></h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v8.1 - ESTÁVEL</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -871,7 +872,7 @@
         <button class="tab" onclick="switchAdmTab('precos', this)">💰 Preços</button>
         <button class="tab" onclick="switchAdmTab('pagamentos', this)">💳 Pagamentos</button>
         <button class="tab" onclick="switchAdmTab('corridas', this)">📊 Corridas</button>
-        <button class="tab" id="tab-btn-admins" style="display: none !important;" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
+        <button class="tab" id="tab-btn-admins" id="tab-btn-admins" style="display: none" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
       </div>
 
       <!-- Motoristas -->
@@ -2309,5 +2310,65 @@ setInterval(function() {
 window.addEventListener('load', init);
 </script>
 <audio id="audio-notif" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+
+<!-- MODAL: Acesso Restrito ao Cadastro de ADM -->
+<div class="modal-overlay" id="modal-auth-adm">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>🔒 Acesso Restrito</h3>
+    <p style="font-size:12px;margin-bottom:15px;color:var(--text2)">Apenas o administrador mestre pode cadastrar novos ADMs.</p>
+    <div class="input-group">
+      <label>Usuário Mestre</label>
+      <input type="text" id="auth-adm-user" placeholder="Rodolfo Oliveira">
+    </div>
+    <div class="input-group">
+      <label>Senha Mestre</label>
+      <input type="password" id="auth-adm-pass" placeholder="Rm...">
+    </div>
+    <button class="btn btn-orange" onclick="verificarAcessoAdm()">Validar e Abrir Cadastro</button>
+    <button class="btn btn-ghost mt-8" onclick="fecharModal('modal-auth-adm')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-form-adm">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>➕ Novo Administrador</h3>
+    <div class="input-group">
+      <label>Nome do Novo ADM</label>
+      <input type="text" id="new-adm-username" placeholder="Ex: João Silva">
+    </div>
+    <div class="input-group">
+      <label>Senha do Novo ADM</label>
+      <input type="password" id="new-adm-password" placeholder="Senha de acesso">
+    </div>
+    <button class="btn btn-blue" onclick="concluirCadastroNovoAdm()">Salvar Novo Admin</button>
+    <button class="btn btn-ghost mt-8" onclick="fecharModal('modal-form-adm')">Voltar</button>
+  </div>
+</div>
+
+<script>
+function abrirAcessoCadastroAdm() {
+  document.getElementById('modal-auth-adm').classList.add('open');
+}
+function verificarAcessoAdm() {
+  var u = document.getElementById('auth-adm-user').value.trim();
+  var p = document.getElementById('auth-adm-pass').value.trim();
+  if ((u.toLowerCase() === 'rodolfo oliveira' || u.toLowerCase() === 'rodolfo') && p === 'Rm290198') {
+    fecharModal('modal-auth-adm');
+    document.getElementById('modal-form-adm').classList.add('open');
+  } else { toast('❌ Acesso negado!', 'error'); }
+}
+function concluirCadastroNovoAdm() {
+  var u = document.getElementById('new-adm-username').value.trim();
+  var p = document.getElementById('new-adm-password').value.trim();
+  if(!u || !p) { toast('⚠️ Preencha tudo!', 'error'); return; }
+  if(!DB.admins) DB.admins = [];
+  DB.admins.push({user:u, pass:p});
+  saveDB();
+  fecharModal('modal-form-adm');
+  toast('✅ Cadastrado!', 'success');
+}
+</script>
 </body>
 </html>
