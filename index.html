@@ -871,14 +871,15 @@
         <button class="tab" onclick="switchAdmTab('precos', this)">💰 Preços</button>
         <button class="tab" onclick="switchAdmTab('pagamentos', this)">💳 Pagamentos</button>
         <button class="tab" onclick="switchAdmTab('corridas', this)">📊 Corridas</button>
-        <button class="tab" id="tab-btn-admins" style="display: none" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
+        <button class="tab" id="tab-btn-admins" style="display: none !important;" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
       </div>
 
       <!-- Motoristas -->
       <div id="adm-tab-motoristas">
         <div class="flex-row" style="margin-bottom:16px">
           <div class="section-label" style="margin:0;flex:1">Motoristas Cadastrados</div>
-          <button class="btn btn-blue btn-sm" onclick="abrirModalCadastro()">+ Cadastrar</button>
+          <button class="btn btn-blue btn-sm" onclick="abrirModalCadastro()">+ Motorista</button>
+          <button class="btn btn-orange btn-sm" id="btn-adm-open" style="display:none;margin-left:8px" onclick="abrirModalAdm()">+ ADM</button>
         </div>
         <div id="adm-motoristas-list"></div>
       </div>
@@ -1005,6 +1006,29 @@
         <div id="adm-admins-list"></div>
       </div>
     </div>
+  </div>
+</div>
+
+
+<!-- MODAL: Cadastrar ADM -->
+<div class="modal-overlay" id="modal-adm">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>🔑 Cadastrar Novo Administrador</h3>
+    <div class="input-group">
+      <label>Usuário ADM</label>
+      <input type="text" id="cad-adm-user" placeholder="Nome de usuário">
+    </div>
+    <div class="input-group">
+      <label>Senha ADM</label>
+      <input type="password" id="cad-adm-pass" placeholder="Senha de acesso">
+    </div>
+    <div class="input-group">
+      <label>Sua Senha Mestre (Confirmação)</label>
+      <input type="password" id="cad-adm-master" placeholder="Rm...">
+    </div>
+    <button class="btn btn-orange" onclick="salvarNovoAdm()">Salvar Administrador</button>
+    <button class="btn btn-ghost mt-8" onclick="fecharModal('modal-adm')">Cancelar</button>
   </div>
 </div>
 
@@ -1308,6 +1332,31 @@ function toast(msg, type) {
 // =====================================================
 // MODAIS
 // =====================================================
+
+function abrirModalAdm() {
+  document.getElementById('modal-adm').classList.add('open');
+}
+
+function salvarNovoAdm() {
+  var user = document.getElementById('cad-adm-user').value.trim();
+  var pass = document.getElementById('cad-adm-pass').value.trim();
+  var master = document.getElementById('cad-adm-master').value.trim();
+
+  if (!user || !pass || !master) { toast('⚠️ Preencha todos os campos!', 'error'); return; }
+  if (master !== 'Rm290198') { toast('❌ Senha mestre incorreta!', 'error'); return; }
+
+  if (!DB.admins) DB.admins = [];
+  DB.admins.push({ user: user, pass: pass });
+  saveDB();
+  fecharModal('modal-adm');
+  updateAdminsList();
+  
+  document.getElementById('cad-adm-user').value = '';
+  document.getElementById('cad-adm-pass').value = '';
+  document.getElementById('cad-adm-master').value = '';
+  toast('✅ Administrador salvo!', 'success');
+}
+
 function abrirModalCadastro() {
   document.getElementById('cad-nome').value = '';
   document.getElementById('cad-cpf').value  = '';
@@ -2058,28 +2107,6 @@ function loginAdmin() {
   var user = document.getElementById('adm-user').value.trim();
   var pass = document.getElementById('adm-pass').value.trim();
   if (!user || !pass) { toast('⚠️ Preencha usuário e senha!', 'error'); return; }
-  
-  var u = user.toLowerCase();
-  var isRodolfo = (u === 'rodolfo oliveira' || u === 'rodolfo') && pass === 'Rm290198';
-  
-  if (isRodolfo || (DB.admins || []).find(function(a) { return a.user.toLowerCase() === u && a.pass === pass; }) || (u === 'admin' && pass === 'admin123')) {
-    STATE.adminLogado = user;
-    showScreen('admin-painel');
-    
-    var btnAdm = document.getElementById('tab-btn-admins');
-    if (btnAdm) {
-      if (isRodolfo) {
-        btnAdm.style.setProperty('display', 'block', 'important');
-        updateAdminsList();
-      } else {
-        btnAdm.style.setProperty('display', 'none', 'important');
-      }
-    }
-    toast('✅ Bem-vindo!', 'success');
-  } else {
-    toast('❌ Usuário ou senha incorretos!', 'error');
-  }
-}
   var u = user.toLowerCase();
   var isRodolfo = (u === 'rodolfo oliveira' || u === 'rodolfo') && pass === 'Rm290198';
   var dbAdmin = (DB.admins || []).find(function(a) { return a.user.toLowerCase() === u && a.pass === pass; });
@@ -2087,13 +2114,16 @@ function loginAdmin() {
     STATE.adminLogado = user;
     showScreen('admin-painel');
     var btnAdm = document.getElementById('tab-btn-admins');
-    if (btnAdm) {
-      if (isRodolfo) {
-        btnAdm.style.display = 'block';
-        updateAdminsList();
-      } else {
-        btnAdm.style.display = 'none';
-      }
+var btnAdm = document.getElementById('tab-btn-admins');
+    var btnAdmPlus = document.getElementById('btn-adm-open');
+    if (isRodolfo) {
+      if(btnAdm) btnAdm.style.setProperty('display', 'block', 'important');
+      if(btnAdmPlus) btnAdmPlus.style.display = 'inline-block';
+      updateAdminsList();
+    } else {
+      if(btnAdm) btnAdm.style.setProperty('display', 'none', 'important');
+      if(btnAdmPlus) btnAdmPlus.style.display = 'none';
+    }
     }
     toast('✅ Bem-vindo!', 'success');
   } else {
