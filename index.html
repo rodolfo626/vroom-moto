@@ -839,7 +839,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v16.0 - REPARO DE EMERGÊNCIA - LIMPEZA TOTAL - RECOV ESTAVEL</small></h2>
+    <h2>⚙️ Administração</h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -871,15 +871,13 @@
         <button class="tab" onclick="switchAdmTab('precos', this)">💰 Preços</button>
         <button class="tab" onclick="switchAdmTab('pagamentos', this)">💳 Pagamentos</button>
         <button class="tab" onclick="switchAdmTab('corridas', this)">📊 Corridas</button>
-        <button class="tab" id="tab-btn-admins" style="display: none !important;" onclick="switchAdmTab('admins', this)">🔑 Admins</button>
       </div>
 
       <!-- Motoristas -->
       <div id="adm-tab-motoristas">
         <div class="flex-row" style="margin-bottom:16px">
           <div class="section-label" style="margin:0;flex:1">Motoristas Cadastrados</div>
-          <button class="btn btn-blue btn-sm" onclick="abrirModalCadastro()">+ Motorista</button>
-          <button class="btn btn-orange btn-sm" id="btn-adm-open" style="display:none;margin-left:8px" onclick="abrirModalAdm()">+ ADM</button>
+          <button class="btn btn-blue btn-sm" onclick="abrirModalCadastro()">+ Cadastrar</button>
         </div>
         <div id="adm-motoristas-list"></div>
       </div>
@@ -981,54 +979,7 @@
           </div>
         </div>
       </div>
-
-      <!-- ABA ADMINS (Somente Rodolfo) -->
-      <div id="adm-tab-admins" style="display:none">
-        <div class="section-label">Gerenciamento de Administradores</div>
-        <div class="card">
-          <h3>➕ Novo Administrador</h3>
-          <div class="input-group">
-            <label>Usuário</label>
-            <input type="text" id="new-adm-user" placeholder="Nome de usuário">
-          </div>
-          <div class="input-group">
-            <label>Senha</label>
-            <input type="password" id="new-adm-pass" placeholder="Senha de acesso">
-          </div>
-          <div class="input-group">
-            <label>Sua Senha Mestre (Confirmação)</label>
-            <input type="password" id="adm-master-confirm" placeholder="Confirme com sua senha Rm...">
-          </div>
-          <button class="btn btn-blue" onclick="cadastrarNovoAdmin()">💾 Cadastrar Admin</button>
-        </div>
-        
-        <div class="section-label" style="margin-top:20px">Admins Cadastrados</div>
-        <div id="adm-admins-list"></div>
-      </div>
     </div>
-  </div>
-</div>
-
-
-<!-- MODAL: Cadastrar ADM -->
-<div class="modal-overlay" id="modal-adm">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <h3>🔑 Cadastrar Novo Administrador</h3>
-    <div class="input-group">
-      <label>Usuário ADM</label>
-      <input type="text" id="cad-adm-user" placeholder="Nome de usuário">
-    </div>
-    <div class="input-group">
-      <label>Senha ADM</label>
-      <input type="password" id="cad-adm-pass" placeholder="Senha de acesso">
-    </div>
-    <div class="input-group">
-      <label>Sua Senha Mestre (Confirmação)</label>
-      <input type="password" id="cad-adm-master" placeholder="Rm...">
-    </div>
-    <button class="btn btn-orange" onclick="salvarNovoAdm()">Salvar Administrador</button>
-    <button class="btn btn-ghost mt-8" onclick="fecharModal('modal-adm')">Cancelar</button>
   </div>
 </div>
 
@@ -1179,17 +1130,13 @@ var STATE = {
 // INIT
 // =====================================================
 function init() {
-  console.log('Vroom Moto: Iniciando...');
-  try {
-    loadDB();
-    updateClock();
-    // Forçar tela inicial
-    showScreen('home');
-    console.log('Vroom Moto: Pronto.');
-  } catch(e) {
-    console.error('Erro no Init:', e);
-  }
-}, 2200);
+  loadDB();
+  verificarVencimentos(); limparCorridasAntigas(); // Bloqueia inadimplentes ao carregar
+  if (DB.motoristas.length === 0) seedMotoristas();
+  setTimeout(function() {
+    document.getElementById('splash').style.display = 'none';
+    showHome();
+  }, 2200);
 }
 
 function loadDB() {
@@ -1336,31 +1283,6 @@ function toast(msg, type) {
 // =====================================================
 // MODAIS
 // =====================================================
-
-function abrirModalAdm() {
-  document.getElementById('modal-adm').classList.add('open');
-}
-
-function salvarNovoAdm() {
-  var user = document.getElementById('cad-adm-user').value.trim();
-  var pass = document.getElementById('cad-adm-pass').value.trim();
-  var master = document.getElementById('cad-adm-master').value.trim();
-
-  if (!user || !pass || !master) { toast('⚠️ Preencha todos os campos!', 'error'); return; }
-  if (master !== 'Rm290198') { toast('❌ Senha mestre incorreta!', 'error'); return; }
-
-  if (!DB.admins) DB.admins = [];
-  DB.admins.push({ user: user, pass: pass });
-  saveDB();
-  fecharModal('modal-adm');
-  updateAdminsList();
-  
-  document.getElementById('cad-adm-user').value = '';
-  document.getElementById('cad-adm-pass').value = '';
-  document.getElementById('cad-adm-master').value = '';
-  toast('✅ Administrador salvo!', 'success');
-}
-
 function abrirModalCadastro() {
   document.getElementById('cad-nome').value = '';
   document.getElementById('cad-cpf').value  = '';
@@ -1723,7 +1645,13 @@ function animateMoto() {
   if (!moto) return;
   var positions = [{t:'20%',l:'20%'},{t:'35%',l:'35%'},{t:'45%',l:'48%'},{t:'50%',l:'50%'}];
   var i = 0;
-  var interval = setInterval(updateClock, 1000);
+  var interval = setInterval(function() {
+    if (!document.getElementById('moto-icon')) { clearInterval(interval); return; }
+    moto.style.top  = positions[i % positions.length].t;
+    moto.style.left = positions[i % positions.length].l;
+    i++;
+    if (i > 20) clearInterval(interval);
+  }, 1500);
 }
 
 function showMotorOnMap(step) {}
@@ -2106,29 +2034,13 @@ function loginAdmin() {
   var pass = document.getElementById('adm-pass').value.trim();
   if (!user || !pass) { toast('⚠️ Preencha usuário e senha!', 'error'); return; }
   var u = user.toLowerCase();
-  var isRodolfo = (u === 'rodolfo oliveira' || u === 'rodolfo') && pass === 'Rm290198';
-  var dbAdmin = (DB.admins || []).find(function(a) { return a.user.toLowerCase() === u && a.pass === pass; });
-  if (isRodolfo || dbAdmin || (u === 'admin' && pass === 'admin123')) {
-    STATE.adminLogado = user;
+  if ((u === 'admin' && pass === 'admin123') || (u === 'rodolfo oliveira' && pass === 'Rm290198') || (u === 'rodolfo' && pass === 'Rm290198')) {
     showScreen('admin-painel');
-    var btnAdm = document.getElementById('tab-btn-admins');
-var btnAdm = document.getElementById('tab-btn-admins');
-    var btnAdmPlus = document.getElementById('btn-adm-open');
-    if (isRodolfo) {
-      if(btnAdm) btnAdm.style.setProperty('display', 'block', 'important');
-      if(btnAdmPlus) btnAdmPlus.style.display = 'inline-block';
-      updateAdminsList();
-    } else {
-      if(btnAdm) btnAdm.style.setProperty('display', 'none', 'important');
-      if(btnAdmPlus) btnAdmPlus.style.display = 'none';
-    }
-    }
-    toast('✅ Bem-vindo!', 'success');
+    toast('✅ Bem-vindo, Administrador!', 'success');
   } else {
     toast('❌ Usuário ou senha incorretos!', 'error');
   }
 }
-
 function logoutAdmin() {
   showHome();
 }
@@ -2145,17 +2057,21 @@ function initAdmin() {
   updateAdminCorridas();
 }
 
+
 function limparCorridasAntigas() {
   var hojeStr = new Date().toLocaleDateString('pt-BR');
   var totalAntes = DB.corridas.length;
+  
+  // Mantemos apenas as que são de hoje OU as que ainda estão em andamento (segurança)
   DB.corridas = DB.corridas.filter(function(c) {
-    var dataCorrida = c.ts ? c.ts.split(' ')[0] : hojeStr;
+    var dataCorrida = c.ts ? c.ts.split(' ')[0] : hojeStr; // ts formato 'DD/MM/YYYY HH:MM'
     var emAndamento = (c.status === 'buscando' || c.status === 'a_caminho' || c.status === 'em_corrida');
     return dataCorrida === hojeStr || emAndamento;
   });
+  
   if (DB.corridas.length < totalAntes) {
     saveDB();
-    console.log('🧹 Corridas antigas limpas.');
+    console.log('🧹 Corridas antigas limpas automaticamente.');
   }
 }
 
@@ -2165,10 +2081,13 @@ function verificarVencimentos() {
   DB.motoristas.forEach(function(mot) {
     if (mot.data_pagamento) {
       var dataPag = new Date(mot.data_pagamento);
-      var diffDays = Math.ceil(Math.abs(hoje - dataPag) / (1000 * 60 * 60 * 24));
+      var diffTime = Math.abs(hoje - dataPag);
+      var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Se passou de 30 dias e ainda está autorizado, bloqueia
       if (diffDays > 30 && mot.status === 'autorizado') {
         mot.status = 'bloqueado';
-        mot.msg_admin = 'Sua mensalidade venceu. Realize o pagamento para liberar o acesso.';
+        mot.msg_admin = 'Sua mensalidade venceu após 30 dias. Realize o pagamento para liberar o acesso.';
         alterado = true;
       }
     }
@@ -2178,10 +2097,11 @@ function verificarVencimentos() {
 
 function updateAdminStats() {
   var online = DB.motoristas.filter(function(m){ return m.online; }).length;
-  var concluidas = DB.corridas.filter(function(c){ return c.status === 'concluida'; });
-  var fat = concluidas.reduce(function(s,c){ return s + (c.preco || 0); }, 0);
+  var corridasHoje = DB.corridas.filter(function(c){ return c.status === 'concluida'; }).length;
+  var fat = DB.corridas.filter(function(c){ return c.status === 'concluida'; }).reduce(function(s,c){ return s + c.preco; }, 0);
+
   document.getElementById('adm-stat-online').textContent = online;
-  document.getElementById('adm-stat-corridas').textContent = concluidas.length;
+  document.getElementById('adm-stat-corridas').textContent = corridasHoje;
   document.getElementById('adm-stat-motoristas').textContent = DB.motoristas.length;
   document.getElementById('adm-stat-faturamento').textContent = 'R$ ' + fat.toFixed(0);
 }
@@ -2189,78 +2109,38 @@ function updateAdminStats() {
 function switchAdmTab(tab, el) {
   document.querySelectorAll('#screen-admin-painel .tab').forEach(function(t){ t.classList.remove('active'); });
   el.classList.add('active');
-  document.getElementById('adm-tab-motoristas').style.display = tab === 'motoristas' ? 'block' : 'none';
-  document.getElementById('adm-tab-precos').style.display = tab === 'precos' ? 'block' : 'none';
-  document.getElementById('adm-tab-pagamentos').style.display = tab === 'pagamentos' ? 'block' : 'none';
-  document.getElementById('adm-tab-corridas').style.display = tab === 'corridas' ? 'block' : 'none';
-  var admTabContent = document.getElementById('adm-tab-admins');
-  if(admTabContent) { admTabContent.style.display = tab === 'admins' ? 'block' : 'none'; }
-}
-
-function updateAdminsList() {
-  var el = document.getElementById('adm-admins-list');
-  if (!DB.admins) DB.admins = [];
-  if (DB.admins.length === 0) {
-    el.innerHTML = '<div class="empty-state"><p>Nenhum admin cadastrado.</p></div>';
-    return;
-  }
-  el.innerHTML = DB.admins.map(function(a, idx) {
-    return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:12px">' +
-           '<div><b>' + a.user + '</b></div>' +
-           '<button class="btn btn-red btn-xs" onclick="excluirAdmin(' + idx + ')">🗑️</button></div>';
-  }).join('');
-}
-
-function cadastrarNovoAdmin() {
-  var user = document.getElementById('new-adm-user').value.trim();
-  var pass = document.getElementById('new-adm-pass').value.trim();
-  var master = document.getElementById('adm-master-confirm').value.trim();
-
-  if (!user || !pass || !master) { 
-    toast('⚠️ Preencha todos os campos, incluindo sua senha mestre!', 'error'); 
-    return; 
-  }
-  
-  if (master !== 'Rm290198') {
-    toast('❌ Senha mestre incorreta! Cadastro não autorizado.', 'error');
-    return;
-  }
-
-  if (!DB.admins) DB.admins = [];
-  DB.admins.push({ user: user, pass: pass });
-  saveDB();
-  updateAdminsList();
-  
-  document.getElementById('new-adm-user').value = '';
-  document.getElementById('new-adm-pass').value = '';
-  document.getElementById('adm-master-confirm').value = '';
-  
-  toast('✅ Administrador cadastrado com sucesso!', 'success');
-}
-
-function excluirAdmin(idx) {
-  if (!confirm('Excluir admin?')) return;
-  DB.admins.splice(idx, 1);
-  saveDB();
-  updateAdminsList();
-  toast('🗑️ Admin removido.', 'info');
+  document.getElementById('adm-tab-motoristas').style.display  = tab === 'motoristas'  ? 'block' : 'none';
+  document.getElementById('adm-tab-precos').style.display      = tab === 'precos'      ? 'block' : 'none';
+  document.getElementById('adm-tab-pagamentos').style.display  = tab === 'pagamentos'  ? 'block' : 'none';
+  document.getElementById('adm-tab-corridas').style.display    = tab === 'corridas'    ? 'block' : 'none';
 }
 
 function updateAdminMotoristas() {
   var el = document.getElementById('adm-motoristas-list');
   if (DB.motoristas.length === 0) {
-    el.innerHTML = '<div class="empty-state"><p>Nenhum motorista.</p></div>';
+    el.innerHTML = '<div class="empty-state"><div class="icon">🏍️</div><p>Nenhum motorista cadastrado</p></div>';
     return;
   }
   el.innerHTML = DB.motoristas.map(function(m) {
-    var statusMap = { autorizado: { cls: 'status-online', txt: 'Autorizado' }, pendente: { cls: 'status-waiting', txt: 'Pendente' }, bloqueado: { cls: 'status-offline', txt: 'Bloqueado' } };
+    var statusMap = {
+      autorizado: { cls: 'status-online', txt: 'Autorizado' },
+      pendente:   { cls: 'status-waiting', txt: 'Pendente' },
+      bloqueado:  { cls: 'status-offline', txt: 'Bloqueado' }
+    };
     var st = statusMap[m.status] || statusMap.autorizado;
-    return '<div class="user-item"><div class="user-avatar">' + m.nome.charAt(0) + '</div><div class="user-info">' +
-      '<div class="user-name">' + m.nome + '</div><div class="user-detail">🏍️ ' + m.placa + ' · ' + m.tel + '</div>' +
-      '<div class="mt-8"><span class="status ' + st.cls + '">' + st.txt + '</span></div></div>' +
-      '<div class="user-actions"><button class="btn btn-ghost btn-xs" onclick="abrirModalMsgMot(' + m.id + ')">💬</button>' +
-      '<button class="btn btn-xs" onclick="toggleStatusMot(' + m.id + ')">🔒</button>' +
-      '<button class="btn btn-red btn-xs" onclick="confirmarExcluirMot(' + m.id + ')">🗑️</button></div></div>';
+    return '<div class="user-item">' +
+      '<div class="user-avatar">' + m.nome.charAt(0) + '</div>' +
+      '<div class="user-info">' +
+      '<div class="user-name">' + m.nome + '</div>' +
+      '<div class="user-detail">🏍️ ' + m.placa + ' · ' + m.tel + '</div>' + '<div class="user-detail" style="color:var(--orange);font-weight:bold">🔑 Chave: ' + (m.chave || '---') + '</div>' +
+      '<div class="mt-8"><span class="status ' + st.cls + '">' + st.txt + '</span></div>' +
+      '</div>' +
+      '<div class="user-actions">' +
+      '<button class="btn btn-ghost btn-xs" title="Enviar Mensagem" onclick="abrirModalMsgMot(' + m.id + ')">💬</button>' +
+      '<button class="btn btn-' + (m.status === 'autorizado' ? 'ghost' : 'green') + ' btn-xs" onclick="toggleStatusMot(' + m.id + ')">' +
+      (m.status === 'autorizado' ? '🔒' : '✅') + '</button>' +
+      '<button class="btn btn-red btn-xs" onclick="confirmarExcluirMot(' + m.id + ')">🗑️</button>' +
+      '</div></div>';
   }).join('');
 }
 
@@ -2279,7 +2159,7 @@ function enviarMensagemMot() {
   mot.msg_admin = document.getElementById('msg-mot-texto').value.trim();
   saveDB();
   fecharModal('modal-msg-mot');
-  toast('✅ Mensagem salva.', 'success');
+  toast('✅ Mensagem salva para ' + mot.nome, 'success');
 }
 
 function toggleStatusMot(id) {
@@ -2288,70 +2168,198 @@ function toggleStatusMot(id) {
   mot.status = mot.status === 'autorizado' ? 'bloqueado' : 'autorizado';
   saveDB();
   updateAdminMotoristas();
-  toast('Status alterado.', 'info');
+  updateAdminStats();
+  toast(mot.status === 'autorizado' ? '✅ Motorista autorizado!' : '🔒 Motorista bloqueado!', mot.status === 'autorizado' ? 'success' : 'info');
 }
 
 function confirmarExcluirMot(id) {
-  if (!confirm('Excluir motorista?')) return;
-  DB.motoristas = DB.motoristas.filter(function(m){ return m.id !== id; });
+  var mot = DB.motoristas.find(function(m){ return m.id === id; });
+  if (!mot) return;
+  STATE.excluirId = id;
+  document.getElementById('excluir-nome-confirm').textContent = mot.nome;
+  document.getElementById('excluir-placa-confirm').textContent = '🏍️ ' + mot.placa + ' · ' + mot.cpf;
+  document.getElementById('modal-excluir').classList.add('open');
+}
+
+function confirmarExcluir() {
+  DB.motoristas = DB.motoristas.filter(function(m){ return m.id !== STATE.excluirId; });
   saveDB();
+  fecharModal('modal-excluir');
   updateAdminMotoristas();
-  toast('Excluído.', 'info');
+  updateAdminStats();
+  updateAdminPagamentos();
+  toast('🗑️ Motorista removido.', 'info');
+}
+
+function cadastrarMotorista() {
+  var nome  = document.getElementById('cad-nome').value.trim();
+  var cpf   = document.getElementById('cad-cpf').value.trim();
+  var tel   = document.getElementById('cad-tel').value.trim();
+  var placa = document.getElementById('cad-placa').value.trim().toUpperCase();
+  var senha = document.getElementById('cad-senha').value.trim();
+  var chave = document.getElementById('cad-chave').value.trim();
+  var status = document.getElementById('cad-status').value;
+  var dataPag = document.getElementById('cad-datapag').value;
+
+  if (!nome || !cpf || !tel || !placa || !senha || !chave) {
+    toast('⚠️ Preencha todos os campos!', 'error'); return;
+  }
+
+  var novo = {
+    id: Date.now(),
+    nome: nome, cpf: cpf, tel: tel, placa: placa, senha: senha, chave: chave, status: status,
+    data_pagamento: dataPag || null,
+    online: false, ganhos_hoje: 0, ganhos_semana: 0, ganhos_mes: 0,
+    corridas_hoje: 0, avaliacao: 5.0, pagamento: dataPag ? 'ok' : 'pend', msg_admin: '', corridas: []
+  };
+  DB.motoristas.push(novo);
+  saveDB();
+  fecharModal('modal-cadastro');
+  updateAdminMotoristas();
+  updateAdminStats();
+  updateAdminPagamentos();
+  toast('✅ Motorista cadastrado com sucesso!', 'success');
 }
 
 function updateAdminPrecos() {
-  var p = DB.precos;
-  document.getElementById('adm-p-basica').value = p.basica.valor;
-  document.getElementById('adm-p-basica-km').value = p.basica.km_minimo;
-  document.getElementById('adm-p-basica-extra').value = p.basica.km_extra;
-  document.getElementById('adm-p-expressa').value = p.expressa.valor;
-  document.getElementById('adm-p-expressa-km').value = p.expressa.km_minimo;
-  document.getElementById('adm-p-expressa-extra').value = p.expressa.km_extra;
-  document.getElementById('adm-p-bandeirada').value = p.bandeirada;
+  var p = DB.precos || {};
+  if (!p.mun_basica) p.mun_basica = 10;
+  if (!p.mun_expressa) p.mun_expressa = 15;
+  if (!p.int_base) p.int_base = 5;
+  if (!p.int_km) p.int_km = 3;
+
+  document.getElementById('adm-mun-basica').value = p.mun_basica;
+  document.getElementById('adm-mun-expressa').value = p.mun_expressa;
+  document.getElementById('adm-int-base').value = p.int_base;
+  document.getElementById('adm-int-km').value = p.int_km;
+
+  var el = document.getElementById('adm-precos-list');
+  el.innerHTML = '<div class="price-row"><span>🛵 Municipal Básica</span><strong>R$ ' + p.mun_basica.toFixed(2).replace('.',',') + '</strong></div>' +
+                 '<div class="price-row"><span>🚀 Municipal Expressa</span><strong>R$ ' + p.mun_expressa.toFixed(2).replace('.',',') + '</strong></div>' +
+                 '<div class="price-row"><span>🛣️ Intermunicipal (Base)</span><strong>R$ ' + p.int_base.toFixed(2).replace('.',',') + '</strong></div>' +
+                 '<div class="price-row"><span>🛣️ Intermunicipal (p/ KM)</span><strong>R$ ' + p.int_km.toFixed(2).replace('.',',') + '</strong></div>';
 }
 
-function salvarPrecos() {
-  DB.precos.basica.valor = parseFloat(document.getElementById('adm-p-basica').value);
-  DB.precos.basica.km_minimo = parseFloat(document.getElementById('adm-p-basica-km').value);
-  DB.precos.basica.km_extra = parseFloat(document.getElementById('adm-p-basica-extra').value);
-  DB.precos.expressa.valor = parseFloat(document.getElementById('adm-p-expressa').value);
-  DB.precos.expressa.km_minimo = parseFloat(document.getElementById('adm-p-expressa-km').value);
-  DB.precos.expressa.km_extra = parseFloat(document.getElementById('adm-p-expressa-extra').value);
-  DB.precos.bandeirada = parseFloat(document.getElementById('adm-p-bandeirada').value);
+function salvarPrecosAdm() {
+  var munB = parseFloat(document.getElementById('adm-mun-basica').value);
+  var munE = parseFloat(document.getElementById('adm-mun-expressa').value);
+  var intB = parseFloat(document.getElementById('adm-int-base').value);
+  var intK = parseFloat(document.getElementById('adm-int-km').value);
+
+  if (isNaN(munB) || isNaN(munE) || isNaN(intB) || isNaN(intK)) {
+    toast('⚠️ Preencha todos os campos!', 'error'); return;
+  }
+
+  DB.precos = { mun_basica: munB, mun_expressa: munE, int_base: intB, int_km: intK };
   saveDB();
+  updateAdminPrecos();
   toast('✅ Preços salvos!', 'success');
+}
+function salvarPreco() {
+  var tipo = document.getElementById('edit-preco-tipo').value;
+  var val  = parseFloat(document.getElementById('edit-preco-val').value);
+  if (isNaN(val) || val < 0) { toast('⚠️ Valor inválido!', 'error'); return; }
+  DB.precos[tipo] = val;
+  saveDB();
+  updateAdminPrecos();
+  toast('✅ Preço atualizado!', 'success');
+  document.getElementById('edit-preco-val').value = '';
+}
+
+function abrirEditarTaxa() {
+  document.getElementById('taxa-novo-valor').value = DB.mensalidade_valor || 0;
+  document.getElementById('taxa-edit-form').style.display = 'block';
+}
+function cancelarEditarTaxa() {
+  document.getElementById('taxa-edit-form').style.display = 'none';
+}
+function salvarTaxa() {
+  var val = parseFloat(document.getElementById('taxa-novo-valor').value);
+  if (isNaN(val) || val < 0) { toast('⚠️ Valor inválido', 'error'); return; }
+  DB.mensalidade_valor = val;
+  saveDB();
+  document.getElementById('taxa-valor-display').textContent = 'R$ ' + val.toFixed(2).replace('.', ',');
+  document.getElementById('taxa-edit-form').style.display = 'none';
+  toast('✅ Valor da taxa mensal atualizado!', 'success');
 }
 
 function updateAdminPagamentos() {
+  document.getElementById('taxa-valor-display').textContent = 'R$ ' + (DB.mensalidade_valor || 0).toFixed(2).replace('.', ',');
   var el = document.getElementById('adm-pagamentos-list');
+  if (DB.motoristas.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">💳</div><p>Nenhum motorista cadastrado</p></div>';
+    return;
+  }
+  var payMap = { ok: { cls: 'pay-ok', txt: '✅ Em dia' }, pend: { cls: 'pay-pend', txt: '⏳ Pendente' }, late: { cls: 'pay-late', txt: '❌ Atrasado' } };
   el.innerHTML = DB.motoristas.map(function(m) {
-    var payMap = { ok: 'Em dia', pend: 'Pendente', late: 'Atrasado' };
-    return '<div class="user-item"><div><b>' + m.nome + '</b><br><small>' + (payMap[m.pagamento] || 'Ok') + '</small></div>' +
-      '<div><button class="btn btn-xs" onclick="alterarPagamento(' + m.id + ')">💰 Status</button></div></div>';
+    var p = payMap[m.pagamento] || payMap.ok;
+    var dataPagStr = m.data_pagamento ? new Date(m.data_pagamento).toLocaleDateString('pt-BR') : 'Nunca';
+    return '<div class="user-item">' +
+      '<div class="user-avatar" style="background:linear-gradient(135deg,var(--blue),#357ABD)">' + m.nome.charAt(0) + '</div>' +
+      '<div class="user-info">' +
+      '<div class="user-name">' + m.nome + '</div>' +
+      '<div class="user-detail">Último Pagto: ' + dataPagStr + '</div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">' +
+      '<span class="pay-badge ' + p.cls + '">' + p.txt + '</span>' +
+      '<div style="display:flex;gap:4px">' +
+      '<button class="btn btn-xs btn-green" title="Confirmar Pagamento Hoje" onclick="registrarPagamento(' + m.id + ')">💰</button>' +
+      '<button class="btn btn-xs btn-ghost" onclick="setPayStatus(' + m.id + ',\'pend\')">⏳</button>' +
+      '<button class="btn btn-xs btn-red" onclick="setPayStatus(' + m.id + ',\'late\')">❌</button>' +
+      '</div></div></div>';
   }).join('');
 }
 
-function alterarPagamento(id) {
+function registrarPagamento(id) {
   var mot = DB.motoristas.find(function(m){ return m.id === id; });
-  var n = prompt('Status (ok, pend, late):', mot.pagamento);
-  if (n) { mot.pagamento = n; saveDB(); updateAdminPagamentos(); }
+  if (!mot) return;
+  var hoje = new Date().toISOString().split('T')[0];
+  mot.data_pagamento = hoje;
+  mot.pagamento = 'ok';
+  mot.status = 'autorizado'; // Libera automaticamente ao pagar
+  mot.msg_admin = 'Sua mensalidade foi confirmada! Próximo vencimento em 30 dias.';
+  saveDB();
+  updateAdminPagamentos();
+  updateAdminMotoristas();
+  toast('✅ Pagamento registrado e acesso liberado para ' + mot.nome, 'success');
+}
+
+function setPayStatus(id, status) {
+  var mot = DB.motoristas.find(function(m){ return m.id === id; });
+  if (mot) { mot.pagamento = status; saveDB(); updateAdminPagamentos(); toast('Status de pagamento atualizado!', 'success'); }
 }
 
 function updateAdminCorridas() {
   var el = document.getElementById('adm-corridas-list');
-  var hist = DB.corridas.slice(-10).reverse();
-  if (hist.length === 0) { el.innerHTML = '<p>Sem corridas.</p>'; return; }
-  el.innerHTML = hist.map(function(c) {
-    return '<div class="ride-item"><b>' + c.destino + '</b><br>R$ ' + c.preco.toFixed(2) + ' (' + c.status + ')</div>';
+  if (DB.corridas.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>Nenhuma corrida registrada ainda</p></div>';
+    return;
+  }
+  el.innerHTML = DB.corridas.slice(-10).reverse().map(function(c) {
+    var st = { buscando:'🔍 Aguardando', a_caminho:'🏍️ A caminho', em_corrida:'⚡ Em corrida', concluida:'🎉 Concluída', cancelada:'❌ Cancelada' };
+    return '<div class="ride-item ' + (c.status === 'concluida' ? 'accepted' : c.status === 'cancelada' ? 'completed' : '') + '">' +
+      '<div class="ride-header"><span class="ride-client">🏁 ' + c.destino + '</span>' +
+      '<span class="ride-price">R$ ' + c.preco.toFixed(2).replace('.',',') + '</span></div>' +
+      '<div class="ride-info">' +
+      '<span>' + (st[c.status] || c.status) + '</span>' +
+      (c.motorista ? '<span>🏍️ ' + c.motorista.nome.split(' ')[0] + '</span>' : '') +
+      '<span>🕐 ' + c.ts + '</span>' +
+      '</div></div>';
   }).join('');
 }
 
-function fecharModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
+// =====================================================
+// ATUALIZAÇÃO PERIÓDICA
+// =====================================================
+setInterval(function() {
+  if (STATE.screen === 'motorista-painel') updateMotCorridasList();
+  if (STATE.screen === 'admin-painel')     { updateAdminStats(); updateAdminCorridas(); }
+  if (STATE.screen === 'cliente-home' && STATE.corridaAtual) updateClienteRideStatus();
+}, 4000);
 
-setInterval(updateClock, 1000);
-
+// =====================================================
+// START
+// =====================================================
 window.addEventListener('load', init);
 </script>
 <audio id="audio-notif" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
