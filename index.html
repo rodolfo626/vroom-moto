@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Vroom Moto 2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+    :root { --vroom-orange: #FF6B00; }
+    body { font-family: 'Inter', sans-serif; background: #F9FAFB; overflow-x: hidden; }
+    .screen { display: none; min-height: 100vh; }
+    .screen.active { display: flex; flex-direction: column; }
+    .vroom-btn { background: var(--vroom-orange); color: white; transition: all 0.2s; border: none; }
+    .vroom-btn:active { transform: scale(0.96); opacity: 0.9; }
+    .card-vroom { background: white; border-radius: 28px; box-shadow: 0 15px 35px -5px rgba(255, 107, 0, 0.1); }
+    .type-select { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-width: 3px; }
+    .type-select.active { border-color: var(--vroom-orange); background: #FFF7ED; transform: translateY(-2px); }
+  </style>
+</head>
+<body>
+
+  <!-- TELA 1: PORTAL -->
+  <div id="screen-portal" class="screen active p-8 items-center justify-center bg-white text-center">
+    <div class="animate-bounce mb-12 text-9xl">🏍️</div>
+    <h1 class="text-6xl font-black italic tracking-tighter text-slate-900 leading-none">VROOM<br><span class="text-orange-600">MOTO</span></h1>
+    <p class="text-slate-400 mt-6 font-bold text-lg">O app que move a cidade.</p>
+    
+    <div class="mt-16 w-full max-w-xs space-y-4">
+      <button onclick="showScreen('screen-cliente-login')" class="w-full vroom-btn py-6 rounded-3xl font-black text-2xl shadow-2xl shadow-orange-200">
+        SOU CLIENTE
+      </button>
+      <button onclick="showScreen('screen-motorista-login')" class="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-2xl shadow-2xl">
+        SOU MOTORISTA
+      </button>
+    </div>
+    <div class="absolute bottom-10 text-[10px] font-black text-slate-300 tracking-[0.4em] uppercase">Gerado por Zapia • Geração 2.0</div>
+  </div>
+
+  <!-- TELA 2: CLIENTE PEDIDO -->
+  <div id="screen-cliente-home" class="screen bg-slate-50">
+    <div class="bg-white p-6 shadow-sm flex items-center justify-between border-b border-slate-100">
+      <h2 class="text-3xl font-black italic tracking-tighter">VROOM</h2>
+      <div class="flex gap-4">
+         <button onclick="showScreen('screen-portal')" class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400"><i class="fa-solid fa-bell text-xl"></i></button>
+         <button onclick="showScreen('screen-portal')" class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white"><i class="fa-solid fa-user text-xl"></i></button>
+      </div>
+    </div>
+    
+    <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+      <div class="card-vroom p-8">
+        <h3 class="font-black text-slate-800 text-2xl mb-8">Para onde vamos? 🚀</h3>
+        
+        <div class="space-y-4">
+          <div class="flex items-center bg-slate-50 p-5 rounded-2xl border border-slate-100">
+            <i class="fa-solid fa-location-dot text-orange-500 mr-5 text-xl"></i>
+            <input type="text" value="Minha localização atual" class="bg-transparent text-sm font-bold text-slate-400 w-full outline-none" readonly>
+          </div>
+          <div class="flex items-center bg-white p-5 rounded-2xl border-2 border-slate-100 focus-within:border-orange-500 transition-all shadow-sm">
+            <i class="fa-solid fa-flag-checkered text-slate-300 mr-5 text-xl"></i>
+            <input type="text" id="dest-input" placeholder="Digite o destino..." class="bg-transparent text-lg font-black text-slate-800 w-full outline-none">
+          </div>
+        </div>
+
+        <div class="mt-10">
+          <label class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">MODALIDADE</label>
+          <div class="grid grid-cols-2 gap-4">
+            <div id="opt-municipal" onclick="selectType('municipal')" class="type-select active p-5 border-2 border-slate-100 rounded-3xl cursor-pointer shadow-sm">
+              <div class="font-black text-slate-800 italic text-sm">MUNICIPAL</div>
+              <div class="text-[10px] text-orange-600 font-black mt-1 uppercase tracking-tighter">Taxa Fixa</div>
+              <div class="text-2xl font-black text-slate-900 mt-3" id="price-municipal">R$ 7,00</div>
+            </div>
+            <div id="opt-inter" onclick="selectType('inter')" class="type-select p-5 border-2 border-slate-100 rounded-3xl cursor-pointer shadow-sm">
+              <div class="font-black text-slate-800 italic text-sm">INTERMUNICIPAL</div>
+              <div class="text-[10px] text-orange-600 font-black mt-1 uppercase tracking-tighter">Por Quilômetro</div>
+              <div class="text-2xl font-black text-slate-900 mt-3" id="price-inter">—</div>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="confirmarPedido()" class="w-full vroom-btn mt-10 py-6 rounded-3xl font-black text-2xl shadow-2xl shadow-orange-200 uppercase tracking-tighter">
+          PEDIR VROOM MOTO
+        </button>
+      </div>
+      
+      <div class="p-4 text-center text-slate-300 text-xs font-bold">
+         Dúvidas? Chame no suporte pelo menu.
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN CLIENTE -->
+  <div id="screen-cliente-login" class="screen p-10 bg-white justify-center items-center">
+      <button onclick="showScreen('screen-portal')" class="absolute top-12 left-8 text-slate-900 text-2xl"><i class="fa-solid fa-chevron-left"></i></button>
+      <div class="w-full max-w-sm">
+          <h2 class="text-5xl font-black text-slate-900 mb-4 tracking-tighter">Sua conta.</h2>
+          <p class="text-slate-400 mb-12 font-bold text-lg">Informe seu telefone para entrar.</p>
+          <div class="relative mb-8">
+            <span class="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400">🇧🇷 +55</span>
+            <input type="tel" id="login-phone" placeholder="(00) 00000-0000" class="w-full pl-20 p-6 rounded-3xl border-2 border-slate-100 outline-none focus:border-orange-500 font-black text-2xl shadow-sm">
+          </div>
+          <button onclick="showScreen('screen-cliente-home')" class="w-full vroom-btn py-6 rounded-3xl font-black text-2xl shadow-xl">ENTRAR AGORA</button>
+      </div>
+  </div>
+
+  <!-- LOGIN MOTORISTA -->
+  <div id="screen-motorista-login" class="screen p-10 bg-white justify-center items-center">
+      <button onclick="showScreen('screen-portal')" class="absolute top-12 left-8 text-slate-900 text-2xl"><i class="fa-solid fa-chevron-left"></i></button>
+      <div class="w-full max-w-sm">
+          <h2 class="text-5xl font-black text-slate-900 mb-4 tracking-tighter">Painel.</h2>
+          <p class="text-slate-400 mb-12 font-bold text-lg italic">Área exclusiva para motoristas cadastrados.</p>
+          <div class="space-y-4 mb-10">
+            <input type="text" placeholder="Usuário / CPF" class="w-full p-6 rounded-3xl border-2 border-slate-100 outline-none focus:border-orange-500 font-black text-xl shadow-sm">
+            <input type="password" placeholder="Sua Senha" class="w-full p-6 rounded-3xl border-2 border-slate-100 outline-none focus:border-orange-500 font-black text-xl shadow-sm">
+          </div>
+          <button onclick="alert('Área do Motorista em construção...')" class="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-2xl shadow-xl">ACESSAR CONTA</button>
+      </div>
+  </div>
+
+  <script>
+    let selectedType = 'municipal';
+    const CONFIG = {
+        precoMunicipal: 7.00,
+        precoKmInter: 2.50
+    };
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(id);
+      if(target) target.classList.add('active');
+      window.scrollTo(0,0);
+    }
+
+    function selectType(type) {
+      selectedType = type;
+      document.querySelectorAll('.type-select').forEach(el => el.classList.remove('active'));
+      document.getElementById('opt-' + type).classList.add('active');
+      
+      if(type === 'inter') {
+          const distSimulada = 15.8; 
+          const preco = distSimulada * CONFIG.precoKmInter;
+          document.getElementById('price-inter').innerText = 'R$ ' + preco.toFixed(2).replace('.',',');
+      } else {
+          document.getElementById('price-inter').innerText = '—';
+      }
+    }
+
+    function confirmarPedido() {
+        const dest = document.getElementById('dest-input').value;
+        if(!dest) return alert('Para onde você vai hoje? Digite o destino final.');
+        alert('🚀 TUDO PRONTO!
+
+Destino: ' + dest + '
+Modalidade: ' + selectedType.toUpperCase() + '
+
+O sistema agora está pronto para receber a conexão em nuvem!');
+    }
+  </script>
+</body>
+</html>
