@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Vroom Moto 2.0 - Sistema Completo</title>
+  <title>Vroom Moto 2.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -19,8 +19,6 @@
     .type-card.active { border-color: var(--vroom); background: #FFF7ED; }
     #results { position: absolute; background: white; width: calc(100% - 48px); max-height: 200px; overflow-y: auto; z-index: 100; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; }
     .result-item { padding: 12px 16px; border-bottom: 1px solid #F3F4F6; font-size: 14px; cursor: pointer; font-weight: 600; color: #475569; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-    .pulse { animation: pulse 1.5s infinite; }
   </style>
 </head>
 <body>
@@ -29,19 +27,23 @@
   <div id="screen-portal" class="screen active p-8 items-center justify-center text-center">
     <div class="text-7xl mb-6">🏍️</div>
     <h1 class="text-5xl font-black italic tracking-tighter mb-2">VROOM<span class="text-orange-600">MOTO</span></h1>
-    <p class="text-slate-400 font-bold text-xs tracking-widest uppercase mb-12 italic tracking-[0.2em]">Versão 2.0 Completa</p>
+    <p class="text-slate-400 font-bold text-xs tracking-widest uppercase mb-12 italic">Escolha seu Perfil</p>
     <div class="w-full max-w-xs space-y-4">
       <button onclick="initApp('cliente')" class="w-full vroom-btn py-6 rounded-2xl text-xl shadow-xl italic uppercase">Sou Cliente</button>
       <button onclick="initApp('motorista')" class="w-full bg-slate-900 text-white py-6 rounded-2xl text-xl shadow-xl italic uppercase">Sou Motorista</button>
-      <button onclick="initApp('adm')" class="w-full bg-slate-200 text-slate-600 py-4 rounded-2xl text-xs font-black uppercase tracking-widest">Painel Administrativo</button>
+      
+      <!-- BOTÃO DA CENTRAL ADM -->
+      <button onclick="initApp('adm')" class="w-full bg-white border-2 border-slate-200 text-slate-500 py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
+        <i class="fas fa-lock"></i> Central ADM
+      </button>
     </div>
   </div>
 
-  <!-- CLIENTE -->
+  <!-- TELAS RESTANTES (CLIENTE, MOTORISTA, ADM) -->
   <div id="screen-cliente-home" class="screen">
     <div class="p-6 bg-white flex justify-between items-center shadow-sm">
       <span class="text-2xl font-black italic tracking-tighter">VROOM</span>
-      <button onclick="location.reload()" class="bg-slate-100 p-2 rounded-lg text-slate-500 font-bold text-xs uppercase italic">Sair</button>
+      <button onclick="location.reload()" class="bg-slate-100 p-2 rounded-lg text-slate-500 font-bold text-xs uppercase">Sair</button>
     </div>
     <div class="p-6 flex-1 overflow-y-auto space-y-6">
       <div id="status-cliente-container">
@@ -68,42 +70,31 @@
     </div>
   </div>
 
-  <!-- MOTORISTA -->
   <div id="screen-motorista-home" class="screen">
-    <div class="p-6 bg-slate-900 text-white flex justify-between items-center shadow-lg">
+    <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
       <span class="text-xl font-black italic tracking-tighter">MOTORISTA</span>
       <button onclick="toggleOnline()" id="mot-toggle" class="bg-red-500 px-6 py-2 rounded-xl font-black text-xs uppercase">Offline</button>
     </div>
     <div class="p-6 flex-1 overflow-y-auto space-y-4" id="lista-chamadas">
-      <div class="text-center p-20 text-slate-400 font-bold italic opacity-60">Fique online para receber chamadas...</div>
+      <div class="text-center p-20 text-slate-400 font-bold italic opacity-60">Fique online...</div>
     </div>
   </div>
 
-  <!-- ADM -->
   <div id="screen-adm-home" class="screen">
     <div class="p-6 bg-slate-800 text-white flex justify-between items-center">
-      <span class="text-xl font-black italic tracking-tighter uppercase">Central ADM</span>
+      <span class="text-xl font-black italic tracking-tighter uppercase">Painel ADM</span>
       <button onclick="location.reload()" class="bg-slate-700 p-2 rounded-lg text-xs uppercase font-black tracking-widest">Sair</button>
     </div>
     <div class="p-6 flex-1 overflow-y-auto space-y-6">
       <div class="card p-6 border-t-4 border-orange-500">
-        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 italic text-center">Gestão de Tarifas</h3>
+        <h3 class="text-xs font-black text-slate-400 uppercase mb-4 text-center">Tarifas Atuais</h3>
         <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="text-[10px] font-black text-slate-500 uppercase">Municipal (R$)</label>
-            <input type="number" id="adm-fixo" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-black text-orange-600 outline-none">
-          </div>
-          <div>
-            <label class="text-[10px] font-black text-slate-500 uppercase">KM (R$)</label>
-            <input type="number" step="0.1" id="adm-km" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-black text-orange-600 outline-none">
-          </div>
+          <div><label class="text-[10px] font-black uppercase">Fixo (R$)</label><input type="number" id="adm-fixo" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-black"></div>
+          <div><label class="text-[10px] font-black uppercase">KM (R$)</label><input type="number" step="0.1" id="adm-km" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-black"></div>
         </div>
-        <button onclick="saveSettings()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs mt-4">Atualizar Frota</button>
+        <button onclick="saveSettings()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs mt-4 italic">Salvar Configurações</button>
       </div>
-      <div class="space-y-4">
-        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest italic">Monitor em Tempo Real</h3>
-        <div id="adm-monitor" class="space-y-3"></div>
-      </div>
+      <div id="adm-monitor" class="space-y-3"></div>
     </div>
   </div>
 
@@ -135,7 +126,7 @@
       DB.settings.fixo = parseFloat(document.getElementById('adm-fixo').value);
       DB.settings.km = parseFloat(document.getElementById('adm-km').value);
       await syncPush();
-      alert('Configurações aplicadas com sucesso!');
+      alert('Configurações salvas!');
     }
 
     function detectMyLocation() {
@@ -219,7 +210,7 @@
 
     async function aceitarCorrida(id) {
       const c = DB.corridas.find(x => x.id === id);
-      if(c) { c.status = 'aceita'; c.motorista = 'Rodolfo Oliveira'; await syncPush(); }
+      if(c) { c.status = 'aceita'; c.motorista = 'Rodolfo'; await syncPush(); }
     }
 
     async function syncPush() {
@@ -247,14 +238,12 @@
     function renderFilaMotorista() {
       const container = document.getElementById('lista-chamadas');
       const disp = (DB.corridas || []).filter(c => c.status === 'buscando');
-      if(disp.length === 0) { container.innerHTML = '<div class="text-center p-20 text-slate-400 font-bold italic opacity-60">Aguardando novos pedidos...</div>'; return; }
+      if(disp.length === 0) { container.innerHTML = '<div class="text-center p-20 text-slate-400 font-bold italic">Aguardando...</div>'; return; }
       container.innerHTML = disp.map(c => `
-        <div class="card p-6 border-l-[12px] border-orange-500 shadow-md">
-          <div class="mb-4">
-            <div class="text-[9px] font-black text-slate-300 uppercase">PEDIDO ATIVO</div>
-            <div class="text-xl font-black text-slate-800 italic leading-none">${c.destino.split(',')[0]}</div>
-          </div>
-          <div class="flex justify-between items-center">
+        <div class="card p-6 border-l-[12px] border-orange-500 shadow-md mb-4">
+          <div class="text-[9px] font-black text-slate-300 uppercase">PEDIDO</div>
+          <div class="text-xl font-black text-slate-800 italic">${c.destino.split(',')[0]}</div>
+          <div class="flex justify-between items-center mt-4">
             <span class="text-orange-600 font-black text-lg italic">${c.valor}</span>
             <button onclick="aceitarCorrida(${c.id})" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-black uppercase text-xs">Aceitar</button>
           </div>
@@ -264,10 +253,10 @@
     function renderAdmMonitor() {
       const container = document.getElementById('adm-monitor');
       const todas = DB.corridas || [];
-      if(todas.length === 0) { container.innerHTML = '<div class="text-center p-10 text-slate-300 font-bold italic">Sem atividade no momento...</div>'; return; }
+      if(todas.length === 0) { container.innerHTML = '<div class="text-center p-10 text-slate-300 font-bold italic">Sem atividade...</div>'; return; }
       container.innerHTML = todas.map(c => `
-        <div class="bg-white p-4 rounded-xl border border-slate-100 flex justify-between items-center">
-          <div><div class="text-[10px] font-black text-slate-300 uppercase">Destino</div><div class="text-xs font-black text-slate-800">${c.destino.split(',')[0]}</div></div>
+        <div class="bg-white p-4 rounded-xl border flex justify-between items-center">
+          <div><div class="text-xs font-black text-slate-800">${c.destino.split(',')[0]}</div></div>
           <div class="text-right">
             <div class="text-[10px] font-black ${c.status === 'aceita' ? 'text-green-500' : 'text-orange-500'} uppercase">${c.status}</div>
             <div class="text-xs font-black text-slate-800">${c.valor}</div>
@@ -283,9 +272,9 @@
     function renderStatusCliente(status) {
       const container = document.getElementById('status-cliente-container');
       if(status === 'buscando') {
-        container.innerHTML = `<div class="card p-10 bg-orange-600 text-white text-center shadow-xl"><div class="text-5xl mb-4 animate-pulse">🔍</div><div class="text-2xl font-black italic uppercase">Buscando Moto...</div></div>`;
+        container.innerHTML = `<div class="card p-10 bg-orange-600 text-white text-center shadow-xl"><div class="text-2xl font-black italic uppercase">Buscando Moto...</div></div>`;
       } else if(status === 'aceita') {
-        container.innerHTML = `<div class="card p-10 bg-green-600 text-white text-center shadow-xl"><div class="text-5xl mb-4">🚀</div><div class="text-2xl font-black italic uppercase text-white leading-none">Motorista a Caminho!</div><button onclick="location.reload()" class="mt-8 bg-white text-green-600 px-8 py-3 rounded-xl font-black text-xs uppercase shadow-md">Cheguei</button></div>`;
+        container.innerHTML = `<div class="card p-10 bg-green-600 text-white text-center shadow-xl"><div class="text-2xl font-black italic uppercase">Motorista a Caminho!</div><button onclick="location.reload()" class="mt-8 bg-white text-green-600 px-8 py-3 rounded-xl font-black text-xs uppercase shadow-md">Cheguei</button></div>`;
       }
     }
   </script>
