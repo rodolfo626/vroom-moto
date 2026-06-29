@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v14.5 - Visualização Direta</title>
+    <title>VROOM MOTO v14.6 - Fila de Espera</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -15,114 +15,205 @@
         .screen.active { display: flex !important; z-index: 1000 !important; }
         .portal-bg { background: var(--vroom-dark); justify-content: center; align-items: center; padding: 30px; }
         .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; border-radius: 18px; padding: 18px; width: 100%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; box-shadow: 0 8px 15px rgba(255, 107, 0, 0.3); }
-        .vroom-btn:active { transform: scale(0.98); }
         .input-vroom { background: #1E293B; border: 2px solid #334155; padding: 15px; border-radius: 15px; font-weight: 600; width: 100%; color: white; font-size: 14px; margin-bottom: 15px; }
         .driver-header { background: #0F172A; padding: 20px; border-bottom: 1px solid #1E293B; }
         .status-pill { padding: 8px 16px; border-radius: 50px; font-size: 11px; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; gap: 6px; cursor: pointer; }
-        .online { background: #15803D; color: white; box-shadow: 0 0 15px rgba(21, 128, 61, 0.4); }
+        .online { background: #15803D; color: white; }
         .offline { background: #334155; color: #94A3B8; }
         #driver-map { flex: 1; background: #1E293B; position: relative; }
         .driver-footer { background: white; border-radius: 30px 30px 0 0; padding: 20px; color: #1E293B; }
-        #alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.98); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 25px; }
-        .alert-box { background: white; width: 100%; max-width: 380px; border-radius: 35px; padding: 30px; text-align: center; color: #1E293B; border: 4px solid var(--vroom); }
         .tab-bar { display: flex; justify-content: space-around; background: white; border-top: 1px solid #F1F5F9; padding: 15px 0; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: #94A3B8; font-size: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
         .tab-item.active { color: var(--vroom); }
-        .panel-bottom { background: white; border-radius: 30px 30px 0 0; padding: 25px; color: #1E293B; position: relative; }
+        
+        /* Queue Styles */
+        .queue-card { background: #F8FAFC; border-radius: 20px; padding: 15px; border-left: 6px solid var(--vroom); margin-bottom: 12px; }
+        .pulse-orange { animation: pulse-orange 2s infinite; }
+        @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 107, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0); } }
     </style>
 </head>
 <body>
-    <!-- PORTAL -->
     <div id="screen-portal" class="screen active portal-bg">
         <div class="text-center mb-12"><i class="fas fa-motorcycle text-7xl text-orange-500 mb-4"></i><h1 class="text-5xl font-black italic text-white uppercase tracking-tighter">VROOM<span class="text-orange-500">MOTO</span></h1></div>
         <div class="w-full max-w-xs space-y-4">
             <button onclick="checkClientAccess()" class="vroom-btn">Pedir uma Moto</button>
-            <button onclick="nav('driver-dashboard'); initMap('map-frame');" class="w-full bg-slate-800 text-slate-400 py-5 rounded-2xl font-black uppercase text-xs">Acessar Área do Motorista (S/ Login)</button>
+            <button onclick="nav('driver-dashboard'); initMap('map-frame');" class="w-full bg-slate-800 text-slate-400 py-5 rounded-2xl font-black uppercase text-xs">Área do Motorista</button>
         </div>
     </div>
 
-    <!-- DASHBOARD MOTORISTA -->
     <div id="screen-driver-dashboard" class="screen">
         <div class="driver-header flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-orange-500 border-2 border-white overflow-hidden"><img src="https://i.pravatar.cc/100?u=rodolfo" class="w-full h-full object-cover"></div>
-                <div><p class="text-[9px] font-black text-orange-500 uppercase">Status</p><p class="text-sm font-black italic">Rodolfo Oliveira</p></div>
+                <div><p class="text-[9px] font-black text-orange-400 uppercase">Motorista</p><p class="text-sm font-black italic">Rodolfo Oliveira</p></div>
             </div>
             <div id="status-pill" onclick="toggleOnline()" class="status-pill offline"><i class="fas fa-power-off"></i> <span>Offline</span></div>
         </div>
+
         <div id="driver-tabs-content" class="flex-1 flex flex-col overflow-hidden">
+            <!-- ABA MAPA -->
             <div id="tab-map" class="flex-1 flex flex-col">
                 <div id="driver-map"><iframe id="map-frame" width="100%" height="100%" frameborder="0" style="border:0; opacity:0.5;" allowfullscreen="" loading="lazy"></iframe></div>
                 <div class="driver-footer">
                     <div class="flex justify-between items-center">
                         <div><p class="text-[10px] font-black text-slate-400 uppercase">Ganhos de Hoje</p><p class="text-2xl font-black italic">R$ 0,00</p></div>
-                        <div class="text-right"><p class="text-[10px] font-black text-slate-400 uppercase">Mensalidade</p><span class="bg-green-100 text-green-700 px-3 py-1 rounded-md text-[10px] font-black">EM DIA</span></div>
+                        <div class="text-right"><p class="text-[10px] font-black text-slate-400 uppercase">Mensalidade</p><span class="bg-green-100 text-green-700 px-3 py-1 rounded-md text-[10px] font-black uppercase">Ativa</span></div>
                     </div>
                 </div>
             </div>
-            <div id="tab-finance" class="hidden flex-1 bg-white p-6 overflow-y-auto">
+
+            <!-- ABA FILA (NOVA) -->
+            <div id="tab-queue" class="hidden flex-1 bg-white p-5 overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-slate-800 text-xl font-black italic uppercase">Fila de Corridas</h3>
+                    <span id="queue-count" class="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-black">0</span>
+                </div>
+                
+                <div id="empty-queue" class="text-center py-20">
+                    <i class="fas fa-clock text-slate-200 text-5xl mb-4"></i>
+                    <p class="text-slate-400 font-bold text-sm uppercase">Nenhuma corrida na fila agora...</p>
+                </div>
+
+                <div id="queue-list" class="space-y-4">
+                    <!-- Cards de corrida entram aqui -->
+                </div>
+            </div>
+
+            <!-- ABA FINANCEIRO -->
+            <div id="tab-finance" class="hidden flex-1 bg-white p-5 overflow-y-auto">
                 <h3 class="text-slate-800 text-xl font-black italic uppercase mb-6">Financeiro</h3>
-                <div class="card-finance p-4 bg-slate-50 rounded-2xl mb-4"><p class="text-[10px] font-black text-slate-400 uppercase">Total Acumulado</p><p class="text-3xl font-black italic text-slate-900">R$ 1.250,00</p></div>
-                <div class="space-y-4"><p class="text-[10px] font-black text-slate-400 uppercase">Histórico Recente</p><div class="flex justify-between border-b pb-2"><span class="text-sm font-bold text-slate-700 italic">Corrida Centro</span><span class="text-green-600 font-black">R$ 7,00</span></div></div>
+                <div class="bg-slate-50 p-6 rounded-3xl mb-4 text-center border border-slate-100">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Saldo para Saque</p>
+                    <p class="text-4xl font-black italic text-slate-900">R$ 1.250,00</p>
+                </div>
             </div>
         </div>
+
         <div class="tab-bar">
             <div onclick="switchTab('map')" id="nav-map" class="tab-item active"><i class="fas fa-map-marked-alt text-xl"></i><span>Mapa</span></div>
-            <div onclick="switchTab('finance')" id="nav-finance" class="tab-item"><i class="fas fa-wallet text-xl"></i><span>Financeiro</span></div>
+            <div onclick="switchTab('queue')" id="nav-queue" class="tab-item"><i class="fas fa-list-ul text-xl"></i><span>Fila</span></div>
+            <div onclick="switchTab('finance')" id="nav-finance" class="tab-item"><i class="fas fa-wallet text-xl"></i><span>Ganhos</span></div>
             <div onclick="location.reload()" class="tab-item text-red-400"><i class="fas fa-power-off text-xl"></i><span>Sair</span></div>
         </div>
     </div>
 
-    <!-- ALERTA -->
-    <div id="alert-overlay">
-        <div class="alert-box">
-            <div class="flex justify-between mb-4"><span class="bg-orange-500 text-white px-4 py-1 rounded-full text-[10px] font-black">NOVO CHAMADO</span><span class="text-2xl font-black italic text-orange-600">R$ 7,00</span></div>
-            <div class="flex items-center gap-4 mb-6"><img src="https://i.pravatar.cc/100?u=ana" class="w-16 h-16 rounded-full border-2 border-orange-500"><div class="text-left"><p class="text-xl font-black italic text-slate-800">Ana Souza</p><p class="text-[10px] text-green-600 font-black uppercase">5.0 ★★★★★</p></div></div>
-            <div class="flex gap-4"><button onclick="hideAlert()" class="vroom-btn flex-1 !bg-green-600">Aceitar</button><button onclick="hideAlert()" class="bg-slate-100 text-slate-400 px-6 rounded-2xl font-black uppercase text-xs">Recusar</button></div>
-        </div>
-    </div>
-
-    <div id="screen-cadastro" class="screen bg-white p-8">
-        <h2 class="text-3xl font-black italic uppercase mb-10 text-slate-800">Cadastro</h2>
-        <input type="text" id="reg-name" placeholder="Nome Completo" class="input-vroom !bg-slate-50 !text-slate-800">
-        <button onclick="finalizeRegistry()" class="vroom-btn">Continuar</button>
-    </div>
-
+    <!-- CLIENTE -->
+    <div id="screen-cadastro" class="screen bg-white p-8"><h2 class="text-3xl font-black uppercase mb-10 text-slate-800 italic">Entrar</h2><input type="text" id="reg-name" placeholder="Seu Nome" class="input-vroom !bg-slate-50 !text-slate-800"><button onclick="finalizeRegistry()" class="vroom-btn">Acessar</button></div>
     <div id="screen-cliente" class="screen">
-        <div style="flex:1; background:#e5e7eb"><iframe id="client-map" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>
-        <div class="panel-bottom">
-            <input type="text" id="dest-input" placeholder="Para onde vamos?" class="input-vroom !bg-slate-50 !text-slate-800">
-            <button onclick="sendToDriver()" class="vroom-btn">Pedir Moto</button>
-            <button onclick="nav('portal')" class="w-full mt-4 text-[10px] font-black text-slate-400 uppercase">Voltar ao Início</button>
+        <div class="flex-1 bg-slate-200"><iframe id="client-map" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>
+        <div class="bg-white p-6 rounded-t-[35px] shadow-2xl">
+            <input type="text" id="dest-input" placeholder="Destino da corrida?" class="input-vroom !bg-slate-50 !text-slate-800">
+            <button onclick="sendToQueue()" class="vroom-btn">Solicitar Vroom</button>
+            <button onclick="nav('portal')" class="w-full mt-4 text-[10px] font-black text-slate-400 uppercase">Início</button>
         </div>
     </div>
 
     <script>
         let isOnline = false;
+        let ridesQueue = [];
+        const bip = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
+
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-' + id).classList.add('active');
         }
+
         function toggleOnline() {
             isOnline = !isOnline;
             const pill = document.getElementById('status-pill');
             if(isOnline) {
                 pill.className = 'status-pill online';
                 pill.innerHTML = '<i class="fas fa-power-off"></i> <span>Online</span>';
-                setTimeout(() => { if(isOnline) document.getElementById('alert-overlay').style.display = 'flex'; }, 4000);
+                alert('Você está online! Novas corridas aparecerão na aba FILA.');
             } else {
                 pill.className = 'status-pill offline';
                 pill.innerHTML = '<i class="fas fa-power-off"></i> <span>Offline</span>';
-                hideAlert();
             }
         }
-        function hideAlert() { document.getElementById('alert-overlay').style.display = 'none'; }
+
         function switchTab(t) {
             document.getElementById('tab-map').classList.toggle('hidden', t !== 'map');
+            document.getElementById('tab-queue').classList.toggle('hidden', t !== 'queue');
             document.getElementById('tab-finance').classList.toggle('hidden', t !== 'finance');
+            
             document.getElementById('nav-map').classList.toggle('active', t === 'map');
+            document.getElementById('nav-queue').classList.toggle('active', t === 'queue');
             document.getElementById('nav-finance').classList.toggle('active', t === 'finance');
         }
+
+        // CLIENTE ENVIANDO CORRIDA
+        function sendToQueue() {
+            const dest = document.getElementById('dest-input').value;
+            const user = JSON.parse(localStorage.getItem('vroom_user')) || {n: 'Cliente Anônimo'};
+            if(!dest) return alert('Digite o destino!');
+            
+            const newRide = {
+                id: Date.now(),
+                client: user.n,
+                dest: dest,
+                price: 'R$ 7,00',
+                time: new Date().toLocaleTimeString([], {hour: '2min', minute: '2min'})
+            };
+            
+            // Simula salvar na nuvem/fila
+            let currentQueue = JSON.parse(localStorage.getItem('vroom_queue') || '[]');
+            currentQueue.push(newRide);
+            localStorage.setItem('vroom_queue', JSON.stringify(currentQueue));
+            
+            alert('Chamado enviado para a fila!');
+            nav('portal');
+        }
+
+        // MOTORISTA ATUALIZANDO FILA
+        setInterval(() => {
+            if(!isOnline) return;
+            const currentQueue = JSON.parse(localStorage.getItem('vroom_queue') || '[]');
+            if(currentQueue.length > ridesQueue.length) bip.play(); // Toca bip se houver nova corrida
+            ridesQueue = currentQueue;
+            renderQueue();
+        }, 3000);
+
+        function renderQueue() {
+            const list = document.getElementById('queue-list');
+            const empty = document.getElementById('empty-queue');
+            const count = document.getElementById('queue-count');
+            
+            count.innerText = ridesQueue.length;
+            
+            if(ridesQueue.length === 0) {
+                empty.classList.remove('hidden');
+                list.innerHTML = '';
+                return;
+            }
+            
+            empty.classList.add('hidden');
+            list.innerHTML = ridesQueue.map(ride => `
+                <div class="queue-card pulse-orange">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <p class="text-[10px] font-black text-orange-500 uppercase">Solicitado às ${ride.time}</p>
+                            <h4 class="text-lg font-black text-slate-800 italic">${ride.client}</h4>
+                        </div>
+                        <p class="text-xl font-black text-orange-600 italic">${ride.price}</p>
+                    </div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <i class="fas fa-map-marker-alt text-slate-400 text-xs"></i>
+                        <p class="text-xs font-bold text-slate-500">${ride.dest}</p>
+                    </div>
+                    <button onclick="acceptFromQueue(${ride.id})" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs">Aceitar Corrida</button>
+                </div>
+            `).join('');
+        }
+
+        function acceptFromQueue(id) {
+            let currentQueue = JSON.parse(localStorage.getItem('vroom_queue') || '[]');
+            currentQueue = currentQueue.filter(r => r.id !== id);
+            localStorage.setItem('vroom_queue', JSON.stringify(currentQueue));
+            alert('Corrida aceita! O GPS será iniciado.');
+            switchTab('map');
+        }
+
+        // HELPERS CLIENTE
         function checkClientAccess() {
             if(localStorage.getItem('vroom_user')) { nav('cliente'); initMap('client-map'); }
             else nav('cadastro');
@@ -132,7 +223,6 @@
             if(n) { localStorage.setItem('vroom_user', JSON.stringify({n})); nav('cliente'); initMap('client-map'); }
             else alert('Digite seu nome!');
         }
-        function sendToDriver() { alert('Chamado enviado!'); nav('portal'); }
         function initMap(id) {
             navigator.geolocation.getCurrentPosition(p => {
                 document.getElementById(id).src = `https://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}&z=15&output=embed`;
