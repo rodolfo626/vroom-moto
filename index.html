@@ -3,29 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v13.0</title>
+    <title>VROOM MOTO v13.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
         :root { --vroom: #FF6B00; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', sans-serif; background: #0F172A; overflow: hidden; height: 100vh; width: 100vw; display: flex; justify-content: center; align-items: center; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #0F172A; 
+            overflow: hidden; 
+            height: 100vh; 
+            width: 100vw; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
         
         .portal-container { width: 100%; max-width: 350px; padding: 30px; text-align: center; }
         
         .logo-box { margin-bottom: 50px; }
+        
         .vroom-btn { 
-            background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; 
-            border-radius: 18px; padding: 20px; width: 100%; border: none; cursor: pointer; 
-            display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 16px;
-            box-shadow: 0 10px 20px rgba(255, 107, 0, 0.3); margin-bottom: 15px;
+            background: var(--vroom); 
+            color: white; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            border-radius: 18px; 
+            padding: 20px; 
+            width: 100%; 
+            border: none; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px; 
+            font-size: 16px;
+            box-shadow: 0 10px 20px rgba(255, 107, 0, 0.3); 
+            margin-bottom: 15px;
             transition: transform 0.2s;
         }
         .vroom-btn:active { transform: scale(0.96); }
         
         .secondary-btn { background: #1E293B; box-shadow: none; color: #94A3B8; font-size: 13px; }
-        .outline-btn { background: transparent; border: 2px solid #334155; color: #64748b; font-size: 10px; box-shadow: none; }
+        
+        .outline-btn { 
+            background: transparent; 
+            border: 2px solid #334155; 
+            color: #64748b; 
+            font-size: 10px; 
+            box-shadow: none; 
+            text-transform: uppercase; 
+            font-weight: 900;
+        }
     </style>
 </head>
 <body>
@@ -33,19 +64,20 @@
     <div class="portal-container">
         <div class="logo-box">
             <i class="fas fa-motorcycle text-7xl text-orange-500 mb-4"></i>
-            <h1 class="text-5xl font-black italic text-white tracking-tighter">VROOM<span class="text-orange-500">MOTO</span></h1>
-            <p class="text-slate-500 text-[10px] font-bold mt-2 tracking-[0.4em]">SISTEMA DE MOBILIDADE v13.0</p>
+            <h1 class="text-5xl font-black italic text-white tracking-tighter uppercase">VROOM<span class="text-orange-500">MOTO</span></h1>
+            <p class="text-slate-500 text-[10px] font-bold mt-2 tracking-[0.4em] uppercase">SISTEMA DE MOBILIDADE v13.1</p>
         </div>
 
-        <button onclick="alert('Iniciando Área do Cliente...')" class="vroom-btn">
+        <!-- BOTÕES SOLICITADOS -->
+        <button class="vroom-btn">
             <i class="fas fa-motorcycle"></i> Pedir uma Moto
         </button>
         
-        <button onclick="alert('Iniciando Área do Motorista...')" class="vroom-btn secondary-btn">
+        <button class="vroom-btn secondary-btn">
             Área do Motorista
         </button>
         
-        <button onclick="alert('Acessando Painel Master...')" class="vroom-btn outline-btn">
+        <button class="vroom-btn outline-btn">
             Painel Administrativo Master
         </button>
     </div>
