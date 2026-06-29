@@ -839,7 +839,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v15.1 - LIMPEZA TOTAL - RECOV ESTAVEL</small></h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v16.0 - REPARO DE EMERGÊNCIA - LIMPEZA TOTAL - RECOV ESTAVEL</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -1179,13 +1179,17 @@ var STATE = {
 // INIT
 // =====================================================
 function init() {
-  loadDB();
-  verificarVencimentos(); limparCorridasAntigas(); // Bloqueia inadimplentes ao carregar
-  if (DB.motoristas.length === 0) seedMotoristas();
-  setTimeout(function() {
-    document.getElementById('splash').style.display = 'none';
-    showHome();
-  }, 2200);
+  console.log('Vroom Moto: Iniciando...');
+  try {
+    loadDB();
+    updateClock();
+    // Forçar tela inicial
+    showScreen('home');
+    console.log('Vroom Moto: Pronto.');
+  } catch(e) {
+    console.error('Erro no Init:', e);
+  }
+}, 2200);
 }
 
 function loadDB() {
@@ -1719,9 +1723,7 @@ function animateMoto() {
   if (!moto) return;
   var positions = [{t:'20%',l:'20%'},{t:'35%',l:'35%'},{t:'45%',l:'48%'},{t:'50%',l:'50%'}];
   var i = 0;
-  var interval = setInterval(function() {
-  updateClock();
-}, 1000);
+  var interval = setInterval(updateClock, 1000);
 }
 
 function showMotorOnMap(step) {}
@@ -2348,9 +2350,7 @@ function fecharModal(id) {
   document.getElementById(id).classList.remove('open');
 }
 
-setInterval(function() {
-  updateClock();
-}, 1000);
+setInterval(updateClock, 1000);
 
 window.addEventListener('load', init);
 </script>
