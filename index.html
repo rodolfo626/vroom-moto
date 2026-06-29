@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v13.2 - Cliente</title>
+    <title>VROOM MOTO v13.3 - Cálculo Dinâmico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -11,63 +11,21 @@
         :root { --vroom: #FF6B00; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background: #0F172A; overflow: hidden; height: 100vh; width: 100vw; }
-        
         .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 10; }
         .screen.active { display: flex !important; z-index: 1000 !important; }
-        
-        /* PORTAL */
         #screen-portal { background: #0F172A !important; justify-content: center; align-items: center; padding: 30px; }
-        
-        /* CLIENTE */
         #map { height: 100%; width: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #e5e7eb; }
-        
-        .hud-top { 
-            position: fixed; top: 20px; left: 15px; right: 15px; 
-            background: white; border-radius: 20px; padding: 15px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 2000; 
-            display: none; border-left: 5px solid var(--vroom);
-        }
-
-        .panel-bottom { 
-            position: fixed; bottom: 0; left: 0; right: 0; 
-            background: white; border-radius: 30px 30px 0 0; padding: 20px; 
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.15); z-index: 1500; 
-        }
-
-        .vroom-btn { 
-            background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; 
-            border-radius: 18px; padding: 18px; width: 100%; border: none; cursor: pointer; 
-            display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px;
-            box-shadow: 0 8px 15px rgba(255, 107, 0, 0.3);
-        }
-
-        .input-vroom { 
-            background: #F8FAFC; border: 2px solid #F1F5F9; padding: 15px; 
-            border-radius: 15px; outline: none; font-weight: 600; width: 100%; 
-            color: #1E293B; font-size: 14px; margin-bottom: 10px;
-        }
-
-        .price-card { 
-            background: #FFF7ED; border: 2px solid #FFEDD5; border-radius: 18px; 
-            padding: 15px; margin-bottom: 15px; display: none; 
-            justify-content: space-between; align-items: center;
-        }
-
-        .gps-badge { 
-            position: absolute; top: 100px; right: 20px; z-index: 2000;
-            background: rgba(255,255,255,0.9); padding: 5px 10px; border-radius: 50px;
-            font-size: 8px; font-weight: 900; color: #22c55e; border: 1px solid #22c55e;
-        }
+        .hud-top { position: fixed; top: 20px; left: 15px; right: 15px; background: white; border-radius: 20px; padding: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 2000; display: none; border-left: 5px solid var(--vroom); }
+        .panel-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-radius: 30px 30px 0 0; padding: 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.15); z-index: 1500; }
+        .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; border-radius: 18px; padding: 18px; width: 100%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; box-shadow: 0 8px 15px rgba(255, 107, 0, 0.3); }
+        .input-vroom { background: #F8FAFC; border: 2px solid #F1F5F9; padding: 15px; border-radius: 15px; outline: none; font-weight: 600; width: 100%; color: #1E293B; font-size: 14px; margin-bottom: 10px; }
+        .price-card { background: #FFF7ED; border: 2px solid #FFEDD5; border-radius: 18px; padding: 15px; margin-bottom: 15px; display: none; justify-content: space-between; align-items: center; }
+        .gps-badge { position: absolute; top: 100px; right: 20px; z-index: 2000; background: rgba(255,255,255,0.9); padding: 5px 10px; border-radius: 50px; font-size: 8px; font-weight: 900; color: #22c55e; border: 1px solid #22c55e; }
     </style>
 </head>
 <body>
-
-    <!-- TELA PORTAL -->
     <div id="screen-portal" class="screen active">
-        <div class="text-center mb-10">
-            <i class="fas fa-motorcycle text-7xl text-orange-500 mb-4"></i>
-            <h1 class="text-5xl font-black italic text-white tracking-tighter uppercase">VROOM<span class="text-orange-500">MOTO</span></h1>
-        </div>
+        <div class="text-center mb-10"><i class="fas fa-motorcycle text-7xl text-orange-500 mb-4"></i><h1 class="text-5xl font-black italic text-white tracking-tighter uppercase">VROOM<span class="text-orange-500">MOTO</span></h1></div>
         <div class="w-full max-w-xs space-y-4">
             <button onclick="nav('cliente')" class="vroom-btn"><i class="fas fa-motorcycle"></i> Pedir uma Moto</button>
             <button class="w-full bg-slate-800 text-slate-400 py-5 rounded-2xl font-black uppercase text-xs">Área do Motorista</button>
@@ -75,9 +33,7 @@
         </div>
     </div>
 
-    <!-- TELA CLIENTE -->
     <div id="screen-cliente" class="screen">
-        <!-- HUD SUPERIOR (IDENTIFICAÇÃO) -->
         <div id="hud-status" class="hud-top">
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-3">
@@ -87,28 +43,20 @@
                 <div class="text-right"><p class="text-[8px] font-black text-slate-400 uppercase">Chegada em</p><p class="text-lg font-black text-orange-500 italic">4 min</p></div>
             </div>
         </div>
-
         <div class="gps-badge"><i class="fas fa-crosshairs"></i> GPS GOOGLE ATIVO</div>
-        
-        <!-- MAPA GOOGLE VÍNCULO -->
-        <div id="map">
-            <iframe id="google-iframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        </div>
-
-        <!-- PAINEL INFERIOR -->
+        <div id="map"><iframe id="google-iframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>
         <div class="panel-bottom">
             <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4"></div>
             <input type="text" id="inp-origem" value="Sua localização atual..." readonly class="input-vroom !bg-slate-50">
-            <input type="text" id="inp-destino" placeholder="Para onde vamos?" class="input-vroom" oninput="updatePrice()">
-            
+            <input type="text" id="inp-destino" placeholder="Cidade ou Endereço de Destino" class="input-vroom" oninput="updatePrice()">
             <div id="price-box" class="price-card">
-                <div>
+                <div style="flex:1">
                     <span id="label-cat" class="bg-orange-500 text-white px-2 py-1 rounded text-[9px] font-black uppercase">Municipal</span>
                     <p id="label-price" class="text-3xl font-black italic">R$ 7,00</p>
+                    <p id="label-detail" class="text-[10px] font-bold text-slate-400 uppercase mt-1">Taxa Fixa</p>
                 </div>
-                <p class="text-xs font-bold text-slate-400 uppercase">Moto Express</p>
+                <div class="text-right"><i class="fas fa-route text-orange-500 text-2xl"></i></div>
             </div>
-
             <button onclick="confirmRide()" id="btn-main" class="vroom-btn">Confirmar Corrida</button>
             <button onclick="location.reload()" class="w-full mt-3 text-slate-400 font-black text-[10px] uppercase">Cancelar</button>
         </div>
@@ -118,59 +66,48 @@
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-' + id).classList.add('active');
-            
-            if(id === 'cliente') {
-                initMap();
-            }
+            if(id === 'cliente') initMap();
         }
-
         function initMap() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    // Vínculo com Google Maps Embed para visualização precisa
+                    const lat = position.coords.latitude; const lng = position.coords.longitude;
                     document.getElementById('google-iframe').src = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
-                    
-                    // Geocodificação reversa simples para o endereço
                     fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
-                        .then(r => r.json())
-                        .then(d => {
-                            document.getElementById('inp-origem').value = d.display_name.split(',')[0] + ', ' + d.display_name.split(',')[1];
-                        });
-                }, () => {
-                    alert('Por favor, ative o GPS.');
+                        .then(r => r.json()).then(d => document.getElementById('inp-origem').value = d.display_name.split(',')[0]);
                 });
             }
         }
-
         function updatePrice() {
             const dest = document.getElementById('inp-destino').value;
             const box = document.getElementById('price-box');
-            if(dest.length > 3) {
+            if(dest.length > 2) {
                 box.style.display = 'flex';
-                // Lógica de Diferenciação Municipal vs Intermunicipal
-                if(dest.toLowerCase().includes('rua') || dest.length < 15) {
+                // Lógica de Diferenciação
+                const isInter = dest.toLowerCase().includes('inter') || dest.length > 12;
+                if(!isInter) {
                     document.getElementById('label-cat').innerText = 'Municipal';
                     document.getElementById('label-cat').style.background = '#FF6B00';
                     document.getElementById('label-price').innerText = 'R$ 7,00';
+                    document.getElementById('label-detail').innerText = 'Taxa Local Fixa';
                 } else {
+                    // SIMULAÇÃO DE CÁLCULO INTERMUNICIPAL (50km x 3,00)
+                    const km = 50; 
+                    const valorKM = 3.00;
+                    const total = km * valorKM;
                     document.getElementById('label-cat').innerText = 'Intermunicipal';
                     document.getElementById('label-cat').style.background = '#4F46E5';
-                    document.getElementById('label-price').innerText = 'R$ 15,50';
+                    document.getElementById('label-price').innerText = 'R$ ' + total.toFixed(2).replace('.', ',');
+                    document.getElementById('label-detail').innerText = km + ' KM TOTAL x R$ ' + valorKM.toFixed(2) + '/KM';
                 }
             }
         }
-
         function confirmRide() {
             const btn = document.getElementById('btn-main');
-            btn.innerText = 'Procurando Motorista...';
-            btn.style.background = '#1E293B';
-            
+            btn.innerText = 'Procurando Motorista...'; btn.style.background = '#1E293B';
             setTimeout(() => {
                 document.getElementById('hud-status').style.display = 'block';
-                btn.innerText = 'Motorista a Caminho';
-                btn.style.background = '#22C55E';
+                btn.innerText = 'Motorista a Caminho'; btn.style.background = '#22C55E';
             }, 3000);
         }
     </script>
