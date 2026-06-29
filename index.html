@@ -840,7 +840,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v13.0 - NUVEM REALTIME - MULTI-DEVICE - REPARO INTERNO - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v13.1 - REPARO TOTAL - NUVEM REALTIME - MULTI-DEVICE - REPARO INTERNO - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -1143,16 +1143,13 @@ var DB = {
 };
 
 
-// MOTOR DE SINCRONIZAÇÃO EM NUVEM (FIREBASE)
+
+// BANCO DE DADOS EM NUVEM
 async function syncToCloud() {
   try {
-    // Usamos um identificador único para o seu app para evitar conflitos com outros usuários
     const cloudUrl = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v13.json';
-    await fetch(cloudUrl, {
-      method: 'PUT',
-      body: JSON.stringify(DB)
-    });
-  } catch (e) { console.error('Erro ao enviar para Nuvem:', e); }
+    await fetch(cloudUrl, { method: 'PUT', body: JSON.stringify(DB) });
+  } catch (e) {}
 }
 
 async function syncFromCloud() {
@@ -1162,65 +1159,21 @@ async function syncFromCloud() {
     if (res.ok) {
       const remoteDB = await res.json();
       if (!remoteDB) return;
-
-      // MESCLAGEM INTELIGENTE DE CORRIDAS
-      if (remoteDB.corridas && Array.isArray(remoteDB.corridas)) {
+      if (remoteDB.corridas) {
           var localIds = DB.corridas.map(function(c) { return c.id; });
-          
           remoteDB.corridas.forEach(function(remoteC) {
               var localIdx = localIds.indexOf(remoteC.id);
-              if (localIdx === -1) {
-                  // Corrida nova na nuvem -> Adiciona ao local
-                  DB.corridas.push(remoteC);
-              } else {
-                  // Corrida já existe -> Atualiza status se for mais recente
-                  // (Quem manda no status é o motorista ou cliente que alterou por último)
+              if (localIdx === -1) { DB.corridas.push(remoteC); }
+              else {
                   DB.corridas[localIdx].status = remoteC.status;
                   DB.corridas[localIdx].motorista = remoteC.motorista;
               }
           });
       }
-
-      // SINCRONIZAÇÃO DE MOTORISTAS (Online/Offline)
-      if (remoteDB.motoristas && Array.isArray(remoteDB.motoristas)) {
-          remoteDB.motoristas.forEach(function(remoteM) {
-              var localM = DB.motoristas.find(function(m) { return m.id === remoteM.id; });
-              if (localM) {
-                  localM.online = remoteM.online;
-                  localM.status = remoteM.status;
-              }
-          });
-      }
-      
       localStorage.setItem('vroomDB', JSON.stringify(DB));
-      
-      // FORÇAR ATUALIZAÇÃO VISUAL SE HOUVER MUDANÇA
-      if (STATE.screen === 'motorista-painel') updateMotCorridasList();
-      if (STATE.screen === 'cliente-home' && STATE.corridaAtual) updateClienteRideStatus();
+      if (typeof updateMotCorridasList === 'function' && STATE.screen === 'motorista-painel') updateMotCorridasList();
     }
-  } catch (e) { console.error('Erro ao baixar da Nuvem:', e); }
-});
-      
-      // Sincronizar Status de Corridas (Aceite/Conclusão)
-      DB.corridas.forEach(localC => {
-        const remoteC = remoteDB.corridas.find(r => r.id === localC.id);
-        if (remoteC && remoteC.status !== localC.status) {
-          localC.status = remoteC.status;
-          localC.motorista = remoteC.motorista;
-        }
-      });
-      
-      // Sincronizar Motoristas (Status Online)
-      if (remoteDB.motoristas) {
-          remoteDB.motoristas.forEach(remoteM => {
-              const localM = DB.motoristas.find(m => m.id === remoteM.id);
-              if (localM) localM.online = remoteM.online;
-          });
-      }
-      
-      localStorage.setItem('vroomDB', JSON.stringify(DB));
-    }
-  } catch (e) { console.error('Cloud Load Error:', e); }
+  } catch (e) {}
 }
 
 var STATE = {
@@ -1238,157 +1191,7 @@ var STATE = {
 // =====================================================
 function init() {
   loadDB(); syncFromCloud();
-  verificarVencimentos(); limparCorridasAntigas(); // Bloqueia inadimplentes ao carregar
-  if (DB.motoristas.length === 0) seedMotoristas();
-  setTimeout(function() {
-    document.getElementById('splash').style.display = 'none';
-    showHome();
-  }, 2200);
-}
-
-function loadDB() {
-  try {
-    var saved = localStorage.getItem('vroomDB');
-    var savedUser = localStorage.getItem('vroomUser');
-    if (savedUser) STATE.clienteLogado = JSON.parse(savedUser);
-    
-    if (saved) {
-      var parsed = JSON.parse(saved);
-      DB.motoristas = parsed.motoristas || [];
-      DB.corridas   = parsed.corridas   || [];
-      // Migração: estrutura antiga (plana) → nova (por tipo)
-      if (parsed.precos) {
-        var p = parsed.precos;
-        if (typeof p.basica === 'number') {
-          // Formato antigo — converte
-          DB.precos = {
-            basica:     { valor: p.basica   || 8.00,  km_minimo: p.km_minimo || 3.0, km_extra: p.km_extra || 1.50 },
-            expressa:   { valor: p.expressa || 10.00, km_minimo: p.km_minimo || 3.0, km_extra: p.km_extra || 2.00 },
-            bandeirada: p.bandeirada || 3.00
-          };
-        } else {
-          DB.precos = p;
-          // Garante bandeirada
-          if (typeof DB.precos.bandeirada !== 'number') DB.precos.bandeirada = 3.00;
-        }
-      }
-      // Sempre garante os admins fixos + os do localStorage
-      var savedAdmins = parsed.admins || [];
-      var fixedAdmins = [{ user: 'admin', pass: 'admin123' }, { user: 'Rodolfo Oliveira', pass: 'Rm290198' }];
-      // Mescla sem duplicar
-      fixedAdmins.forEach(function(fa) {
-        if (!savedAdmins.find(function(sa){ return sa.user === fa.user; })) savedAdmins.push(fa);
-      });
-      DB.admins = savedAdmins;
-    }
-  } catch(e) {}
-}
-
-function saveDB() {
-  var data = {
-    motoristas:        DB.motoristas,
-    corridas:          DB.corridas,
-    precos:            DB.precos,
-    admins:            DB.admins,
-    mensalidade_valor: DB.mensalidade_valor
-  };
-  localStorage.setItem('vroomDB', JSON.stringify(data)); syncToCloud();
-  // Gatilho visual para depuração
-  console.log('💾 DB Salvo com ' + DB.corridas.length + ' corridas');
-}
-
-function seedMotoristas() {
-  DB.motoristas = [
-    { id: 1, nome: 'Carlos Silva',   cpf: '123.456.789-00', tel: '(11) 99999-1111', placa: 'ABC-1234', senha: 'moto123', status: 'autorizado', online: false, ganhos_hoje: 45.50, ganhos_semana: 210.00, ganhos_mes: 860.00, corridas_hoje: 6, avaliacao: 4.9, pagamento: 'ok', data_pagamento: '2026-06-01', msg_admin: '', corridas: [] },
-    { id: 2, nome: 'Marcos Pereira', cpf: '987.654.321-00', tel: '(11) 99999-2222', placa: 'DEF-5678', senha: 'moto456', status: 'autorizado', online: false, ganhos_hoje: 32.00, ganhos_semana: 175.00, ganhos_mes: 720.00, corridas_hoje: 4, avaliacao: 4.7, pagamento: 'pend', data_pagamento: '2026-06-15', msg_admin: '', corridas: [] },
-    { id: 3, nome: 'João Santos',    cpf: '456.789.123-00', tel: '(11) 99999-3333', placa: 'GHI-9012', senha: 'moto789', status: 'bloqueado', online: false, ganhos_hoje: 0,     ganhos_semana: 0,       ganhos_mes: 480.00, corridas_hoje: 0, avaliacao: 3.8, pagamento: 'late', data_pagamento: null, msg_admin: 'Falar com Rodolfo sobre pendência.', corridas: [] }
-  ];
-  saveDB();
-}
-
-// =====================================================
-// NAVEGAÇÃO
-// =====================================================
-function showHome() {
-  document.getElementById('home').style.display = 'flex';
-  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-  STATE.screen = 'home';
-}
-
-function compartilharApp() {
-  var url = 'https://rodolfo626.github.io/vroom-moto/';
-  var titulo = 'Vroom Moto – Mototáxi rápido e seguro';
-  var texto = 'Peça seu mototáxi agora pelo Vroom Moto!';
-  if (navigator.share) {
-    navigator.share({ title: titulo, text: texto, url: url })
-      .catch(function() {});
-  } else {
-    navigator.clipboard.writeText(url).then(function() {
-      toast('🔗 Link copiado! Compartilhe com quem quiser.', 'success');
-    }).catch(function() {
-      toast('🔗 ' + url, 'info');
-    });
-  }
-}
-
-function goHome() {  showHome();
-}
-
-function showScreen(name) {
-  document.getElementById('home').style.display = 'none';
-  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-  var el = document.getElementById('screen-' + name);
-  if (el) {
-    el.classList.add('active');
-    STATE.screen = name;
-    onScreenLoad(name);
-  }
-}
-
-function onScreenLoad(name) {
-  if (name === 'cliente-home')   initCliente();
-  if (name === 'motorista-painel') initMotorista();
-  if (name === 'admin-painel')   initAdmin();
-}
-
-function salvarCadastroCliente() {
-  var nome = document.getElementById('cli-cad-nome').value.trim();
-  var tel  = document.getElementById('cli-cad-tel').value.trim();
-  var fotoInput = document.getElementById('cli-cad-foto');
-  
-  if (!nome || !tel) { toast('⚠️ Preencha nome e WhatsApp!', 'error'); return; }
-  
-  var user = { id: Date.now(), nome: nome, tel: tel, foto: null };
-  
-  if (fotoInput.files && fotoInput.files[0]) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      user.foto = e.target.result;
-      finalizarSalvarCliente(user);
-    };
-    reader.readAsDataURL(fotoInput.files[0]);
-  } else {
-    finalizarSalvarCliente(user);
-  }
-}
-
-function finalizarSalvarCliente(user) {
-  STATE.clienteLogado = user;
-  localStorage.setItem('vroomUser', JSON.stringify(user));
-  fecharModal('modal-cliente-cadastro');
-  toast('✅ Cadastro realizado! Bem-vindo, ' + user.nome.split(' ')[0], 'success');
-  initCliente();
-}
-
-// =====================================================
-// TOAST
-// =====================================================
-function toast(msg, type) {
-  var el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'show ' + (type || 'info');
-  setTimeout(function() { el.classList.remove('show');   syncFromCloud();
-}, 1500);
+}, 2000);
 }
 
 // =====================================================
