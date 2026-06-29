@@ -840,7 +840,7 @@
 <div class="screen" id="screen-admin-painel">
   <div class="header">
     <button class="back" onclick="logoutAdmin()">‹</button>
-    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v10.1 - REPARO INTERNO - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
+    <h2>⚙️ Administração <small style="font-size:10px; opacity:0.5">v12.0 - MULTI-DEVICE - REPARO INTERNO - MOTOR DE FILA - SYNC FIX - ESTÁVEL</small></h2>
     <span class="badge badge-blue">Admin</span>
     <button class="btn-share" onclick="compartilharApp()" title="Compartilhar">🔗</button>
   </div>
@@ -1142,6 +1142,52 @@ var DB = {
   admins: [{ user: 'admin', pass: 'admin123' }, { user: 'Rodolfo Oliveira', pass: 'Rm290198' }]
 };
 
+
+// MOTOR DE SINCRONIZAÇÃO EM NUVEM (FIREBASE)
+async function syncToCloud() {
+  try {
+    await fetch('https://vroom-moto-default-rtdb.firebaseio.com/db.json', {
+      method: 'PUT',
+      body: JSON.stringify(DB)
+    });
+  } catch (e) { console.error('Cloud Sync Error:', e); }
+}
+
+async function syncFromCloud() {
+  try {
+    const res = await fetch('https://vroom-moto-default-rtdb.firebaseio.com/db.json');
+    if (res.ok) {
+      const remoteDB = await res.json();
+      if (!remoteDB) return;
+      
+      // Sincronizar Corridas
+      const localIds = DB.corridas.map(c => c.id);
+      remoteDB.corridas.forEach(c => {
+        if (!localIds.includes(c.id)) DB.corridas.push(c);
+      });
+      
+      // Sincronizar Status de Corridas (Aceite/Conclusão)
+      DB.corridas.forEach(localC => {
+        const remoteC = remoteDB.corridas.find(r => r.id === localC.id);
+        if (remoteC && remoteC.status !== localC.status) {
+          localC.status = remoteC.status;
+          localC.motorista = remoteC.motorista;
+        }
+      });
+      
+      // Sincronizar Motoristas (Status Online)
+      if (remoteDB.motoristas) {
+          remoteDB.motoristas.forEach(remoteM => {
+              const localM = DB.motoristas.find(m => m.id === remoteM.id);
+              if (localM) localM.online = remoteM.online;
+          });
+      }
+      
+      localStorage.setItem('vroomDB', JSON.stringify(DB));
+    }
+  } catch (e) { console.error('Cloud Load Error:', e); }
+}
+
 var STATE = {
   screen: 'home',
   motoristaLogado: null,
@@ -1211,7 +1257,7 @@ function saveDB() {
     admins:            DB.admins,
     mensalidade_valor: DB.mensalidade_valor
   };
-  localStorage.setItem('vroomDB', JSON.stringify(data));
+  localStorage.setItem('vroomDB', JSON.stringify(data)); syncToCloud();
   // Gatilho visual para depuração
   console.log('💾 DB Salvo com ' + DB.corridas.length + ' corridas');
 }
