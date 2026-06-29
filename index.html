@@ -3,290 +3,311 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Vroom Moto 2.0 - FIX</title>
+  <title>VROOM MOTO 3.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
     :root { --vroom: #FF6B00; }
-    body { font-family: 'Inter', sans-serif; background: #F3F4F6; margin: 0; padding: 0; overflow: hidden; }
-    .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; position: fixed; top: 0; left: 0; background: #F3F4F6; z-index: 10; }
+    body { font-family: 'Poppins', sans-serif; background: #0F172A; color: white; margin: 0; padding: 0; overflow: hidden; }
+    .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; position: fixed; top: 0; left: 0; background: #F8FAFC; color: #1E293B; z-index: 10; }
     .screen.active { display: flex; }
-    .vroom-btn { background: var(--vroom); color: white; border: none; font-weight: 900; transition: transform 0.1s; cursor: pointer; }
-    .vroom-btn:active { transform: scale(0.95); }
-    .card { background: white; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-    .type-card { border: 2px solid #E5E7EB; border-radius: 16px; transition: 0.2s; cursor: pointer; padding: 12px; text-align: center; }
+    .vroom-btn { background: var(--vroom); color: white; border: none; font-weight: 800; transition: all 0.2s; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+    .vroom-btn:active { transform: scale(0.95); filter: brightness(1.1); }
+    .card { background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #F1F5F9; }
+    
+    /* Portal Style */
+    #screen-portal { background: #0F172A; color: white; justify-content: center; align-items: center; text-align: center; }
+    
+    /* Autocomplete */
+    #results { position: absolute; background: white; width: 100%; max-height: 200px; overflow-y: auto; z-index: 100; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: none; margin-top: 5px; }
+    .result-item { padding: 12px 16px; border-bottom: 1px solid #F1F5F9; font-size: 13px; cursor: pointer; color: #334155; font-weight: 600; }
+    
+    .type-card { border: 2px solid #F1F5F9; border-radius: 16px; padding: 12px; text-align: center; cursor: pointer; transition: 0.2s; }
     .type-card.active { border-color: var(--vroom); background: #FFF7ED; }
-    #results { position: absolute; background: white; width: calc(100% - 48px); max-height: 200px; overflow-y: auto; z-index: 100; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; }
-    .result-item { padding: 12px 16px; border-bottom: 1px solid #F3F4F6; font-size: 14px; cursor: pointer; font-weight: 600; color: #475569; }
   </style>
 </head>
 <body>
 
-  <!-- PORTAL -->
-  <div id="screen-portal" class="screen active p-8 items-center justify-center text-center">
-    <div class="text-7xl mb-6">🏍️</div>
-    <h1 class="text-5xl font-black italic tracking-tighter mb-2">VROOM<span class="text-orange-600">MOTO</span></h1>
-    <p class="text-slate-400 font-bold text-xs tracking-widest uppercase mb-12 italic">Acesso v2.1</p>
+  <!-- PORTAL INICIAL -->
+  <div id="screen-portal" class="screen active p-8">
+    <div class="text-7xl mb-6 animate-bounce">🏍️</div>
+    <h1 class="text-5xl font-extrabold italic tracking-tighter mb-1">VROOM<span class="text-orange-600">MOTO</span></h1>
+    <p class="text-slate-500 font-bold text-[10px] tracking-[0.3em] uppercase mb-12">Plataforma Profissional v3.0</p>
+    
     <div class="w-full max-w-xs space-y-4">
-      <button onclick="initApp('cliente')" class="w-full vroom-btn py-6 rounded-2xl text-xl shadow-xl italic uppercase">Sou Cliente</button>
-      <button onclick="initApp('motorista')" class="w-full bg-slate-900 text-white py-6 rounded-2xl text-xl shadow-xl italic uppercase">Sou Motorista</button>
-      <button onclick="initApp('adm')" class="w-full bg-white border-2 border-slate-200 text-slate-500 py-4 rounded-2xl text-xs font-black uppercase flex items-center justify-center gap-2">
-        <i class="fas fa-lock"></i> Central ADM
+      <button onclick="nav('cliente')" class="w-full vroom-btn py-5 rounded-2xl text-xl shadow-2xl">Sou Cliente</button>
+      <button onclick="nav('motorista')" class="w-full bg-slate-800 text-white py-5 rounded-2xl text-xl shadow-2xl font-extrabold uppercase">Sou Motorista</button>
+      <button onclick="nav('adm')" class="w-full bg-transparent border-2 border-slate-700 text-slate-400 py-4 rounded-2xl text-xs font-bold uppercase flex items-center justify-center gap-2">
+        <i class="fas fa-cog"></i> Painel Administrativo
       </button>
     </div>
   </div>
 
-  <!-- CLIENTE -->
-  <div id="screen-cliente-home" class="screen">
-    <div class="p-6 bg-white flex justify-between items-center shadow-sm">
-      <span class="text-2xl font-black italic tracking-tighter">VROOM</span>
-      <button onclick="location.reload()" class="bg-slate-100 p-2 rounded-lg text-slate-500 font-bold text-xs uppercase">Sair</button>
+  <!-- TELA CLIENTE -->
+  <div id="screen-cliente" class="screen">
+    <div class="p-5 bg-white flex justify-between items-center border-b shadow-sm">
+      <span class="text-xl font-extrabold italic">VROOM <span class="text-orange-600">CLIENTE</span></span>
+      <button onclick="location.reload()" class="text-slate-400 text-xs font-bold uppercase">Sair</button>
     </div>
-    <div class="p-6 flex-1 overflow-y-auto space-y-6">
-      <div id="status-cliente-container">
-          <div id="pedir-box" class="card p-6">
-            <h3 class="text-lg font-black text-slate-800 mb-4 italic">Para onde vamos?</h3>
-            <div class="space-y-3 mb-6 relative">
-                <input type="text" id="cli-origem" placeholder="Sua localização..." class="w-full bg-slate-50 p-4 rounded-xl border-2 border-slate-100 outline-none font-bold text-sm">
-                <input type="text" id="cli-destino" oninput="searchAddress(this.value)" placeholder="Destino final" class="w-full bg-slate-50 p-4 rounded-xl border-2 border-slate-100 outline-none focus:border-orange-500 font-bold text-sm">
-                <div id="results"></div>
-            </div>
-            <div class="grid grid-cols-2 gap-3 mb-6">
-              <div id="btn-mun" onclick="setMod('municipal')" class="type-card active">
-                <div class="text-[10px] font-black text-slate-400 uppercase">MUNICIPAL</div>
-                <div id="price-mun" class="text-orange-600 font-black text-lg italic mt-1 leading-none">R$ 7,00</div>
-              </div>
-              <div id="btn-inter" onclick="setMod('inter')" class="type-card">
-                <div class="text-[10px] font-black text-slate-400 uppercase">INTER</div>
-                <div id="price-inter" class="text-orange-600 font-black text-lg italic mt-1 leading-none">R$ 2,50/km</div>
-              </div>
-            </div>
-            <button onclick="pedirCorrida()" class="w-full vroom-btn py-5 rounded-2xl text-xl shadow-lg uppercase italic">Solicitar Agora</button>
-          </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="screen-motorista-home" class="screen">
-    <div class="p-6 bg-slate-900 text-white flex justify-between items-center shadow-lg">
-      <span class="text-xl font-black italic tracking-tighter">MOTORISTA</span>
-      <button onclick="toggleOnline()" id="mot-toggle" class="bg-red-500 px-6 py-2 rounded-xl font-black text-xs uppercase shadow-md transition-all">Offline</button>
-    </div>
-    <div class="p-6 flex-1 overflow-y-auto" id="lista-chamadas">
-      <div class="text-center p-20 text-slate-400 font-bold italic opacity-60">Aguardando pedidos...</div>
-    </div>
-  </div>
-
-  <div id="screen-adm-home" class="screen">
-    <div class="p-6 bg-slate-800 text-white flex justify-between items-center shadow-lg">
-      <span class="text-xl font-black italic tracking-tighter uppercase">Central ADM</span>
-      <button onclick="location.reload()" class="bg-slate-700 p-2 rounded-lg text-xs uppercase font-black tracking-widest">Sair</button>
-    </div>
-    <div class="p-6 flex-1 overflow-y-auto space-y-6">
-      <div class="card p-6 border-t-4 border-orange-500">
-        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 italic text-center">Configuração de Preços</h3>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="text-[10px] font-black text-slate-500 uppercase">Fixo Municipal</label>
-            <input type="number" id="adm-fixo" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-black text-orange-600 outline-none">
-          </div>
-          <div>
-            <label class="text-[10px] font-black text-slate-500 uppercase">KM Intermunicipal</label>
-            <input type="number" step="0.1" id="adm-km" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-black text-orange-600 outline-none">
+    
+    <div class="p-6 flex-1 overflow-y-auto space-y-6" id="cliente-content">
+      <div class="card p-6">
+        <h3 class="text-sm font-extrabold text-slate-400 uppercase mb-4 italic">Para onde vamos hoje?</h3>
+        <div class="space-y-3 relative">
+          <input type="text" id="origem" placeholder="Sua localização..." class="w-full bg-slate-50 p-4 rounded-xl border-2 border-slate-100 outline-none font-semibold text-sm">
+          <div class="relative">
+            <input type="text" id="destino" oninput="buscarEndereco(this.value)" placeholder="Destino final" class="w-full bg-slate-50 p-4 rounded-xl border-2 border-slate-100 outline-none focus:border-orange-500 font-bold text-sm">
+            <div id="results"></div>
           </div>
         </div>
-        <button onclick="saveSettings()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs mt-4">Salvar Alterações</button>
+
+        <div class="grid grid-cols-2 gap-3 my-6">
+          <div id="mod-mun" onclick="toggleMod('mun')" class="type-card active">
+            <div class="text-[9px] font-extrabold text-slate-400 uppercase">MUNICIPAL</div>
+            <div id="disp-fixo" class="text-orange-600 font-extrabold text-lg italic mt-1 leading-none">R$ 0,00</div>
+          </div>
+          <div id="mod-inter" onclick="toggleMod('inter')" class="type-card">
+            <div class="text-[9px] font-extrabold text-slate-400 uppercase">INTER (KM)</div>
+            <div id="disp-km" class="text-orange-600 font-extrabold text-lg italic mt-1 leading-none">R$ 0,00</div>
+          </div>
+        </div>
+
+        <button id="btn-pedir" onclick="solicitarCorrida()" class="w-full vroom-btn py-5 rounded-2xl text-xl shadow-lg">Chamar Moto</button>
       </div>
-      <div class="space-y-4">
-        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest italic">Monitor de Atividades</h3>
-        <div id="adm-monitor" class="space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- TELA MOTORISTA -->
+  <div id="screen-motorista" class="screen">
+    <div class="p-5 bg-slate-900 text-white flex justify-between items-center shadow-xl">
+      <span class="text-xl font-extrabold italic">VROOM <span class="text-orange-600">MOTOS</span></span>
+      <button id="btn-online" onclick="toggleOnline()" class="bg-red-500 px-5 py-2 rounded-xl font-extrabold text-[10px] uppercase shadow-lg">Offline</button>
+    </div>
+    <div class="p-6 flex-1 overflow-y-auto space-y-4" id="fila-motorista">
+      <div class="text-center p-20 text-slate-400 font-bold italic opacity-40">Aguardando pedidos...</div>
+    </div>
+  </div>
+
+  <!-- TELA ADM -->
+  <div id="screen-adm" class="screen">
+    <div class="p-5 bg-slate-800 text-white flex justify-between items-center">
+      <span class="text-xl font-extrabold italic uppercase">Central ADM</span>
+      <button onclick="location.reload()" class="bg-slate-700 px-4 py-2 rounded-lg text-[10px] font-extrabold uppercase">Voltar</button>
+    </div>
+    <div class="p-6 flex-1 overflow-y-auto space-y-6">
+      <div class="card p-6 border-t-8 border-orange-500">
+        <h4 class="text-xs font-extrabold text-slate-400 uppercase mb-4 text-center">Configurar Tarifas</h4>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-[9px] font-extrabold text-slate-500 uppercase">Preço Municipal</label>
+            <input type="number" id="set-fixo" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-extrabold text-orange-600 outline-none">
+          </div>
+          <div>
+            <label class="text-[9px] font-extrabold text-slate-500 uppercase">Valor por KM</label>
+            <input type="number" step="0.1" id="set-km" class="w-full bg-slate-50 p-3 rounded-lg border-2 border-slate-100 font-extrabold text-orange-600 outline-none">
+          </div>
+        </div>
+        <button onclick="salvarConfig()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-extrabold uppercase text-xs mt-6 shadow-xl">Salvar e Atualizar Todos</button>
+      </div>
+      
+      <div class="space-y-3">
+        <h4 class="text-xs font-extrabold text-slate-400 uppercase italic">Corridas em Andamento</h4>
+        <div id="monitor-corridas" class="space-y-2"></div>
       </div>
     </div>
   </div>
 
   <script>
-    const CLOUD_URL = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v2_final_fix.json';
-    let DB = { corridas: [], settings: { fixo: 7.00, km: 2.50 } };
-    let STATE = { role: null, online: false, modalidade: 'municipal', activeId: null, distKm: 0, 
-                  origCoord: null, destCoord: null };
+    // SISTEMA DE DADOS CENTRALIZADO
+    const ENDPOINT = 'https://vroom-moto-default-rtdb.firebaseio.com/vroom_v3_master.json';
+    let DB = { 
+      corridas: [], 
+      config: { fixo: 7.0, km: 2.5 } 
+    };
+    
+    let APP = { 
+      user: null, 
+      online: false, 
+      mod: 'mun', 
+      distancia: 0, 
+      origem: null, 
+      destino: null,
+      idAtivo: null 
+    };
 
-    function showScreen(id) {
+    function nav(role) {
+      APP.user = role;
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+      document.getElementById('screen-' + role).classList.add('active');
+      
+      if(role === 'cliente') {
+        detectarLocal();
+      } else if(role === 'adm') {
+        document.getElementById('set-fixo').value = DB.config.fixo;
+        document.getElementById('set-km').value = DB.config.km;
+      }
+      iniciarSync();
     }
 
-    function initApp(role) {
-      STATE.role = role;
-      showScreen('screen-' + role + '-home');
-      if(role === 'cliente') detectMyLocation();
-      if(role === 'adm') loadAdmSettings();
-      startSync();
-    }
-
-    function loadAdmSettings() {
-      document.getElementById('adm-fixo').value = DB.settings.fixo;
-      document.getElementById('adm-km').value = DB.settings.km;
-    }
-
-    async function saveSettings() {
-      DB.settings.fixo = parseFloat(document.getElementById('adm-fixo').value);
-      DB.settings.km = parseFloat(document.getElementById('adm-km').value);
-      await syncPush();
-      alert('Configurações salvas!');
-    }
-
-    function detectMyLocation() {
+    function detectarLocal() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
-          STATE.origCoord = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+          APP.origem = { lat: pos.coords.latitude, lon: pos.coords.longitude };
           fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
             .then(r => r.json()).then(data => {
-              document.getElementById('cli-origem').value = data.display_name.split(',')[0] + ', ' + data.display_name.split(',')[1];
+              document.getElementById('origem').value = data.display_name.split(',')[0] + ', ' + data.display_name.split(',')[1];
             });
         });
       }
     }
 
-    async function searchAddress(query) {
-      const resultsDiv = document.getElementById('results');
-      if(query.length < 3) { resultsDiv.style.display = 'none'; return; }
+    async function buscarEndereco(q) {
+      const resDiv = document.getElementById('results');
+      if(q.length < 3) { resDiv.style.display = 'none'; return; }
       try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5&countrycodes=br`);
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&limit=5&countrycodes=br`);
         const data = await r.json();
         if(data.length > 0) {
-          resultsDiv.innerHTML = data.map(item => `
-            <div class="result-item" onclick="selectDestino('${item.display_name}', ${item.lat}, ${item.lon})">
-              ${item.display_name}
-            </div>`).join('');
-          resultsDiv.style.display = 'block';
+          resDiv.innerHTML = data.map(i => `<div class="result-item" onclick="selecionarDestino('${i.display_name}', ${i.lat}, ${i.lon})">${i.display_name}</div>`).join('');
+          resDiv.style.display = 'block';
         }
       } catch(e){}
     }
 
-    function selectDestino(name, lat, lon) {
-      document.getElementById('cli-destino').value = name;
+    function selecionarDestino(nome, lat, lon) {
+      document.getElementById('destino').value = nome;
       document.getElementById('results').style.display = 'none';
-      STATE.destCoord = { lat: lat, lon: lon };
-      calcularDistancia();
+      APP.destino = { lat, lon };
+      calcularRota();
     }
 
-    async function calcularDistancia() {
-      if(!STATE.origCoord || !STATE.destCoord) return;
-      const url = `https://router.project-osrm.org/route/v1/driving/${STATE.origCoord.lon},${STATE.origCoord.lat};${STATE.destCoord.lon},${STATE.destCoord.lat}?overview=false`;
+    async function calcularRota() {
+      if(!APP.origem || !APP.destino) return;
+      const url = `https://router.project-osrm.org/route/v1/driving/${APP.origem.lon},${APP.origem.lat};${APP.destino.lon},${APP.destino.lat}?overview=false`;
       try {
         const r = await fetch(url);
         const data = await r.json();
         if(data.routes && data.routes[0]) {
-          STATE.distKm = data.routes[0].distance / 1000;
-          updatePrices();
+          APP.distancia = data.routes[0].distance / 1000;
+          atualizarPrecos();
         }
       } catch(e){}
     }
 
-    function updatePrices() {
-      if(document.getElementById('price-mun')) 
-        document.getElementById('price-mun').innerText = 'R$ ' + DB.settings.fixo.toFixed(2).replace('.', ',');
-      if(document.getElementById('price-inter')) {
-        const precoInter = (STATE.distKm * DB.settings.km).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        document.getElementById('price-inter').innerText = precoInter;
-      }
+    function atualizarPrecos() {
+      const fixo = DB.config.fixo;
+      const totalInter = APP.distancia * DB.config.km;
+      
+      document.getElementById('disp-fixo').innerText = `R$ ${fixo.toFixed(2).replace('.',',')}`;
+      document.getElementById('disp-km').innerText = `R$ ${totalInter.toFixed(2).replace('.',',')}`;
     }
 
-    function setMod(m) {
-      STATE.modalidade = m;
-      document.getElementById('btn-mun').classList.toggle('active', m === 'municipal');
-      document.getElementById('btn-inter').classList.toggle('active', m === 'inter');
+    function toggleMod(m) {
+      APP.mod = m;
+      document.getElementById('mod-mun').classList.toggle('active', m === 'mun');
+      document.getElementById('mod-inter').classList.toggle('active', m === 'inter');
     }
 
-    async function pedirCorrida() {
-      const dest = document.getElementById('cli-destino').value;
+    async function solicitarCorrida() {
+      const dest = document.getElementById('destino').value;
       if(!dest) return alert('Escolha o destino!');
-      let valorFinal = DB.settings.fixo.toFixed(2);
-      if(STATE.modalidade === 'inter') valorFinal = (STATE.distKm * DB.settings.km).toFixed(2);
-      STATE.activeId = Date.now();
-      DB.corridas.push({ id: STATE.activeId, destino: dest, tipo: STATE.modalidade, valor: 'R$ ' + valorFinal.replace('.', ','), status: 'buscando' });
-      renderStatusCliente('buscando');
-      await syncPush();
+      
+      let valor = APP.mod === 'mun' ? DB.config.fixo : (APP.distancia * DB.config.km);
+      APP.idAtivo = Date.now();
+      
+      const nova = { 
+        id: APP.idAtivo, 
+        destino: dest.split(',')[0], 
+        valor: `R$ ${valor.toFixed(2).replace('.',',')}`, 
+        status: 'procurando' 
+      };
+      
+      DB.corridas.push(nova);
+      await pushDB();
+      renderStatusCliente('procurando');
     }
 
     function toggleOnline() {
-      STATE.online = !STATE.online;
-      const btn = document.getElementById('mot-toggle');
-      btn.innerText = STATE.online ? 'Online' : 'Offline';
-      btn.style.backgroundColor = STATE.online ? '#22c55e' : '#ef4444';
-      if(STATE.online) renderFilaMotorista();
+      APP.online = !APP.online;
+      const btn = document.getElementById('btn-online');
+      btn.innerText = APP.online ? 'Online' : 'Offline';
+      btn.className = APP.online ? 'bg-green-500 px-5 py-2 rounded-xl font-extrabold text-[10px] uppercase shadow-lg' : 'bg-red-500 px-5 py-2 rounded-xl font-extrabold text-[10px] uppercase shadow-lg';
+      if(APP.online) renderMotorista();
     }
 
-    async function aceitarCorrida(id) {
+    async function aceitar(id) {
       const c = DB.corridas.find(x => x.id === id);
-      if(c) { c.status = 'aceita'; c.motorista = 'Rodolfo'; await syncPush(); }
+      if(c) { c.status = 'aceita'; await pushDB(); }
     }
 
-    async function syncPush() {
-      try { 
-        const res = await fetch(CLOUD_URL, { method: 'PUT', body: JSON.stringify(DB) }); 
-        if(res.ok) console.log('Sync OK');
-      } catch(e){ console.error('Sync Error', e); }
+    async function salvarConfig() {
+      DB.config.fixo = parseFloat(document.getElementById('set-fixo').value);
+      DB.config.km = parseFloat(document.getElementById('set-km').value);
+      await pushDB();
+      alert('Preços atualizados!');
     }
 
-    function startSync() {
-      setInterval(async () => {
+    async function pushDB() {
+      try { await fetch(ENDPOINT, { method: 'PUT', body: JSON.stringify(DB) }); } catch(e){}
+    }
+
+    function iniciarSync() {
+      if(window.syncInterval) clearInterval(window.syncInterval);
+      window.syncInterval = setInterval(async () => {
         try {
-          const r = await fetch(CLOUD_URL + '?t=' + Date.now());
-          if(r.ok) {
-            const data = await r.json();
-            if(data) {
-                DB = data;
-                if(STATE.role === 'motorista' && STATE.online) renderFilaMotorista();
-                if(STATE.role === 'cliente' && STATE.activeId) checkStatusCliente();
-                if(STATE.role === 'adm') renderAdmMonitor();
-                updatePrices();
-            }
+          const r = await fetch(ENDPOINT + '?t=' + Date.now());
+          const data = await r.json();
+          if(data) {
+            DB = data;
+            if(APP.user === 'motorista' && APP.online) renderMotorista();
+            if(APP.user === 'cliente' && APP.idAtivo) conferirStatusCliente();
+            if(APP.user === 'adm') renderMonitorAdm();
+            atualizarPrecos();
           }
         } catch(e){}
-      }, 2000);
+      }, 3000);
     }
 
-    function renderFilaMotorista() {
-      const container = document.getElementById('lista-chamadas');
-      const disp = (DB.corridas || []).filter(c => c.status === 'buscando');
-      if(disp.length === 0) { container.innerHTML = '<div class="text-center p-20 text-slate-400 font-bold italic">Aguardando...</div>'; return; }
-      container.innerHTML = disp.map(c => `
-        <div class="card p-6 border-l-[12px] border-orange-500 shadow-md mb-4">
-          <div class="text-xl font-black text-slate-800 italic">${c.destino.split(',')[0]}</div>
+    function renderMotorista() {
+      const container = document.getElementById('fila-motorista');
+      const abertas = (DB.corridas || []).filter(c => c.status === 'procurando');
+      if(abertas.length === 0) { container.innerHTML = '<div class="text-center p-20 text-slate-400 font-bold italic opacity-40">Aguardando pedidos...</div>'; return; }
+      container.innerHTML = abertas.map(c => `
+        <div class="card p-6 border-l-[12px] border-orange-500">
+          <div class="text-lg font-extrabold text-slate-800 italic">${c.destino}</div>
           <div class="flex justify-between items-center mt-4">
-            <span class="text-orange-600 font-black text-lg italic">${c.valor}</span>
-            <button onclick="aceitarCorrida(${c.id})" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-black uppercase text-xs">Aceitar</button>
+            <span class="text-orange-600 font-extrabold text-xl italic">${c.valor}</span>
+            <button onclick="aceitar(${c.id})" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-extrabold uppercase text-xs">Aceitar</button>
           </div>
         </div>`).join('');
     }
 
-    function renderAdmMonitor() {
-      const container = document.getElementById('adm-monitor');
+    function renderMonitorAdm() {
+      const container = document.getElementById('monitor-corridas');
       const todas = DB.corridas || [];
-      if(todas.length === 0) { container.innerHTML = '<div class="text-center p-10 text-slate-300 font-bold italic">Sem atividade...</div>'; return; }
+      if(todas.length === 0) { container.innerHTML = '<div class="text-center p-5 text-slate-400 font-bold text-xs">Nenhuma corrida.</div>'; return; }
       container.innerHTML = todas.map(c => `
-        <div class="bg-white p-4 rounded-xl border flex justify-between items-center">
-          <div class="text-xs font-black text-slate-800">${c.destino.split(',')[0]}</div>
+        <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
+          <div class="text-xs font-extrabold text-slate-700">${c.destino}</div>
           <div class="text-right">
-            <div class="text-[10px] font-black ${c.status === 'aceita' ? 'text-green-500' : 'text-orange-500'} uppercase">${c.status}</div>
-            <div class="text-xs font-black text-slate-800">${c.valor}</div>
+            <div class="text-[8px] font-extrabold ${c.status === 'aceita' ? 'text-green-500' : 'text-orange-500'} uppercase">${c.status}</div>
+            <div class="text-xs font-extrabold text-slate-900">${c.valor}</div>
           </div>
         </div>`).join('');
     }
 
-    function checkStatusCliente() {
-      const minha = (DB.corridas || []).find(c => c.id === STATE.activeId);
+    function conferirStatusCliente() {
+      const minha = (DB.corridas || []).find(c => c.id === APP.idAtivo);
       if(minha && minha.status === 'aceita') renderStatusCliente('aceita');
     }
 
-    function renderStatusCliente(status) {
-      const container = document.getElementById('status-cliente-container');
-      if(status === 'buscando') {
-        container.innerHTML = `<div class="card p-10 bg-orange-600 text-white text-center shadow-xl"><div class="text-2xl font-black italic uppercase animate-pulse">Buscando Moto...</div></div>`;
-      } else if(status === 'aceita') {
-        container.innerHTML = `<div class="card p-10 bg-green-600 text-white text-center shadow-xl"><div class="text-2xl font-black italic uppercase">Motorista a Caminho!</div><button onclick="location.reload()" class="mt-8 bg-white text-green-600 px-8 py-3 rounded-xl font-black text-xs uppercase">Cheguei</button></div>`;
+    function renderStatusCliente(st) {
+      const container = document.getElementById('cliente-content');
+      if(st === 'procurando') {
+        container.innerHTML = `<div class="card p-12 bg-orange-600 text-white text-center"><div class="text-3xl font-extrabold italic uppercase animate-pulse">Buscando Moto...</div><div class="text-[10px] mt-4 opacity-70 uppercase font-extrabold tracking-widest">Sincronizando com a nuvem</div></div>`;
+      } else if(st === 'aceita') {
+        container.innerHTML = `<div class="card p-12 bg-green-600 text-white text-center"><div class="text-3xl font-extrabold italic uppercase">Motorista Aceitou!</div><p class="text-xs mt-2 opacity-80">Ele já está a caminho do seu local.</p><button onclick="location.reload()" class="mt-10 bg-white text-green-600 px-10 py-4 rounded-2xl font-extrabold uppercase text-xs shadow-2xl">Finalizar</button></div>`;
       }
     }
   </script>
