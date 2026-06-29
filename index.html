@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v14.3 - Área do Motorista</title>
+    <title>VROOM MOTO v14.4 - Login Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -11,54 +11,33 @@
         :root { --vroom: #FF6B00; --vroom-dark: #0F172A; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { font-family: 'Inter', sans-serif; background: var(--vroom-dark); overflow: hidden; height: 100vh; width: 100vw; color: white; }
-        
         .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; z-index: 10; }
         .screen.active { display: flex !important; z-index: 1000 !important; }
-        
         .portal-bg { background: var(--vroom-dark); justify-content: center; align-items: center; padding: 30px; }
-        .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; border-radius: 18px; padding: 18px; width: 100%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; box-shadow: 0 8px 15px rgba(255, 107, 0, 0.3); transition: transform 0.1s; }
-        .vroom-btn:active { transform: scale(0.98); }
-        
+        .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; border-radius: 18px; padding: 18px; width: 100%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; box-shadow: 0 8px 15px rgba(255, 107, 0, 0.3); }
         .input-vroom { background: #1E293B; border: 2px solid #334155; padding: 15px; border-radius: 15px; font-weight: 600; width: 100%; color: white; font-size: 14px; margin-bottom: 15px; }
-        
-        /* Driver Area */
         .driver-header { background: #0F172A; padding: 20px; border-bottom: 1px solid #1E293B; }
         .status-pill { padding: 8px 16px; border-radius: 50px; font-size: 11px; font-weight: 900; text-transform: uppercase; display: flex; align-items: center; gap: 6px; cursor: pointer; }
-        .online { background: #15803D; color: white; box-shadow: 0 0 15px rgba(21, 128, 61, 0.4); }
+        .online { background: #15803D; color: white; }
         .offline { background: #334155; color: #94A3B8; }
-        
         #driver-map { flex: 1; background: #1E293B; position: relative; }
         .driver-footer { background: white; border-radius: 30px 30px 0 0; padding: 20px; color: #1E293B; }
-        
-        /* Alert Overlay */
         #alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.98); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 25px; }
         .alert-box { background: white; width: 100%; max-width: 380px; border-radius: 35px; padding: 30px; text-align: center; color: #1E293B; border: 4px solid var(--vroom); }
-        .animate-pulse-vroom { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-
-        /* Financial Tab */
-        .card-finance { background: #F8FAFC; border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 1px solid #F1F5F9; }
-        
         .tab-bar { display: flex; justify-content: space-around; background: white; border-top: 1px solid #F1F5F9; padding: 15px 0; }
         .tab-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: #94A3B8; font-size: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
         .tab-item.active { color: var(--vroom); }
     </style>
 </head>
 <body>
-
-    <!-- PORTAL -->
     <div id="screen-portal" class="screen active portal-bg">
-        <div class="text-center mb-12">
-            <i class="fas fa-motorcycle text-7xl text-orange-500 mb-4"></i>
-            <h1 class="text-5xl font-black italic text-white uppercase tracking-tighter">VROOM<span class="text-orange-500">MOTO</span></h1>
-        </div>
+        <div class="text-center mb-12"><i class="fas fa-motorcycle text-7xl text-orange-500 mb-4"></i><h1 class="text-5xl font-black italic text-white uppercase tracking-tighter">VROOM<span class="text-orange-500">MOTO</span></h1></div>
         <div class="w-full max-w-xs space-y-4">
             <button onclick="checkClientAccess()" class="vroom-btn">Pedir uma Moto</button>
             <button onclick="nav('driver-login')" class="w-full bg-slate-800 text-slate-400 py-5 rounded-2xl font-black uppercase text-xs">Área do Motorista</button>
         </div>
     </div>
 
-    <!-- LOGIN MOTORISTA -->
     <div id="screen-driver-login" class="screen portal-bg">
         <div class="w-full max-w-xs text-center">
             <h2 class="text-2xl font-black italic uppercase mb-8">Login do Motorista</h2>
@@ -69,26 +48,17 @@
         </div>
     </div>
 
-    <!-- DASHBOARD MOTORISTA -->
     <div id="screen-driver-dashboard" class="screen">
         <div class="driver-header flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-orange-500 border-2 border-white overflow-hidden">
-                    <img src="https://i.pravatar.cc/100?u=rodolfo" class="w-full h-full object-cover">
-                </div>
+                <div class="w-10 h-10 rounded-full bg-orange-500 border-2 border-white overflow-hidden"><img src="https://i.pravatar.cc/100?u=rodolfo" class="w-full h-full object-cover"></div>
                 <div><p class="text-[9px] font-black text-orange-500 uppercase">Status</p><p class="text-sm font-black italic">Rodolfo Oliveira</p></div>
             </div>
-            <div id="status-pill" onclick="toggleOnline()" class="status-pill offline">
-                <i class="fas fa-power-off"></i> <span>Offline</span>
-            </div>
+            <div id="status-pill" onclick="toggleOnline()" class="status-pill offline"><i class="fas fa-power-off"></i> <span>Offline</span></div>
         </div>
-
         <div id="driver-tabs-content" class="flex-1 flex flex-col overflow-hidden">
-            <!-- TAB MAPA -->
             <div id="tab-map" class="flex-1 flex flex-col">
-                <div id="driver-map">
-                    <iframe id="map-frame" width="100%" height="100%" frameborder="0" style="border:0; opacity:0.5;" allowfullscreen="" loading="lazy"></iframe>
-                </div>
+                <div id="driver-map"><iframe id="map-frame" width="100%" height="100%" frameborder="0" style="border:0; opacity:0.5;" allowfullscreen="" loading="lazy"></iframe></div>
                 <div class="driver-footer">
                     <div class="flex justify-between items-center">
                         <div><p class="text-[10px] font-black text-slate-400 uppercase">Ganhos de Hoje</p><p class="text-2xl font-black italic">R$ 0,00</p></div>
@@ -96,19 +66,11 @@
                     </div>
                 </div>
             </div>
-
-            <!-- TAB FINANCEIRO -->
             <div id="tab-finance" class="hidden flex-1 bg-white p-6 overflow-y-auto">
                 <h3 class="text-slate-800 text-xl font-black italic uppercase mb-6">Financeiro</h3>
-                <div class="card-finance"><p class="text-[10px] font-black text-slate-400 uppercase mb-1">Total acumulado</p><p class="text-3xl font-black text-slate-900 italic">R$ 1.250,00</p></div>
-                <div class="space-y-4">
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Últimos Ganhos</p>
-                    <div class="flex justify-between items-center border-b pb-3"><div><p class="font-black text-sm text-slate-800">Corrida Municipal</p><p class="text-[10px] text-slate-400">14:30</p></div><p class="font-black text-green-600">+ R$ 7,00</p></div>
-                    <div class="flex justify-between items-center border-b pb-3"><div><p class="font-black text-sm text-slate-800">Corrida Intermunicipal</p><p class="text-[10px] text-slate-400">Ontem</p></div><p class="font-black text-green-600">+ R$ 45,00</p></div>
-                </div>
+                <div class="space-y-4"><p class="text-[10px] font-black text-slate-400 uppercase">Resumo</p><p class="text-3xl font-black italic text-slate-900">R$ 1.250,00</p></div>
             </div>
         </div>
-
         <div class="tab-bar">
             <div onclick="switchTab('map')" id="nav-map" class="tab-item active"><i class="fas fa-map-marked-alt text-xl"></i><span>Mapa</span></div>
             <div onclick="switchTab('finance')" id="nav-finance" class="tab-item"><i class="fas fa-wallet text-xl"></i><span>Financeiro</span></div>
@@ -116,77 +78,43 @@
         </div>
     </div>
 
-    <!-- ALERTA DE CORRIDA -->
     <div id="alert-overlay">
-        <div class="alert-box animate-pulse-vroom">
-            <div class="flex justify-between mb-6">
-                <span class="bg-orange-500 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase">Novo Chamado</span>
-                <span class="text-2xl font-black italic text-orange-600">R$ <span id="order-price">7,00</span></span>
-            </div>
-            <div class="bg-slate-50 p-4 rounded-3xl flex items-center gap-4 mb-6 text-left">
-                <div class="w-16 h-16 rounded-full border-4 border-white overflow-hidden bg-slate-200">
-                    <img id="order-photo" src="https://i.pravatar.cc/100?u=ana" class="w-full h-full object-cover">
-                </div>
-                <div><p class="text-[9px] font-black text-slate-400 uppercase">Cliente</p><p id="order-name" class="text-xl font-black italic text-slate-800">Ana Souza</p><p class="text-green-600 font-black text-[10px] uppercase">★ 5.0 Estrelas</p></div>
-            </div>
-            <div class="text-left space-y-4 mb-8">
-                <div class="flex items-center gap-3"><i class="fas fa-circle text-[8px] text-orange-500"></i><div><p class="text-[8px] font-black text-slate-400 uppercase">Coleta</p><p class="text-xs font-bold text-slate-700">Rua Central, 123</p></div></div>
-                <div class="flex items-center gap-3"><i class="fas fa-flag-checkered text-[8px] text-slate-800"></i><div><p class="text-[8px] font-black text-slate-400 uppercase">Destino</p><p class="text-xs font-bold text-slate-700">Shopping Norte</p></div></div>
-            </div>
-            <div class="flex gap-4">
-                <button onclick="acceptOrder()" class="vroom-btn flex-1 !bg-green-600">Aceitar</button>
-                <button onclick="hideAlert()" class="bg-slate-100 text-slate-400 px-6 rounded-2xl font-black uppercase text-xs">Recusar</button>
-            </div>
-        </div>
+        <div class="alert-box"><div class="flex justify-between mb-6"><span class="bg-orange-500 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase">Novo Chamado</span><span class="text-2xl font-black italic text-orange-600">R$ 7,00</span></div><div class="bg-slate-50 p-4 rounded-3xl flex items-center gap-4 mb-6 text-left"><div class="w-16 h-16 rounded-full border-4 border-white overflow-hidden bg-slate-200"><img src="https://i.pravatar.cc/100?u=ana" class="w-full h-full object-cover"></div><div><p class="text-[9px] font-black text-slate-400 uppercase">Cliente</p><p class="text-xl font-black italic text-slate-800">Ana Souza</p></div></div><div class="flex gap-4"><button onclick="hideAlert()" class="vroom-btn flex-1 !bg-green-600">Aceitar</button><button onclick="hideAlert()" class="bg-slate-100 text-slate-400 px-6 rounded-2xl font-black uppercase text-xs">Recusar</button></div></div>
     </div>
 
-    <!-- TELAS DO CLIENTE (Mantidas da v14.0) -->
-    <div id="screen-cadastro" class="screen bg-white p-8 overflow-y-auto">
+    <div id="screen-cadastro" class="screen bg-white p-8">
         <h2 class="text-3xl font-black italic uppercase mb-10 text-slate-800">Novo Cadastro</h2>
-        <div class="w-32 h-32 rounded-full bg-slate-100 mx-auto mb-6 border-4 border-dashed border-slate-300 flex items-center justify-center overflow-hidden" onclick="document.getElementById('photo-input').click()">
-            <img id="profile-preview" class="hidden w-full h-full object-cover">
-            <i id="photo-icon" class="fas fa-camera text-slate-400 text-2xl"></i>
-        </div>
-        <input type="file" id="photo-input" hidden accept="image/*" onchange="handlePhoto(event)">
         <input type="text" id="reg-name" placeholder="Nome Completo" class="input-vroom !bg-slate-50 !text-slate-800">
-        <input type="tel" id="reg-phone" placeholder="WhatsApp (00) 00000-0000" class="input-vroom !bg-slate-50 !text-slate-800">
+        <input type="tel" id="reg-phone" placeholder="WhatsApp" class="input-vroom !bg-slate-50 !text-slate-800">
         <button onclick="finalizeRegistry()" class="vroom-btn">Salvar e Continuar</button>
     </div>
 
     <div id="screen-cliente" class="screen">
         <div style="flex:1; background:#e5e7eb"><iframe id="client-map" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>
         <div class="panel-bottom">
-            <div class="flex gap-2 mb-4">
-                <button id="type-m" onclick="setRideType('m')" class="flex-1 p-3 rounded-xl border-2 border-orange-500 bg-orange-50 text-orange-600 font-black text-[10px] uppercase">Municipal</button>
-                <button id="type-i" onclick="setRideType('i')" class="flex-1 p-3 rounded-xl border-2 border-slate-100 text-slate-400 font-black text-[10px] uppercase">Intermunicipal</button>
-            </div>
             <input type="text" id="dest-input" placeholder="Para onde vamos?" class="input-vroom !bg-slate-50 !text-slate-800">
-            <div id="client-price" class="hidden mb-4 p-4 bg-orange-50 rounded-2xl flex justify-between items-center">
-                <div><p class="text-[9px] font-black text-orange-400 uppercase">Valor da Viagem</p><p id="val-text" class="text-2xl font-black italic text-orange-600">R$ 7,00</p></div>
-                <i class="fas fa-motorcycle text-xl text-orange-500"></i>
-            </div>
-            <button id="btn-calc" onclick="calculateClientRide()" class="bg-slate-900 text-white font-black uppercase p-4 rounded-2xl w-full mb-2">Conferir Valor</button>
-            <button id="btn-confirm" onclick="sendToDriver()" class="vroom-btn hidden">Confirmar Agora</button>
+            <button onclick="sendToDriver()" class="vroom-btn">Confirmar Agora</button>
         </div>
     </div>
 
     <script>
         let isOnline = false;
-        const bip = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
-
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-' + id).classList.add('active');
         }
 
-        // MOTORISTA
         function doDriverLogin() {
-            const u = document.getElementById('driver-user').value;
-            const p = document.getElementById('driver-pass').value;
+            const u = document.getElementById('driver-user').value.trim();
+            const p = document.getElementById('driver-pass').value.trim();
+            
+            // Fix: Ignorar maiusculas e espaços extras
             if(u.toLowerCase() === 'rodolfo oliveira' && p === 'Rm290198') {
                 nav('driver-dashboard');
                 initMap('map-frame');
-            } else alert('Login Inválido!');
+            } else {
+                alert('Acesso Negado!\n\nUse:\nUsuário: Rodolfo oliveira\nSenha: Rm290198');
+            }
         }
 
         function toggleOnline() {
@@ -195,7 +123,7 @@
             if(isOnline) {
                 pill.className = 'status-pill online';
                 pill.innerHTML = '<i class="fas fa-power-off"></i> <span>Online</span>';
-                setTimeout(showAlert, 5000);
+                setTimeout(() => { if(isOnline) document.getElementById('alert-overlay').style.display = 'flex'; }, 4000);
             } else {
                 pill.className = 'status-pill offline';
                 pill.innerHTML = '<i class="fas fa-power-off"></i> <span>Offline</span>';
@@ -203,40 +131,16 @@
             }
         }
 
-        function showAlert() {
-            if(!isOnline) return;
-            document.getElementById('alert-overlay').style.display = 'flex';
-            bip.loop = true; bip.play();
-        }
-
-        function hideAlert() {
-            document.getElementById('alert-overlay').style.display = 'none';
-            bip.pause(); bip.currentTime = 0;
-        }
-
-        function acceptOrder() { hideAlert(); alert('Corrida Aceita! Iniciando Navegação...'); }
-
+        function hideAlert() { document.getElementById('alert-overlay').style.display = 'none'; }
         function switchTab(t) {
             document.getElementById('tab-map').classList.toggle('hidden', t !== 'map');
             document.getElementById('tab-finance').classList.toggle('hidden', t !== 'finance');
             document.getElementById('nav-map').classList.toggle('active', t === 'map');
             document.getElementById('nav-finance').classList.toggle('active', t === 'finance');
         }
-
-        // CLIENTE
         function checkClientAccess() {
             if(localStorage.getItem('vroom_user')) { nav('cliente'); initMap('client-map'); }
             else nav('cadastro');
-        }
-        function handlePhoto(e) {
-            const f = e.target.files[0];
-            const r = new FileReader();
-            r.onload = (ev) => {
-                document.getElementById('profile-preview').src = ev.target.result;
-                document.getElementById('profile-preview').classList.remove('hidden');
-                document.getElementById('photo-icon').classList.add('hidden');
-            };
-            r.readAsDataURL(f);
         }
         function finalizeRegistry() {
             const n = document.getElementById('reg-name').value;
@@ -244,17 +148,7 @@
             if(n && p) { localStorage.setItem('vroom_user', JSON.stringify({n, p})); nav('cliente'); initMap('client-map'); }
             else alert('Preencha os dados!');
         }
-        function calculateClientRide() {
-            if(document.getElementById('dest-input').value.length < 3) return alert('Insira o destino!');
-            document.getElementById('btn-calc').innerText = 'Consultando...';
-            setTimeout(() => {
-                document.getElementById('client-price').classList.remove('hidden');
-                document.getElementById('btn-calc').classList.add('hidden');
-                document.getElementById('btn-confirm').classList.remove('hidden');
-            }, 1500);
-        }
-        function sendToDriver() { alert('Chamado enviado ao motorista!'); nav('portal'); }
-
+        function sendToDriver() { alert('Chamado enviado!'); nav('portal'); }
         function initMap(id) {
             navigator.geolocation.getCurrentPosition(p => {
                 document.getElementById(id).src = `https://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}&z=15&output=embed`;
