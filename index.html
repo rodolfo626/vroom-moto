@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v13.7</title>
+    <title>VROOM MOTO v13.8 - Preço KM 3,00</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -18,19 +18,12 @@
         .panel-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-radius: 30px 30px 0 0; padding: 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.15); z-index: 1500; }
         .vroom-btn { background: var(--vroom); color: white; font-weight: 800; text-transform: uppercase; border-radius: 18px; padding: 18px; width: 100%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; box-shadow: 0 8px 15px rgba(255, 107, 0, 0.3); }
         .input-vroom { background: #F8FAFC; border: 2px solid #F1F5F9; padding: 15px; border-radius: 15px; outline: none; font-weight: 600; width: 100%; color: #1E293B; font-size: 14px; margin-bottom: 10px; }
-        
         .type-selector { display: flex; gap: 10px; margin-bottom: 15px; }
         .type-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid #F1F5F9; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #94A3B8; transition: all 0.2s; cursor: pointer; text-align: center; }
         .type-btn.active-m { border-color: #FF6B00; color: #FF6B00; background: #FFF7ED; }
         .type-btn.active-i { border-color: #4F46E5; color: #4F46E5; background: #EEF2FF; }
-
-        .delivery-toggle { 
-            display: none; align-items: center; justify-content: space-between; 
-            padding: 12px 18px; background: #F1F5F9; border-radius: 15px; 
-            margin-bottom: 15px; cursor: pointer; border: 2px solid transparent;
-        }
+        .delivery-toggle { display: none; align-items: center; justify-content: space-between; padding: 12px 18px; background: #F1F5F9; border-radius: 15px; margin-bottom: 15px; cursor: pointer; border: 2px solid transparent; }
         .delivery-toggle.active { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
-
         .price-card { background: #FFF7ED; border: 2px solid #FFEDD5; border-radius: 18px; padding: 15px; margin-bottom: 15px; display: none; justify-content: space-between; align-items: center; }
     </style>
 </head>
@@ -48,23 +41,16 @@
         <div id="map"><iframe id="google-iframe" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>
         <div class="panel-bottom">
             <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4"></div>
-            
             <div class="type-selector">
                 <div id="btn-m" class="type-btn active-m" onclick="setType('m')"><i class="fas fa-city mb-1 block"></i> Municipal</div>
                 <div id="btn-i" class="type-btn" onclick="setType('i')"><i class="fas fa-road mb-1 block"></i> Intermunicipal</div>
             </div>
-
             <div id="delivery-box" class="delivery-toggle" onclick="toggleDelivery()">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-box text-xl"></i>
-                    <div><p class="text-[10px] font-black uppercase">Serviço de Entrega</p><p class="text-[9px] font-bold opacity-70">Deseja enviar um objeto?</p></div>
-                </div>
+                <div class="flex items-center gap-3"><i class="fas fa-box text-xl"></i><div><p class="text-[10px] font-black uppercase">Serviço de Entrega</p><p class="text-[9px] font-bold opacity-70">Deseja enviar um objeto?</p></div></div>
                 <i id="delivery-check" class="far fa-circle text-xl"></i>
             </div>
-
             <input type="text" id="inp-origem" value="Localizando..." readonly class="input-vroom !bg-slate-50">
             <input type="text" id="inp-destino" placeholder="Para onde vamos?" class="input-vroom" onchange="updateView()">
-            
             <div id="price-box" class="price-card">
                 <div style="flex:1">
                     <span id="label-cat" class="bg-orange-500 text-white px-2 py-1 rounded text-[9px] font-black uppercase">Municipal</span>
@@ -73,7 +59,6 @@
                 </div>
                 <div class="text-right text-orange-500"><i id="price-icon" class="fas fa-motorcycle text-2xl"></i></div>
             </div>
-
             <button onclick="confirmRide()" id="btn-main" class="vroom-btn">Confirmar Corrida</button>
             <button onclick="location.reload()" class="w-full mt-3 text-slate-400 font-black text-[10px] uppercase">Cancelar</button>
         </div>
@@ -82,6 +67,7 @@
     <script>
         let currentType = 'm';
         let isDelivery = false;
+        const PRECO_POR_KM = 3.00;
 
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -104,7 +90,6 @@
             currentType = t;
             document.getElementById('btn-m').classList.remove('active-m');
             document.getElementById('btn-i').classList.remove('active-i');
-            
             if(t === 'm') {
                 document.getElementById('btn-m').classList.add('active-m');
                 document.getElementById('delivery-box').style.display = 'flex';
@@ -117,22 +102,12 @@
             updateView();
         }
 
-        function toggleDelivery() {
-            isDelivery = !isDelivery;
-            updateDeliveryUI();
-            updateView();
-        }
-
+        function toggleDelivery() { isDelivery = !isDelivery; updateDeliveryUI(); updateView(); }
         function updateDeliveryUI() {
             const box = document.getElementById('delivery-box');
             const check = document.getElementById('delivery-check');
-            if(isDelivery) {
-                box.classList.add('active');
-                check.className = 'fas fa-check-circle text-xl text-green-500';
-            } else {
-                box.classList.remove('active');
-                check.className = 'far fa-circle text-xl';
-            }
+            if(isDelivery) { box.classList.add('active'); check.className = 'fas fa-check-circle text-xl text-green-500'; }
+            else { box.classList.remove('active'); check.className = 'far fa-circle text-xl'; }
         }
 
         function updateView() {
@@ -149,20 +124,19 @@
                 document.getElementById('price-icon').className = isDelivery ? 'fas fa-box text-2xl' : 'fas fa-motorcycle text-2xl';
                 document.getElementById('google-iframe').src = `https://maps.google.com/maps?q=${destino}&z=15&output=embed`;
             } else {
-                // REMOVIDO CÁLCULO DE KM CONFORME SOLICITADO
+                // REATIVADO CÁLCULO POR KM CONFORME SOLICITADO
+                const kmSimulado = 50; 
+                const total = kmSimulado * PRECO_POR_KM;
                 document.getElementById('label-cat').innerText = 'Intermunicipal';
                 document.getElementById('label-cat').style.background = '#4F46E5';
-                document.getElementById('label-price').innerText = 'A definir';
-                document.getElementById('label-detail').innerText = 'Consulte o valor com o motorista';
+                document.getElementById('label-price').innerText = 'R$ ' + total.toFixed(2).replace('.', ',');
+                document.getElementById('label-detail').innerText = kmSimulado + ' KM x R$ ' + PRECO_POR_KM.toFixed(2) + '/KM';
                 document.getElementById('price-icon').className = 'fas fa-road text-2xl';
                 document.getElementById('google-iframe').src = `https://maps.google.com/maps?q=${destino}&z=12&output=embed`;
             }
         }
 
-        function confirmRide() {
-            alert('Chamado enviado!');
-        }
-
+        function confirmRide() { alert('Chamado enviado!'); }
         setType('m');
     </script>
 </body>
