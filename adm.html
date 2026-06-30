@@ -2,38 +2,17 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>ADM VROOM v23.2</title>
+    <title>ADM Centro de Serviços</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="p-8 bg-slate-50">
-    <div class="max-w-xl mx-auto">
-        <div class="flex justify-between items-center mb-10">
-            <h1 class="text-3xl font-black italic">VROOM<span class="text-orange-500">ADM</span></h1>
-            <button onclick="location.href='index.html'" class="text-xs font-bold text-slate-400 uppercase">Voltar</button>
+<body class="bg-slate-50 p-8">
+    <div class="max-w-md mx-auto">
+        <h1 class="text-3xl font-black italic mb-8">VROOM<span class="text-orange-500">ADM</span></h1>
+        <div class="bg-white p-6 rounded-3xl shadow-sm mb-6">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Pilotos Online</p>
+            <p class="text-3xl font-black italic">12</p>
         </div>
-        <div id="lista" class="space-y-4"></div>
+        <button onclick="location.href='index.html'" class="w-full bg-slate-900 text-white p-4 rounded-2xl font-bold uppercase italic">Voltar ao Terminal</button>
     </div>
-
-    <script>
-        function render() {
-            const db = JSON.parse(localStorage.getItem('vroom_db_v23') || '[]');
-            document.getElementById('lista').innerHTML = db.map(x => `
-                <div class="bg-white p-6 rounded-3xl shadow-sm flex justify-between items-center">
-                    <div><p class="font-black">${x.nome}</p><p class="text-xs text-slate-400 font-bold">USER: ${x.user}</p></div>
-                    <button onclick="aprovar(${x.id})" class="bg-orange-500 text-white px-6 py-2 rounded-xl font-black text-xs uppercase italic">Aprovar</button>
-                </div>
-            `).join('') || '<p class="text-slate-300 italic text-center py-20 font-bold uppercase tracking-widest">Nenhum cadastro pendente</p>';
-        }
-        function aprovar(id) {
-            let p = JSON.parse(localStorage.getItem('vroom_db_v23') || '[]');
-            let a = JSON.parse(localStorage.getItem('vroom_ativos_v23') || '[]');
-            const i = p.findIndex(x => x.id === id);
-            a.push(p.splice(i, 1)[0]);
-            localStorage.setItem('vroom_db_v23', JSON.stringify(p));
-            localStorage.setItem('vroom_ativos_v23', JSON.stringify(a));
-            render();
-        }
-        render();
-    </script>
 </body>
 </html>
