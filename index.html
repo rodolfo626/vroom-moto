@@ -3,98 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v24.1</title>
+    <title>VROOM MOTO v24.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        body { background: #f8fafc; color: #0f172a; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .vroom-card { background: white; border-radius: 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; }
-        .screen { display: none; min-height: 100vh; flex-direction: column; width: 100%; }
-        .screen.active { display: flex; }
-        .vroom-input { background: #f8fafc; border: 2px solid #f1f5f9; padding: 18px; border-radius: 20px; width: 100%; outline: none; font-weight: 600; transition: 0.3s; }
-        .vroom-input:focus { border-color: #f97316; background: white; }
-        .btn-main { background: #f97316; color: white; padding: 20px; border-radius: 22px; font-weight: 900; text-transform: uppercase; width: 100%; letter-spacing: 0.05em; }
+        body { background: #f8fafc; color: #0f172a; font-family: 'Inter', sans-serif; overflow: hidden; }
+        .vroom-card { background: white; border-radius: 32px; box-shadow: 0 4px 30px rgba(0,0,0,0.05); }
+        .screen { min-height: 100vh; width: 100%; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* BOTTOM SHEET LOGIN */
+        #login-sheet {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            right: 0;
+            background: white;
+            height: 75vh;
+            border-radius: 40px 40px 0 0;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            padding: 30px;
+        }
+        #login-sheet.open { bottom: 0; }
+        .sheet-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.5s;
+            z-index: 90;
+        }
+        .sheet-overlay.open { opacity: 1; pointer-events: auto; }
+        
+        .handle { width: 40px; height: 4px; background: #e2e8f0; border-radius: 10px; margin: 0 auto 30px; }
+        .vroom-input { background: #f8fafc; border: 2px solid #f1f5f9; padding: 20px; border-radius: 24px; width: 100%; outline: none; font-weight: 700; font-size: 16px; }
+        .vroom-input:focus { border-color: #f97316; }
+        .btn-main { background: #f97316; color: white; padding: 22px; border-radius: 24px; font-weight: 900; text-transform: uppercase; width: 100%; letter-spacing: 0.05em; box-shadow: 0 10px 20px rgba(249, 115, 22, 0.2); }
     </style>
 </head>
 <body>
 
-    <!-- TELA 1: TERMINAL DO CLIENTE (MANTIDA) -->
-    <div id="screen-cliente" class="screen active p-4 pb-24">
-        <header class="flex justify-between items-center mb-6 px-2 pt-4">
+    <!-- OVERLAY -->
+    <div id="overlay" class="sheet-overlay" onclick="toggleLogin()"></div>
+
+    <!-- TELA DO CLIENTE (TERMINAL) -->
+    <div id="screen-cliente" class="screen p-4 pb-24">
+        <header class="flex justify-between items-center mb-10 px-2 pt-6">
             <div>
-                <h1 class="text-3xl font-black italic tracking-tighter leading-none">VROOM<span class="text-orange-500">MOTO</span></h1>
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Painel do Cliente</p>
+                <h1 class="text-4xl font-black italic tracking-tighter leading-none">VROOM<span class="text-orange-500">MOTO</span></h1>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Centro de Serviços</p>
             </div>
-            <div onclick="nav('login')" class="bg-white h-12 w-12 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center cursor-pointer">
-                <i class="fas fa-user-circle text-slate-300 text-xl"></i>
-            </div>
+            <button onclick="toggleLogin()" class="bg-orange-500 h-14 w-14 rounded-[22px] shadow-lg shadow-orange-100 flex items-center justify-center">
+                <i class="fas fa-helmet-safety text-white text-xl"></i>
+            </button>
         </header>
 
-        <div class="vroom-card p-6 mb-6">
-            <h3 class="text-xs font-black uppercase text-slate-400 tracking-widest mb-4 italic">Onde vamos?</h3>
-            <div class="space-y-3">
-                <div class="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <i class="fas fa-location-dot text-orange-500"></i>
-                    <input type="text" placeholder="Origem" class="bg-transparent outline-none w-full text-sm font-bold" value="Rua Rodolfo Oliveira, 626">
+        <div class="vroom-card p-8">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-1.5 h-10 bg-orange-500 rounded-full"></div>
+                <h3 class="text-xl font-black italic uppercase italic">Onde vamos hoje?</h3>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex items-center gap-4">
+                    <i class="fas fa-location-arrow text-orange-500"></i>
+                    <input type="text" placeholder="Sua localização" class="bg-transparent font-bold text-sm outline-none w-full" value="Rua Rodolfo Oliveira, 626">
                 </div>
-                <div class="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <i class="fas fa-flag-checkered text-slate-400"></i>
-                    <input type="text" placeholder="Para onde vamos?" class="bg-transparent outline-none w-full text-sm font-bold">
+                <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex items-center gap-4">
+                    <i class="fas fa-map-marker-alt text-slate-300"></i>
+                    <input type="text" placeholder="Para onde vamos?" class="bg-transparent font-bold text-sm outline-none w-full">
                 </div>
             </div>
-            <button class="btn-main mt-4 shadow-lg shadow-orange-200">Chamar Agora</button>
+            
+            <button class="btn-main mt-8">Chamar Piloto</button>
         </div>
     </div>
 
-    <!-- TELA 2: LOGIN DO PILOTO (LIBERADA E ESTILIZADA) -->
-    <div id="screen-login" class="screen p-6 justify-center">
-        <div class="w-full max-w-sm mx-auto">
-            <div class="text-center mb-10">
-                <div class="w-20 h-20 bg-orange-500 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-orange-100">
-                    <i class="fas fa-helmet-safety text-white text-3xl"></i>
-                </div>
-                <h2 class="text-3xl font-black italic uppercase tracking-tighter">Área do <span class="text-orange-500">Piloto</span></h2>
-                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">Acesse seu centro de prestação</p>
-            </div>
+    <!-- PAINEL DE LOGIN (BOTTOM SHEET) -->
+    <div id="login-sheet">
+        <div class="handle"></div>
+        
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-black italic uppercase tracking-tighter">Acesso <span class="text-orange-500">Piloto</span></h2>
+            <p class="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2">Identifique-se para iniciar o turno</p>
+        </div>
 
-            <div class="vroom-card p-8 space-y-4">
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Usuário</label>
-                    <input id="user" type="text" placeholder="Digite seu user" class="vroom-input">
-                </div>
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Senha</label>
-                    <input id="pass" type="password" placeholder="••••••••" class="vroom-input">
-                </div>
-                <button onclick="alert('Autenticando...')" class="btn-main !mt-8 shadow-lg">Entrar no Turno</button>
+        <div class="space-y-5">
+            <input type="text" placeholder="Usuário / CPF" class="vroom-input">
+            <input type="password" placeholder="Sua Senha" class="vroom-input">
+            
+            <div class="pt-6">
+                <button onclick="alert('Iniciando Turno...')" class="btn-main">Entrar em Serviço</button>
             </div>
-
-            <p onclick="nav('cliente')" class="text-center mt-10 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer">Voltar ao Início</p>
+            
+            <p class="text-center text-slate-300 font-bold text-[10px] uppercase tracking-widest pt-4">Esqueceu seus dados?</p>
         </div>
     </div>
 
     <!-- NAV BAR -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 flex justify-around items-center z-50">
-        <div onclick="nav('cliente')" class="flex flex-col items-center gap-1 cursor-pointer">
-            <i class="fas fa-motorcycle text-xl text-orange-500"></i>
-            <span class="text-[9px] font-black uppercase text-orange-500">Serviço</span>
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-6 flex justify-around items-center z-[80]">
+        <div class="flex flex-col items-center gap-1">
+            <i class="fas fa-motorcycle text-2xl text-orange-500"></i>
+            <span class="text-[10px] font-black uppercase text-orange-500 tracking-tighter">Serviço</span>
         </div>
-        <div onclick="nav('login')" class="flex flex-col items-center gap-1 cursor-pointer">
-            <i class="fas fa-helmet-safety text-xl text-slate-300"></i>
-            <span class="text-[9px] font-black uppercase text-slate-400">Piloto</span>
+        <div onclick="toggleLogin()" class="flex flex-col items-center gap-1 opacity-20">
+            <i class="fas fa-helmet-safety text-2xl"></i>
+            <span class="text-[10px] font-black uppercase tracking-tighter">Piloto</span>
         </div>
-        <div onclick="location.href='adm.html'" class="flex flex-col items-center gap-1 cursor-pointer">
-            <i class="fas fa-shield-halved text-xl text-slate-300"></i>
-            <span class="text-[9px] font-black uppercase text-slate-400">ADM</span>
+        <div onclick="location.href='adm.html'" class="flex flex-col items-center gap-1 opacity-20">
+            <i class="fas fa-chart-pie text-2xl"></i>
+            <span class="text-[10px] font-black uppercase tracking-tighter">Gestão</span>
         </div>
     </nav>
 
     <script>
-        function nav(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('screen-' + id).classList.add('active');
-            window.scrollTo(0,0);
+        function toggleLogin() {
+            const sheet = document.getElementById('login-sheet');
+            const overlay = document.getElementById('overlay');
+            sheet.classList.toggle('open');
+            overlay.classList.toggle('open');
         }
     </script>
 </body>
