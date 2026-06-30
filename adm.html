@@ -233,90 +233,62 @@
         </nav>
     </div>
 
+    
     <script>
-        function loginAdm() {
-            const u = document.getElementById('adm-user').value.trim();
-            const p = document.getElementById('adm-pass').value.trim();
-            if(u.toLowerCase() === 'rodolfo oliveira' && p === 'Rm290198') {
-                document.getElementById('screen-login').classList.remove('active');
-                document.getElementById('screen-dashboard').classList.add('active');
-            } else alert('Acesso Negado! Master Admin não identificado.');
+        function navAdm(id) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tab-' + id).classList.remove('hidden');
         }
 
-        function switchTab(t) {
-            document.getElementById('tab-home').classList.toggle('hidden', t !== 'home');
-            document.getElementById('tab-drivers').classList.toggle('hidden', t !== 'drivers');
-            document.getElementById('tab-settings').classList.toggle('hidden', t !== 'settings');
-            
-            document.getElementById('nav-home').classList.toggle('active', t === 'home');
-            document.getElementById('nav-drivers').classList.toggle('active', t === 'drivers');
-            document.getElementById('nav-settings').classList.toggle('active', t === 'settings');
-        }
-    
-        // Função para abrir modal de cadastro
-        function openAddDriver() {
-            document.getElementById('modal-add-driver').classList.remove('hidden');
-        }
-        function closeAddDriver() {
-            document.getElementById('modal-add-driver').classList.add('hidden');
-        }
-        
-        // Função para salvar novo motorista (simulado no local)
-        ">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex gap-3">
-                            <div class="w-10 h-10 rounded-full border-2 border-orange-500 bg-slate-700 flex items-center justify-center font-black">${name[0]}</div>
-                            <div><p class="text-sm font-black italic">${name}</p><p class="text-[9px] text-slate-500 font-bold uppercase">Cadastrado via ADM</p></div>
-                        </div>
-                        <div class="flex gap-2">
-                            <span class="badge badge-green">Ativo</span>
-                            <button onclick="deleteDriver(${id})" class="text-red-500 p-1"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button class="bg-slate-700 text-[9px] font-black uppercase py-2 rounded-lg">Ver Documentos</button>
-                        <button class="bg-green-600 text-[9px] font-black uppercase py-2 rounded-lg">Dar Baixa (Pix)</button>
-                    </div>
-                </div>
-            `;
-            list.insertAdjacentHTML('afterbegin', newItem);
-            closeAddDriver();
-            alert('Motorista cadastrado com sucesso!');
-        }
-
-        // Função para deletar motorista
-        
-        }
-    
+        function openAddDriver() { document.getElementById('modal-add-driver').classList.remove('hidden'); }
+        function closeAddDriver() { document.getElementById('modal-add-driver').classList.add('hidden'); }
 
         function saveNewDriver() {
             const name = document.getElementById('new-driver-name').value.trim();
             if(!name) return alert('Digite o nome!');
             let drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
-            drivers.push({ id: Date.now(), name: name });
+            drivers.push({ id: Date.now(), name: name, status: 'Ativo' });
             localStorage.setItem('vroom_drivers', JSON.stringify(drivers));
-            renderAdminDrivers(); closeAddDriver(); alert('Cadastrado!');
+            renderAdminDrivers();
+            closeAddDriver();
+            document.getElementById('new-driver-name').value = '';
         }
+
         function deleteDriver(id) {
-            if(confirm('Excluir?')) {
+            if(confirm('Excluir este motorista?')) {
                 let drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
-                drivers = drivers.filter(d => d.id !== id);
+                drivers = drivers.filter(d => d.id != id);
                 localStorage.setItem('vroom_drivers', JSON.stringify(drivers));
                 renderAdminDrivers();
             }
         }
+
         function renderAdminDrivers() {
-            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
             const container = document.getElementById('drivers-list-container');
             if(!container) return;
-            container.innerHTML = '';
+            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+            container.innerHTML = drivers.length ? '' : '<p class="text-slate-500 text-center py-10 uppercase text-[10px] font-black">Nenhum motorista cadastrado</p>';
             drivers.forEach(d => {
-                container.innerHTML += `<div class="adm-card"><div class="flex justify-between items-center"><div class="flex gap-3"><div class="w-10 h-10 rounded-full border-2 border-orange-500 bg-slate-700 flex items-center justify-center font-black">${d.name[0]}</div><p class="text-sm font-black italic">${d.name}</p></div><button onclick="deleteDriver(${d.id})" class="text-red-500 p-1"><i class="fas fa-trash-alt"></i></button></div></div>`;
+                container.innerHTML += `
+                    <div class="adm-card">
+                        <div class="flex justify-between items-center">
+                            <div class="flex gap-3 items-center">
+                                <div class="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-black text-white">${d.name[0].toUpperCase()}</div>
+                                <div>
+                                    <p class="text-sm font-black italic text-white">${d.name}</p>
+                                    <span class="badge badge-green">Ativo</span>
+                                </div>
+                            </div>
+                            <button onclick="deleteDriver(${d.id})" class="text-red-500 p-2 hover:bg-red-500/10 rounded-lg transition-all">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>`;
             });
         }
         window.addEventListener('load', renderAdminDrivers);
+    </script>
     
-</script>
 
     <!-- MODAL NOVO MOTORISTA -->
     <div id="modal-add-driver" class="hidden fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-6">
