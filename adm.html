@@ -14,14 +14,7 @@
         }
         
         // Função para salvar novo motorista (simulado no local)
-        function saveNewDriver() {
-            const name = document.getElementById('new-driver-name').value;
-            if(!name) return alert('Digite o nome!');
-            
-            const list = document.getElementById('drivers-list-container');
-            const id = Date.now();
-            const newItem = `
-                <div class="adm-card" id="driver-${id}">
+        ">
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex gap-3">
                             <div class="w-10 h-10 rounded-full border-2 border-orange-500 bg-slate-700 flex items-center justify-center font-black">${name[0]}</div>
@@ -44,13 +37,36 @@
         }
 
         // Função para deletar motorista
+        
+        }
+    
+
+        function saveNewDriver() {
+            const name = document.getElementById('new-driver-name').value.trim();
+            if(!name) return alert('Digite o nome!');
+            let drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+            drivers.push({ id: Date.now(), name: name });
+            localStorage.setItem('vroom_drivers', JSON.stringify(drivers));
+            renderAdminDrivers(); closeAddDriver(); alert('Cadastrado!');
+        }
         function deleteDriver(id) {
-            if(confirm('Tem certeza que deseja EXCLUIR permanentemente este motorista do sistema?')) {
-                const el = document.getElementById('driver-' + id);
-                if(el) el.remove();
-                alert('Motorista removido!');
+            if(confirm('Excluir?')) {
+                let drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+                drivers = drivers.filter(d => d.id !== id);
+                localStorage.setItem('vroom_drivers', JSON.stringify(drivers));
+                renderAdminDrivers();
             }
         }
+        function renderAdminDrivers() {
+            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+            const container = document.getElementById('drivers-list-container');
+            if(!container) return;
+            container.innerHTML = '';
+            drivers.forEach(d => {
+                container.innerHTML += `<div class="adm-card"><div class="flex justify-between items-center"><div class="flex gap-3"><div class="w-10 h-10 rounded-full border-2 border-orange-500 bg-slate-700 flex items-center justify-center font-black">${d.name[0]}</div><p class="text-sm font-black italic">${d.name}</p></div><button onclick="deleteDriver(${d.id})" class="text-red-500 p-1"><i class="fas fa-trash-alt"></i></button></div></div>`;
+            });
+        }
+        window.addEventListener('load', renderAdminDrivers);
     
 </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -246,14 +262,7 @@
         }
         
         // Função para salvar novo motorista (simulado no local)
-        function saveNewDriver() {
-            const name = document.getElementById('new-driver-name').value;
-            if(!name) return alert('Digite o nome!');
-            
-            const list = document.getElementById('drivers-list-container');
-            const id = Date.now();
-            const newItem = `
-                <div class="adm-card" id="driver-${id}">
+        ">
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex gap-3">
                             <div class="w-10 h-10 rounded-full border-2 border-orange-500 bg-slate-700 flex items-center justify-center font-black">${name[0]}</div>
@@ -276,13 +285,36 @@
         }
 
         // Função para deletar motorista
+        
+        }
+    
+
+        function saveNewDriver() {
+            const name = document.getElementById('new-driver-name').value.trim();
+            if(!name) return alert('Digite o nome!');
+            let drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+            drivers.push({ id: Date.now(), name: name });
+            localStorage.setItem('vroom_drivers', JSON.stringify(drivers));
+            renderAdminDrivers(); closeAddDriver(); alert('Cadastrado!');
+        }
         function deleteDriver(id) {
-            if(confirm('Tem certeza que deseja EXCLUIR permanentemente este motorista do sistema?')) {
-                const el = document.getElementById('driver-' + id);
-                if(el) el.remove();
-                alert('Motorista removido!');
+            if(confirm('Excluir?')) {
+                let drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+                drivers = drivers.filter(d => d.id !== id);
+                localStorage.setItem('vroom_drivers', JSON.stringify(drivers));
+                renderAdminDrivers();
             }
         }
+        function renderAdminDrivers() {
+            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+            const container = document.getElementById('drivers-list-container');
+            if(!container) return;
+            container.innerHTML = '';
+            drivers.forEach(d => {
+                container.innerHTML += `<div class="adm-card"><div class="flex justify-between items-center"><div class="flex gap-3"><div class="w-10 h-10 rounded-full border-2 border-orange-500 bg-slate-700 flex items-center justify-center font-black">${d.name[0]}</div><p class="text-sm font-black italic">${d.name}</p></div><button onclick="deleteDriver(${d.id})" class="text-red-500 p-1"><i class="fas fa-trash-alt"></i></button></div></div>`;
+            });
+        }
+        window.addEventListener('load', renderAdminDrivers);
     
 </script>
 
