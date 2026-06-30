@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADM MASTER - VROOM MOTO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #020617; color: white; font-family: sans-serif; }
+        .card-pendente { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-md mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-2xl font-black italic">PAINEL<span class="text-orange-500">ADM</span></h1>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Controle Master v19.0</p>
+            </div>
+            <button onclick="location.href='index.html'" class="text-slate-500 text-xs font-bold underline">Sair</button>
+        </header>
+
+        <section class="mb-10">
+            <h2 class="text-xs font-black uppercase text-orange-500 mb-4 tracking-widest flex items-center gap-2">
+                <i class="fas fa-user-clock"></i> Candidatos Pendentes
+            </h2>
+            <div id="lista-pendentes">
+                <!-- Pendentes aparecerão aqui -->
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-xs font-black uppercase text-green-500 mb-4 tracking-widest flex items-center gap-2">
+                <i class="fas fa-motorcycle"></i> Frota Ativa
+            </h2>
+            <div id="lista-aprovados" class="space-y-2">
+                <!-- Aprovados aparecerão aqui -->
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function loadADM() {
+            renderPendentes();
+            renderAprovados();
+        }
+
+        function renderPendentes() {
+            const container = document.getElementById('lista-pendentes');
+            let pendentes = JSON.parse(localStorage.getItem('vroom_pendentes') || '[]');
+            
+            if(pendentes.length === 0) {
+                container.innerHTML = '<p class="text-slate-700 text-xs italic">Nenhum novo cadastro...</p>';
+                return;
+            }
+
+            container.innerHTML = pendentes.map(p => `
+                <div class="card-pendente">
+                    <p class="font-black italic text-sm mb-1">${p.nome}</p>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-3">CPF: ${p.cpf} | CNH: ${p.cnh}</p>
+                    <p class="text-[10px] text-slate-400 mb-4">Moto: ${p.modelo} (${p.placa}) - ${p.corAno}</p>
+                    <div class="flex gap-2">
+                        <button onclick="aprovar(${p.id})" class="flex-1 bg-green-600 py-2 rounded font-black text-[10px] uppercase">Aprovar</button>
+                        <button onclick="reprovar(${p.id})" class="flex-1 bg-red-600 py-2 rounded font-black text-[10px] uppercase">Recusar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAprovados() {
+            const container = document.getElementById('lista-aprovados');
+            let aprovados = JSON.parse(localStorage.getItem('vroom_motoristas_aprovados') || '[]');
+            container.innerHTML = aprovados.map(a => `
+                <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-800">
+                    <span class="text-xs font-bold">${a.nome}</span>
+                    <span class="text-[9px] bg-green-900 text-green-400 px-2 py-1 rounded uppercase font-black">Ativo</span>
+                </div>
+            `).join('');
+        }
+
+        function aprovar(id) {
+            let pendentes = JSON.parse(localStorage.getItem('vroom_pendentes') || '[]');
+            let aprovados = JSON.parse(localStorage.getItem('vroom_motoristas_aprovados') || '[]');
+            
+            const index = pendentes.findIndex(p => p.id === id);
+            const motoboy = pendentes.splice(index, 1)[0];
+            
+            aprovados.push(motoboy);
+            localStorage.setItem('vroom_pendentes', JSON.stringify(pendentes));
+            localStorage.setItem('vroom_motoristas_aprovados', JSON.stringify(aprovados));
+            loadADM();
+            alert("Motorista aprovado! O login dele está ativo.");
+        }
+
+        function reprovar(id) {
+            let pendentes = JSON.parse(localStorage.getItem('vroom_pendentes') || '[]');
+            const index = pendentes.findIndex(p => p.id === id);
+            pendentes.splice(index, 1);
+            localStorage.setItem('vroom_pendentes', JSON.stringify(pendentes));
+            loadADM();
+        }
+
+        loadADM();
+    </script>
+</body>
+</html>
