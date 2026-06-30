@@ -2,44 +2,33 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>ADM VROOM v23.0</title>
+    <title>ADM VROOM v23.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>body { background: #f8fafc; font-family: sans-serif; }</style>
 </head>
-<body class="p-8">
+<body class="p-8 bg-slate-50">
     <div class="max-w-xl mx-auto">
         <div class="flex justify-between items-center mb-10">
-            <h1 class="text-3xl font-black italic text-slate-900">VROOM<span class="text-orange-500">ADM</span></h1>
-            <button onclick="location.href='index.html'" class="text-xs font-bold text-slate-400 uppercase">Sair</button>
+            <h1 class="text-3xl font-black italic">VROOM<span class="text-orange-500">ADM</span></h1>
+            <button onclick="location.href='index.html'" class="text-xs font-bold text-slate-400 uppercase">Voltar</button>
         </div>
-
-        <div class="grid grid-cols-1 gap-6">
-            <section>
-                <h2 class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Aguardando Aprovação</h2>
-                <div id="lista-p" class="space-y-4"></div>
-            </section>
-        </div>
+        <div id="lista" class="space-y-4"></div>
     </div>
 
     <script>
         function render() {
-            const p = JSON.parse(localStorage.getItem('vroom_db_v23') || '[]');
-            document.getElementById('lista-p').innerHTML = p.map(x => `
+            const db = JSON.parse(localStorage.getItem('vroom_db_v23') || '[]');
+            document.getElementById('lista').innerHTML = db.map(x => `
                 <div class="bg-white p-6 rounded-3xl shadow-sm flex justify-between items-center">
-                    <div>
-                        <p class="font-extrabold text-lg">${x.nome}</p>
-                        <p class="text-xs text-slate-400 uppercase font-bold tracking-tighter">User: ${x.user}</p>
-                    </div>
-                    <button onclick="aprovar(${x.id})" class="bg-orange-500 text-white px-6 py-2 rounded-xl font-extrabold text-xs uppercase italic">Aprovar</button>
+                    <div><p class="font-black">${x.nome}</p><p class="text-xs text-slate-400 font-bold">USER: ${x.user}</p></div>
+                    <button onclick="aprovar(${x.id})" class="bg-orange-500 text-white px-6 py-2 rounded-xl font-black text-xs uppercase italic">Aprovar</button>
                 </div>
-            `).join('') || '<p class="text-center text-slate-300 italic py-20">Tudo em dia!</p>';
+            `).join('') || '<p class="text-slate-300 italic text-center py-20 font-bold uppercase tracking-widest">Nenhum cadastro pendente</p>';
         }
-
         function aprovar(id) {
             let p = JSON.parse(localStorage.getItem('vroom_db_v23') || '[]');
             let a = JSON.parse(localStorage.getItem('vroom_ativos_v23') || '[]');
-            const idx = p.findIndex(x => x.id === id);
-            a.push(p.splice(idx, 1)[0]);
+            const i = p.findIndex(x => x.id === id);
+            a.push(p.splice(i, 1)[0]);
             localStorage.setItem('vroom_db_v23', JSON.stringify(p));
             localStorage.setItem('vroom_ativos_v23', JSON.stringify(a));
             render();
