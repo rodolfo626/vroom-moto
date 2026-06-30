@@ -4,7 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VROOM MOTO v14.6 - Fila de Espera</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">
+        function renderDriverSelection() {
+            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+            const container = document.getElementById('driver-select-container');
+            
+            if(drivers.length === 0) {
+                container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black">Nenhum motorista cadastrado pelo ADM</p>';
+                return;
+            }
+            
+            container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black mb-3">Selecione seu Perfil</p>';
+            drivers.forEach(d => {
+                container.innerHTML += `
+                    <button onclick="selectDriverProfile('${d.name}')" class="w-full bg-slate-800 p-4 rounded-xl mb-2 flex items-center gap-3 border border-slate-700 active:border-orange-500">
+                        <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center font-black text-xs text-white">${d.name[0]}</div>
+                        <div class="text-left">
+                            <p class="text-sm font-black text-white italic">${d.name}</p>
+                            <p class="text-[8px] text-green-500 font-black uppercase italic">Liberado</p>
+                        </div>
+                    </button>
+                `;
+            });
+        }
+
+        function selectDriverProfile(name) {
+            localStorage.setItem('vroom_current_driver', name);
+            document.getElementById('driver-display-name').innerText = name;
+            document.getElementById('driver-initial').innerText = name[0];
+            nav('driver-dashboard');
+            initMap('map-frame');
+        }
+
+        // Chamar renderização ao abrir tela de login
+        const oldNav = nav;
+        nav = function(id) {
+            if(id === 'driver-login') renderDriverSelection();
+            oldNav(id);
+        }
+    
+</script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
@@ -47,8 +86,8 @@
     <div id="screen-driver-dashboard" class="screen">
         <div class="driver-header flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-orange-500 border-2 border-white overflow-hidden"><img src="https://i.pravatar.cc/100?u=rodolfo" class="w-full h-full object-cover"></div>
-                <div><p class="text-[9px] font-black text-orange-400 uppercase">Motorista</p><p class="text-sm font-black italic">Rodolfo Oliveira</p></div>
+                <div class="w-10 h-10 rounded-full bg-orange-500 border-2 border-white flex items-center justify-center font-black italic text-white" id="driver-initial">V</div>
+                <div><p class="text-[9px] font-black text-orange-400 uppercase">Motorista</p><p id="driver-display-name" class="text-sm font-black italic">---</p></div>
             </div>
             <div id="status-pill" onclick="toggleOnline()" class="status-pill offline"><i class="fas fa-power-off"></i> <span>Offline</span></div>
         </div>
@@ -231,6 +270,45 @@
                 document.getElementById(id).src = `https://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}&z=15&output=embed`;
             });
         }
-    </script>
+    
+        function renderDriverSelection() {
+            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+            const container = document.getElementById('driver-select-container');
+            
+            if(drivers.length === 0) {
+                container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black">Nenhum motorista cadastrado pelo ADM</p>';
+                return;
+            }
+            
+            container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black mb-3">Selecione seu Perfil</p>';
+            drivers.forEach(d => {
+                container.innerHTML += `
+                    <button onclick="selectDriverProfile('${d.name}')" class="w-full bg-slate-800 p-4 rounded-xl mb-2 flex items-center gap-3 border border-slate-700 active:border-orange-500">
+                        <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center font-black text-xs text-white">${d.name[0]}</div>
+                        <div class="text-left">
+                            <p class="text-sm font-black text-white italic">${d.name}</p>
+                            <p class="text-[8px] text-green-500 font-black uppercase italic">Liberado</p>
+                        </div>
+                    </button>
+                `;
+            });
+        }
+
+        function selectDriverProfile(name) {
+            localStorage.setItem('vroom_current_driver', name);
+            document.getElementById('driver-display-name').innerText = name;
+            document.getElementById('driver-initial').innerText = name[0];
+            nav('driver-dashboard');
+            initMap('map-frame');
+        }
+
+        // Chamar renderização ao abrir tela de login
+        const oldNav = nav;
+        nav = function(id) {
+            if(id === 'driver-login') renderDriverSelection();
+            oldNav(id);
+        }
+    
+</script>
 </body>
 </html>
