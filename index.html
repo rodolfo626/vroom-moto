@@ -1205,14 +1205,10 @@ function loadDB() {
       
       if (parsed.precos) {
         var p = parsed.precos;
-        if (p.basica || p.expressa || typeof p.bandeirada === 'number') {
-           DB.precos = {
-             municipal:      { valor: p.municipal ? p.municipal.valor : (p.basica ? p.basica.valor : 8.00) },
-             intermunicipal: { valor: p.intermunicipal ? p.intermunicipal.valor : (p.expressa ? p.expressa.valor : 10.00) }
-           };
-        } else {
-           DB.precos = p;
-        }
+        DB.precos = {
+          municipal:      { valor: p.municipal      ? p.municipal.valor      : (p.basica   ? p.basica.valor   : 8.00) },
+          intermunicipal: { valor: p.intermunicipal ? p.intermunicipal.valor : (p.expressa ? p.expressa.valor : 10.00) }
+        };
       }
       if (!DB.precos) DB.precos = {};
       if (!DB.precos.municipal)      DB.precos.municipal = { valor: 8.00 };
@@ -1373,13 +1369,24 @@ function initCliente() {
   if (sel && DB.precos) {
     var p = DB.precos;
     sel.innerHTML = 
-      '<option value="basica">🛵 Básica (R$ ' + p.basica.valor.toFixed(2).replace('.',',') + ')</option>' +
-      '<option value="expressa">🚀 Expressa (R$ ' + p.expressa.valor.toFixed(2).replace('.',',') + ')</option>';
+      '<option value="municipal">🏙️ Municipal (R$ ' + (p.municipal ? p.municipal.valor : 8).toFixed(2).replace('.',',') + ')</option>' +
+      '<option value="intermunicipal">🛣️ Intermunicipal (R$ ' + (p.intermunicipal ? p.intermunicipal.valor : 10).toFixed(2).replace('.',',') + ')</option>';
   }
 
   updateClienteRideStatus();
   // Força a busca da localização ao abrir a tela do cliente
   getLocation();
+
+  // Inicializa o mapa se ainda não existir
+  if (!window.map && typeof L !== 'undefined') {
+    var mapEl = document.getElementById('cliente-map');
+    if (mapEl) {
+      window.map = L.map('cliente-map').setView([-23.5505, -46.6333], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(window.map);
+    }
+  }
 }
 function calculateHaversine(lat1, lon1, lat2, lon2) {
   var R = 6371;
