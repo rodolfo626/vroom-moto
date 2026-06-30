@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v24.2</title>
+    <title>VROOM MOTO v24.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -12,14 +12,13 @@
         .vroom-card { background: white; border-radius: 32px; box-shadow: 0 4px 30px rgba(0,0,0,0.05); }
         .screen { min-height: 100vh; width: 100%; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        /* BOTTOM SHEET LOGIN */
         #login-sheet {
             position: fixed;
             bottom: -100%;
             left: 0;
             right: 0;
             background: white;
-            height: 75vh;
+            height: 60vh;
             border-radius: 40px 40px 0 0;
             box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
             transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -39,22 +38,21 @@
         .sheet-overlay.open { opacity: 1; pointer-events: auto; }
         
         .handle { width: 40px; height: 4px; background: #e2e8f0; border-radius: 10px; margin: 0 auto 30px; }
-        .vroom-input { background: #f8fafc; border: 2px solid #f1f5f9; padding: 20px; border-radius: 24px; width: 100%; outline: none; font-weight: 700; font-size: 16px; }
-        .vroom-input:focus { border-color: #f97316; }
+        .vroom-input { background: #f8fafc; border: 2px solid #f1f5f9; padding: 22px; border-radius: 24px; width: 100%; outline: none; font-weight: 800; font-size: 18px; text-align: center; color: #f97316; }
+        .vroom-input::placeholder { color: #cbd5e1; font-weight: 600; }
         .btn-main { background: #f97316; color: white; padding: 22px; border-radius: 24px; font-weight: 900; text-transform: uppercase; width: 100%; letter-spacing: 0.05em; box-shadow: 0 10px 20px rgba(249, 115, 22, 0.2); }
     </style>
 </head>
 <body>
 
-    <!-- OVERLAY -->
     <div id="overlay" class="sheet-overlay" onclick="toggleLogin()"></div>
 
-    <!-- TELA DO CLIENTE (TERMINAL) -->
+    <!-- TELA CLIENTE -->
     <div id="screen-cliente" class="screen p-4 pb-24">
         <header class="flex justify-between items-center mb-10 px-2 pt-6">
             <div>
                 <h1 class="text-4xl font-black italic tracking-tighter leading-none">VROOM<span class="text-orange-500">MOTO</span></h1>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Centro de Serviços</p>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Painel do Usuário</p>
             </div>
             <button onclick="toggleLogin()" class="bg-orange-500 h-14 w-14 rounded-[22px] shadow-lg shadow-orange-100 flex items-center justify-center">
                 <i class="fas fa-helmet-safety text-white text-xl"></i>
@@ -62,48 +60,42 @@
         </header>
 
         <div class="vroom-card p-8">
-            <div class="flex items-center gap-4 mb-8">
-                <div class="w-1.5 h-10 bg-orange-500 rounded-full"></div>
-                <h3 class="text-xl font-black italic uppercase italic">Onde vamos hoje?</h3>
-            </div>
-            
+            <h3 class="text-xl font-black italic uppercase mb-8">Pedir Vroom</h3>
             <div class="space-y-4">
                 <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex items-center gap-4">
                     <i class="fas fa-location-arrow text-orange-500"></i>
-                    <input type="text" placeholder="Sua localização" class="bg-transparent font-bold text-sm outline-none w-full" value="Rua Rodolfo Oliveira, 626">
+                    <input type="text" placeholder="Origem" class="bg-transparent font-bold text-sm outline-none w-full" value="Rua Rodolfo Oliveira, 626">
                 </div>
                 <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex items-center gap-4">
                     <i class="fas fa-map-marker-alt text-slate-300"></i>
-                    <input type="text" placeholder="Para onde vamos?" class="bg-transparent font-bold text-sm outline-none w-full">
+                    <input type="text" placeholder="Destino" class="bg-transparent font-bold text-sm outline-none w-full">
                 </div>
             </div>
-            
-            <button class="btn-main mt-8">Chamar Piloto</button>
+            <button class="btn-main mt-8">Confirmar Viagem</button>
         </div>
     </div>
 
-    <!-- PAINEL DE LOGIN (BOTTOM SHEET) -->
+    <!-- LOGIN SEM SENHA (BOTTOM SHEET) -->
     <div id="login-sheet">
         <div class="handle"></div>
         
         <div class="text-center mb-10">
             <h2 class="text-3xl font-black italic uppercase tracking-tighter">Acesso <span class="text-orange-500">Piloto</span></h2>
-            <p class="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2">Identifique-se para iniciar o turno</p>
+            <p class="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em] mt-2 italic px-8 leading-tight">Insira seu Usuário ou ID para entrar em serviço agora</p>
         </div>
 
-        <div class="space-y-5">
-            <input type="text" placeholder="Usuário / CPF" class="vroom-input">
-            <input type="password" placeholder="Sua Senha" class="vroom-input">
-            
-            <div class="pt-6">
-                <button onclick="alert('Iniciando Turno...')" class="btn-main">Entrar em Serviço</button>
+        <div class="space-y-6">
+            <div class="relative">
+                <input id="pilot-id" type="text" placeholder="SEU USUÁRIO" class="vroom-input uppercase">
+                <p class="text-[9px] text-center font-bold text-slate-300 uppercase tracking-widest mt-3">Não é necessária senha para este acesso</p>
             </div>
             
-            <p class="text-center text-slate-300 font-bold text-[10px] uppercase tracking-widest pt-4">Esqueceu seus dados?</p>
+            <div class="pt-4">
+                <button onclick="acessarPiloto()" class="btn-main">Iniciar Trabalho</button>
+            </div>
         </div>
     </div>
 
-    <!-- NAV BAR -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-6 flex justify-around items-center z-[80]">
         <div class="flex flex-col items-center gap-1">
             <i class="fas fa-motorcycle text-2xl text-orange-500"></i>
@@ -125,6 +117,13 @@
             const overlay = document.getElementById('overlay');
             sheet.classList.toggle('open');
             overlay.classList.toggle('open');
+        }
+
+        function acessarPiloto() {
+            const id = document.getElementById('pilot-id').value;
+            if(!id) return alert("Por favor, informe seu Usuário.");
+            alert("Acessando painel de serviços para: " + id);
+            // Aqui ele já entraria direto no Dash do Piloto
         }
     </script>
 </body>
