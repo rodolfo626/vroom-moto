@@ -43,6 +43,34 @@
             oldNav(id);
         }
     
+
+        function renderDriverSelection() {
+            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+            const container = document.getElementById('driver-select-container');
+            if(!container) return;
+            if(drivers.length === 0) {
+                container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black">Nenhum motorista cadastrado no ADM</p>';
+                return;
+            }
+            container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black mb-3">Selecione seu Perfil</p>';
+            drivers.forEach(d => {
+                container.innerHTML += `
+                    <button onclick="selectDriverProfile('${d.name}')" class="w-full bg-slate-800 p-4 rounded-xl mb-2 flex items-center gap-3 border border-slate-700 active:border-orange-500">
+                        <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center font-black text-xs text-white">${d.name[0]}</div>
+                        <div class="text-left"><p class="text-sm font-black text-white italic">${d.name}</p><p class="text-[8px] text-green-500 font-black uppercase italic">Liberado</p></div>
+                    </button>`;
+            });
+        }
+        function selectDriverProfile(name) {
+            localStorage.setItem('vroom_current_driver', name);
+            document.getElementById('driver-display-name').innerText = name;
+            document.getElementById('driver-initial').innerText = name[0];
+            nav('driver-dashboard');
+            initMap('map-frame');
+        }
+        const oldNav = nav;
+        nav = function(id) { if(id === 'driver-login') renderDriverSelection(); oldNav(id); }
+    
 </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -308,6 +336,34 @@
             if(id === 'driver-login') renderDriverSelection();
             oldNav(id);
         }
+    
+
+        function renderDriverSelection() {
+            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+            const container = document.getElementById('driver-select-container');
+            if(!container) return;
+            if(drivers.length === 0) {
+                container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black">Nenhum motorista cadastrado no ADM</p>';
+                return;
+            }
+            container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black mb-3">Selecione seu Perfil</p>';
+            drivers.forEach(d => {
+                container.innerHTML += `
+                    <button onclick="selectDriverProfile('${d.name}')" class="w-full bg-slate-800 p-4 rounded-xl mb-2 flex items-center gap-3 border border-slate-700 active:border-orange-500">
+                        <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center font-black text-xs text-white">${d.name[0]}</div>
+                        <div class="text-left"><p class="text-sm font-black text-white italic">${d.name}</p><p class="text-[8px] text-green-500 font-black uppercase italic">Liberado</p></div>
+                    </button>`;
+            });
+        }
+        function selectDriverProfile(name) {
+            localStorage.setItem('vroom_current_driver', name);
+            document.getElementById('driver-display-name').innerText = name;
+            document.getElementById('driver-initial').innerText = name[0];
+            nav('driver-dashboard');
+            initMap('map-frame');
+        }
+        const oldNav = nav;
+        nav = function(id) { if(id === 'driver-login') renderDriverSelection(); oldNav(id); }
     
 </script>
 </body>
