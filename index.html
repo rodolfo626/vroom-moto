@@ -3,85 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v19.0</title>
+    <title>VROOM MOTO v20.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-        .screen { display: none; min-height: 100vh; padding: 20px; }
-        .screen.active { display: flex; flex-direction: column; }
-        .vroom-input { background: #1e293b; border: 1px solid #334155; padding: 16px; border-radius: 12px; width: 100%; color: white; margin-bottom: 12px; }
-        .btn-primary { background: #f97316; padding: 18px; border-radius: 16px; font-weight: 900; text-transform: uppercase; width: 100%; transition: all 0.2s; }
+        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .screen { display: none; min-height: 100vh; padding: 20px; flex-direction: column; }
+        .screen.active { display: flex; }
+        .vroom-input { background: #1e293b; border: 1px solid #334155; padding: 16px; border-radius: 12px; width: 100%; color: white; margin-bottom: 12px; outline: none; }
+        .vroom-input:focus { border-color: #f97316; }
+        .btn-primary { background: #f97316; padding: 18px; border-radius: 16px; font-weight: 900; text-transform: uppercase; width: 100%; transition: all 0.2s; box-shadow: 0 4px 14px 0 rgba(249, 115, 22, 0.39); }
         .btn-primary:active { transform: scale(0.98); }
         .card { background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 20px; }
     </style>
 </head>
 <body>
 
-    <!-- PORTAL INICIAL -->
+    <!-- 1. PORTAL INICIAL -->
     <div id="screen-portal" class="screen active justify-center items-center">
-        <div class="text-center mb-10">
-            <h1 class="text-5xl font-black italic tracking-tighter">VROOM<span class="text-orange-500">MOTO</span></h1>
-            <p class="text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em] mt-2">Versão 19.0</p>
+        <div class="text-center mb-12">
+            <h1 class="text-6xl font-black italic tracking-tighter">VROOM<span class="text-orange-500">MOTO</span></h1>
+            <p class="text-slate-500 font-bold uppercase text-[10px] tracking-[0.4em] mt-2">Versão 20.0 Oficial</p>
         </div>
         <div class="w-full max-w-xs space-y-4">
-            <button onclick="nav('cliente')" class="btn-primary shadow-lg shadow-orange-900/40">Pedir uma Moto</button>
+            <button onclick="nav('cliente')" class="btn-primary">Pedir uma Moto</button>
             <button onclick="nav('motorista-login')" class="w-full bg-slate-800 py-5 rounded-2xl font-black uppercase text-sm italic border border-slate-700">Área do Motorista</button>
-            <button onclick="nav('recrutamento')" class="w-full text-orange-500 py-2 font-black uppercase text-[10px] tracking-widest">Trabalhe Conosco (Cadastro)</button>
-            <button onclick="location.href='adm.html'" class="w-full text-slate-700 py-2 font-black uppercase text-[10px] tracking-widest mt-4 underline">Painel ADM</button>
+            <button onclick="nav('cadastro')" class="w-full text-orange-500 py-2 font-black uppercase text-[10px] tracking-widest">Trabalhe Conosco (Cadastro)</button>
         </div>
+        <p class="mt-20 text-[9px] text-slate-800 font-bold uppercase tracking-widest">Rodolfo Oliveira Adm</p>
     </div>
 
-    <!-- TELA: RECRUTAMENTO (O QUE O MOTORISTA PREENCHE) -->
-    <div id="screen-recrutamento" class="screen overflow-y-auto">
-        <button onclick="nav('portal')" class="text-slate-400 mb-4"><i class="fas fa-arrow-left"></i> Voltar</button>
-        <h2 class="text-2xl font-black italic uppercase mb-2">Seja um Piloto</h2>
-        <p class="text-slate-400 text-sm mb-6 text-orange-500">Preencha seus dados para análise</p>
+    <!-- 2. TELA: CADASTRO / RECRUTAMENTO -->
+    <div id="screen-cadastro" class="screen overflow-y-auto">
+        <div class="flex items-center gap-4 mb-6">
+            <button onclick="nav('portal')" class="text-slate-400"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="text-2xl font-black italic uppercase">Seja um Piloto</h2>
+        </div>
         
-        <div class="space-y-1">
-            <label class="text-[10px] font-bold uppercase text-slate-500 ml-2">Dados Pessoais</label>
-            <input id="rec-nome" type="text" placeholder="Nome Completo" class="vroom-input">
-            <input id="rec-nasc" type="date" placeholder="Data de Nascimento" class="vroom-input">
-            <input id="rec-cpf" type="text" placeholder="CPF" class="vroom-input">
-            <input id="rec-cnh" type="text" placeholder="Número da CNH" class="vroom-input">
+        <div class="space-y-1 pb-10">
+            <p class="text-[10px] font-black uppercase text-orange-500 mb-2 tracking-widest italic">Dados Pessoais</p>
+            <input id="cad-nome" type="text" placeholder="Nome Completo" class="vroom-input">
+            <input id="cad-nasc" type="date" placeholder="Data de Nascimento" class="vroom-input">
+            <input id="cad-cpf" type="tel" placeholder="CPF" class="vroom-input">
+            <input id="cad-cnh" type="tel" placeholder="Número da CNH" class="vroom-input">
             
-            <label class="text-[10px] font-bold uppercase text-slate-500 ml-2">Dados da Moto</label>
-            <input id="rec-modelo" type="text" placeholder="Modelo (ex: CG 160)" class="vroom-input">
-            <input id="rec-placa" type="text" placeholder="Placa" class="vroom-input">
-            <input id="rec-cor-ano" type="text" placeholder="Cor e Ano" class="vroom-input">
+            <p class="text-[10px] font-black uppercase text-orange-500 mt-4 mb-2 tracking-widest italic">Dados da Moto</p>
+            <input id="cad-modelo" type="text" placeholder="Modelo (ex: Titan 160)" class="vroom-input">
+            <input id="cad-placa" type="text" placeholder="Placa" class="vroom-input">
+            <input id="cad-cor-ano" type="text" placeholder="Cor e Ano" class="vroom-input">
             
-            <label class="text-[10px] font-bold uppercase text-orange-500 ml-2">Crie seu Acesso</label>
-            <input id="rec-user" type="text" placeholder="Usuário (Login)" class="vroom-input">
-            <input id="rec-pass" type="password" placeholder="Senha" class="vroom-input">
+            <p class="text-[10px] font-black uppercase text-orange-500 mt-4 mb-2 tracking-widest italic">Crie seu Acesso</p>
+            <input id="cad-user" type="text" placeholder="Usuário (Login)" class="vroom-input">
+            <input id="cad-pass" type="password" placeholder="Senha" class="vroom-input">
             
-            <button onclick="enviarCadastro()" class="btn-primary mt-4">Enviar para o Rodolfo</button>
+            <button onclick="enviarCadastro()" class="btn-primary mt-6">Enviar para Análise</button>
         </div>
     </div>
 
-    <!-- TELA: LOGIN MOTORISTA -->
-    <div id="screen-motorista-login" class="screen justify-center">
-        <button onclick="nav('portal')" class="text-slate-400 mb-10"><i class="fas fa-arrow-left"></i> Voltar</button>
-        <div class="card">
-            <h2 class="text-xl font-black italic uppercase mb-6 text-center">Login do Piloto</h2>
-            <input id="login-user" type="text" placeholder="Usuário" class="vroom-input">
-            <input id="login-pass" type="password" placeholder="Senha" class="vroom-input">
-            <button onclick="loginMotorista()" class="btn-primary">Entrar para Trabalhar</button>
-            <p class="text-center text-[10px] text-slate-500 mt-4 uppercase">Não tem acesso? <span class="text-orange-500 cursor-pointer" onclick="nav('recrutamento')">Cadastre-se aqui</span></p>
+    <!-- 3. TELA: LOGIN MOTORISTA -->
+    <div id="screen-motorista-login" class="screen justify-center items-center">
+        <button onclick="nav('portal')" class="absolute top-6 left-6 text-slate-400"><i class="fas fa-arrow-left"></i></button>
+        <div class="card w-full max-w-sm">
+            <h2 class="text-2xl font-black italic uppercase mb-8 text-center text-orange-500">Login Piloto</h2>
+            <input id="log-user" type="text" placeholder="Usuário" class="vroom-input">
+            <input id="log-pass" type="password" placeholder="Senha" class="vroom-input">
+            <button onclick="fazerLogin()" class="btn-primary">Entrar para o Turno</button>
         </div>
     </div>
 
-    <!-- TELA: CLIENTE (PEDIDO) -->
+    <!-- 4. TELA: CLIENTE (PEDIDO) -->
     <div id="screen-cliente" class="screen">
-        <button onclick="nav('portal')" class="text-slate-400 mb-6"><i class="fas fa-arrow-left text-xl"></i></button>
-        <h2 class="text-2xl font-black italic uppercase mb-8">Pedir Moto</h2>
-        <div class="card mb-4">
-            <input type="text" placeholder="Origem..." class="vroom-input mb-2">
-            <input type="text" placeholder="Destino..." class="vroom-input mb-4">
-            <div class="flex justify-between font-bold text-sm text-orange-500 mb-4 px-2">
-                <span>Tarifa Estimada:</span>
-                <span>R$ 0,00</span>
+        <div class="flex items-center gap-4 mb-8">
+            <button onclick="nav('portal')" class="text-slate-400"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="text-2xl font-black italic uppercase">Chamar Moto</h2>
+        </div>
+        <div class="card mb-6">
+            <input type="text" placeholder="Sua localização..." class="vroom-input">
+            <input type="text" placeholder="Para onde você vai?" class="vroom-input">
+            <div class="flex justify-between items-center py-4 px-2 border-t border-slate-700 mt-4">
+                <span class="text-slate-400 font-bold">Tarifa Estimada:</span>
+                <span class="text-xl font-black text-green-500 italic">R$ 10,00</span>
             </div>
-            <button onclick="alert('Buscando motoristas...')" class="btn-primary">Confirmar Corrida</button>
+            <button onclick="alert('Funcionalidade de Mapa em breve na v21')" class="btn-primary">Confirmar Pedido</button>
         </div>
     </div>
 
@@ -93,41 +96,34 @@
         }
 
         function enviarCadastro() {
-            const data = {
-                id: Date.now(),
-                nome: document.getElementById('rec-nome').value,
-                nasc: document.getElementById('rec-nasc').value,
-                cpf: document.getElementById('rec-cpf').value,
-                cnh: document.getElementById('rec-cnh').value,
-                modelo: document.getElementById('rec-modelo').value,
-                placa: document.getElementById('rec-placa').value,
-                corAno: document.getElementById('rec-cor-ano').value,
-                user: document.getElementById('rec-user').value,
-                pass: document.getElementById('rec-pass').value,
-                status: 'pendente'
-            };
+            const campos = ['cad-nome', 'cad-nasc', 'cad-cpf', 'cad-cnh', 'cad-modelo', 'cad-placa', 'cad-cor-ano', 'cad-user', 'cad-pass'];
+            const data = { id: Date.now(), status: 'pendente' };
             
-            if(!data.nome || !data.user || !data.pass) return alert("Preencha todos os campos!");
-            
+            for(let c of campos) {
+                const val = document.getElementById(c).value;
+                if(!val) return alert("Por favor, preencha todos os campos!");
+                data[c.replace('cad-', '')] = val;
+            }
+
             let pendentes = JSON.parse(localStorage.getItem('vroom_pendentes') || '[]');
             pendentes.push(data);
             localStorage.setItem('vroom_pendentes', JSON.stringify(pendentes));
             
-            alert("Cadastro enviado! Aguarde a aprovação do Rodolfo.");
+            alert("Cadastro enviado com sucesso! Aguarde a aprovação do Rodolfo.");
             nav('portal');
         }
 
-        function loginMotorista() {
-            const user = document.getElementById('login-user').value;
-            const pass = document.getElementById('login-pass').value;
+        function fazerLogin() {
+            const user = document.getElementById('log-user').value;
+            const pass = document.getElementById('log-pass').value;
             
-            let motoristas = JSON.parse(localStorage.getItem('vroom_motoristas_aprovados') || '[]');
-            const found = motoristas.find(m => m.user === user && m.pass === pass);
+            let aprovados = JSON.parse(localStorage.getItem('vroom_motoristas_aprovados') || '[]');
+            const motorista = aprovados.find(m => m.user === user && m.pass === pass);
             
-            if(found) {
-                alert("Bem-vindo, " + found.nome + "! Acessando painel de trabalho...");
+            if(motorista) {
+                alert("Login realizado! Bem-vindo, " + motorista.nome);
             } else {
-                alert("Acesso negado. Verifique seu login ou aguarde aprovação.");
+                alert("Acesso negado. Cadastro inexistente ou aguardando aprovação.");
             }
         }
     </script>
