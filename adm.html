@@ -2,46 +2,34 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>ADM MASTER v21.1</title>
+    <title>PAINEL ADM MASTER v21.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>body { background: #020617; color: white; font-family: 'Inter', sans-serif; }</style>
 </head>
-<body class="p-6">
-    <div class="max-w-4xl mx-auto">
-        <header class="flex justify-between items-center mb-10">
+<body class="p-8">
+    <div class="max-w-5xl mx-auto">
+        <header class="flex justify-between items-center mb-12">
             <div>
-                <h1 class="text-4xl font-black italic tracking-tighter leading-none">ADM<span class="text-orange-500">MASTER</span></h1>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1">Gestão Completa Rodolfo Oliveira</p>
+                <h1 class="text-4xl font-black italic tracking-tighter italic">VROOM<span class="text-orange-500">ADM</span></h1>
+                <p class="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] mt-1 italic">Central de Inteligência Rodolfo Oliveira</p>
             </div>
-            <button onclick="location.href='index.html'" class="text-xs font-bold text-slate-600 border border-slate-800 px-5 py-2 rounded-full uppercase italic">Sair</button>
+            <button onclick="location.href='index.html'" class="text-[10px] font-black text-slate-600 uppercase border border-slate-800 px-6 py-2 rounded-full italic">Sair do Painel</button>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Faturamento Bruto</p>
-                <p class="text-3xl font-black text-white italic mt-1">R$ 2.450,00</p>
-            </div>
-            <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Corridas (Hoje)</p>
-                <p class="text-3xl font-black text-orange-500 italic mt-1">42</p>
-            </div>
-            <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Lucro do Sistema</p>
-                <p class="text-3xl font-black text-green-500 italic mt-1">R$ 612,00</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <!-- COLUNA: ANÁLISE DE CADASTROS -->
             <section>
-                <h2 class="text-xs font-black uppercase text-orange-500 mb-6 flex items-center gap-2 italic tracking-widest">
-                    <i class="fas fa-user-clock"></i> Pendentes de Aprovação
+                <h2 class="text-xs font-black uppercase text-orange-500 mb-8 flex items-center gap-3 italic tracking-widest border-b border-orange-500/20 pb-4">
+                    <i class="fas fa-user-clock"></i> Candidatos para Aprovação
                 </h2>
-                <div id="lista-pendentes" class="space-y-4"></div>
+                <div id="lista-pendentes" class="space-y-6"></div>
             </section>
+
+            <!-- COLUNA: MONITORAMENTO DE FROTA -->
             <section>
-                <h2 class="text-xs font-black uppercase text-green-500 mb-6 flex items-center gap-2 italic tracking-widest">
-                    <i class="fas fa-users"></i> Gestão da Frota Ativa
+                <h2 class="text-xs font-black uppercase text-green-500 mb-8 flex items-center gap-3 italic tracking-widest border-b border-green-500/20 pb-4">
+                    <i class="fas fa-check-circle"></i> Monitoramento de Frota Ativa
                 </h2>
                 <div id="lista-ativos" class="space-y-4"></div>
             </section>
@@ -49,59 +37,75 @@
     </div>
 
     <script>
-        function load() {
-            const p = JSON.parse(localStorage.getItem('vroom_v21_pendentes') || '[]');
-            const a = JSON.parse(localStorage.getItem('vroom_v21_ativos') || '[]');
-            
-            document.getElementById('lista-pendentes').innerHTML = p.map(x => `
-                <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800">
-                    <p class="font-black italic text-lg mb-1">${x.nome}</p>
-                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-4">Placa: ${x.placa}</p>
-                    <div class="flex gap-2">
-                        <button onclick="aprovar(${x.id})" class="flex-1 bg-green-600 py-3 rounded-2xl font-black text-[10px] uppercase italic text-green-100">Aprovar</button>
-                        <button onclick="reprovar(${x.id})" class="flex-1 bg-red-900/20 py-3 rounded-2xl font-black text-[10px] uppercase italic text-red-500 border border-red-900/30">Recusar</button>
-                    </div>
-                </div>
-            `).join('') || '<p class="text-slate-800 text-xs italic">Nenhum pendente...</p>';
+        function sync() {
+            renderP();
+            renderA();
+        }
 
-            document.getElementById('lista-ativos').innerHTML = a.map(x => `
-                <div class="flex justify-between items-center bg-slate-900 p-5 rounded-3xl border border-slate-800">
-                    <div>
-                        <p class="text-sm font-black italic">${x.nome}</p>
-                        <p class="text-[9px] text-green-500 font-bold uppercase tracking-widest">Ativo e Online</p>
+        function renderP() {
+            const container = document.getElementById('lista-pendentes');
+            let db = JSON.parse(localStorage.getItem('vroom_v21_2_db') || '[]');
+            if(db.length === 0) return container.innerHTML = '<p class="text-slate-800 text-xs italic font-bold text-center py-20 uppercase tracking-[0.2em]">Nenhum novo recrutamento</p>';
+            
+            container.innerHTML = db.map(item => `
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                    <p class="text-xl font-black italic text-white mb-2 leading-none">${item.nome}</p>
+                    <div class="text-[10px] text-slate-500 font-bold uppercase space-y-1 mb-6 italic tracking-tight">
+                        <p><i class="fas fa-id-card w-5"></i> CPF: ${item.cpf}</p>
+                        <p><i class="fas fa-motorcycle w-5"></i> ${item.modelo} - PLACA: ${item.placa}</p>
+                        <p><i class="fas fa-user w-5 text-orange-500"></i> LOGIN CRIADO: <span class="text-orange-500">${item.user}</span></p>
                     </div>
-                    <button onclick="remover(${x.id})" class="text-slate-700 hover:text-red-500 transition-colors"><i class="fas fa-trash-alt text-lg"></i></button>
+                    <div class="flex gap-3">
+                        <button onclick="aprovar(${item.id})" class="flex-1 bg-green-600 hover:bg-green-500 py-3 rounded-2xl font-black text-[10px] uppercase italic transition-all">Aprovar Piloto</button>
+                        <button onclick="recusar(${item.id})" class="flex-1 bg-red-900/10 hover:bg-red-900/30 py-3 rounded-2xl font-black text-[10px] uppercase italic text-red-500 border border-red-900/20 transition-all">Recusar</button>
+                    </div>
                 </div>
-            `).join('') || '<p class="text-slate-800 text-xs italic">Frota vazia...</p>';
+            `).join('');
+        }
+
+        function renderA() {
+            const container = document.getElementById('lista-ativos');
+            let ativos = JSON.parse(localStorage.getItem('vroom_v21_2_ativos') || '[]');
+            if(ativos.length === 0) return container.innerHTML = '<p class="text-slate-800 text-[10px] font-black text-center py-20 uppercase tracking-[0.3em]">Nenhum motorista na rua</p>';
+
+            container.innerHTML = ativos.map(item => `
+                <div class="flex justify-between items-center bg-slate-900 border border-slate-800 p-5 rounded-3xl">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-500 font-black italic text-xl">V</div>
+                        <div>
+                            <p class="text-sm font-black italic text-white">${item.nome}</p>
+                            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">${item.modelo} | ${item.placa}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></span>
+                        <span class="text-[9px] font-black uppercase text-green-500 italic tracking-widest">Disponível</span>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function aprovar(id) {
-            let p = JSON.parse(localStorage.getItem('vroom_v21_pendentes') || '[]');
-            let a = JSON.parse(localStorage.getItem('vroom_v21_ativos') || '[]');
-            const i = p.findIndex(x => x.id === id);
-            a.push(p.splice(i,1)[0]);
-            localStorage.setItem('vroom_v21_pendentes', JSON.stringify(p));
-            localStorage.setItem('vroom_v21_ativos', JSON.stringify(a));
-            load();
+            let db = JSON.parse(localStorage.getItem('vroom_v21_2_db') || '[]');
+            let ativos = JSON.parse(localStorage.getItem('vroom_v21_2_ativos') || '[]');
+            const idx = db.findIndex(x => x.id === id);
+            const m = db.splice(idx, 1)[0];
+            ativos.push(m);
+            localStorage.setItem('vroom_v21_2_db', JSON.stringify(db));
+            localStorage.setItem('vroom_v21_2_ativos', JSON.stringify(ativos));
+            sync();
         }
 
-        function reprovar(id) {
-            let p = JSON.parse(localStorage.getItem('vroom_v21_pendentes') || '[]');
-            const i = p.findIndex(x => x.id === id);
-            p.splice(i,1);
-            localStorage.setItem('vroom_v21_pendentes', JSON.stringify(p));
-            load();
+        function recusar(id) {
+            if(!confirm("Remover permanentemente este cadastro?")) return;
+            let db = JSON.parse(localStorage.getItem('vroom_v21_2_db') || '[]');
+            const idx = db.findIndex(x => x.id === id);
+            db.splice(idx, 1);
+            localStorage.setItem('vroom_v21_2_db', JSON.stringify(db));
+            sync();
         }
 
-        function remover(id) {
-            let a = JSON.parse(localStorage.getItem('vroom_v21_ativos') || '[]');
-            const i = a.findIndex(x => x.id === id);
-            a.splice(i,1);
-            localStorage.setItem('vroom_v21_ativos', JSON.stringify(a));
-            load();
-        }
-
-        load();
+        sync();
     </script>
 </body>
 </html>
