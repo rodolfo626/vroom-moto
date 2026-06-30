@@ -500,7 +500,12 @@
       font-size: 12px; font-weight: 700; color: var(--text2);
       text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;
     }
-  </style>
+  
+.card-active-ride { border-left: 4px solid var(--orange); animation: fadeIn 0.5s; text-align:center; }
+.loading-spinner { width: 40px; height: 40px; border: 4px solid var(--card2); border-top: 4px solid var(--orange); border-radius: 50%; animation: spin 1s linear infinite; margin: 10px auto; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+</style>
 </head>
 <body>
 
@@ -550,6 +555,7 @@
 </div>
 
 <!-- ==================== ÁREA DO CLIENTE ==================== -->
+
 <div class="screen" id="screen-cliente-home">
   <div class="header">
     <button class="back" onclick="goHome()">‹</button>
@@ -559,79 +565,106 @@
   </div>
   <div class="content">
     <div class="content-max">
-      <!-- Status da corrida atual -->
-      <div id="cliente-ride-status" style="display:none"></div>
+      
+      <!-- Cabeçalho de Perfil -->
+      <div id='cli-perfil-display'></div>
 
-      <!-- Painel principal -->
-      <div id="cliente-main">
-        <!-- Mapa -->
-        <div class="fake-map" id="cliente-map">
-          <div class="map-grid"></div>
-          <div class="map-road-h" style="top:35%;left:0;right:0"></div>
-          <div class="map-road-h" style="top:65%;left:0;right:0"></div>
-          <div class="map-road-v" style="left:30%;top:0;bottom:0"></div>
-          <div class="map-road-v" style="left:65%;top:0;bottom:0"></div>
-          <div class="map-accuracy" id="my-accuracy" style="top:50%;left:50%"></div>
-          <div class="map-pin" id="my-pin" style="top:50%;left:50%">📍</div>
-          <div class="map-label" id="map-label-text">📡 Obtendo localização...</div>
+      <!-- TELA DE MAPA (Visualização do Mapa) -->
+      <div class="card" style="padding:0; overflow:hidden; position:relative; height:240px; margin-bottom:16px; border:1px solid rgba(255,107,0,0.2)" id="cliente-map-container">
+        <div id="map" style="width:100%; height:100%; background:#16213E"></div>
+        <div id="map-overlay-info" style="position:absolute; bottom:10px; left:10px; right:10px; background:rgba(26,26,46,0.9); padding:8px 12px; border-radius:10px; font-size:12px; border:1px solid rgba(255,255,255,0.1)">
+           📍 <span id="loc-status-text">Identificando sua localização...</span>
         </div>
+      </div>
 
-        <!-- Card de localização -->
-        <div class="card" id="cliente-loc-card">
-          <h3>📍 Sua Localização</h3>
-          <div id="loc-display">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-              <div class="status status-waiting">Obtendo GPS...</div>
-            </div>
-            <p class="text-sm">Aguardando permissão de localização...</p>
+      <!-- PAINEL DE SOLICITAÇÃO (Destino e Tipo) -->
+      <div id="cliente-painel-pedido">
+        <div class="card">
+          <h3>🏁 Para onde vamos?</h3>
+          <div class="input-group">
+            <input type="text" id="destino-input" oninput="calcularPreco()" placeholder="Digite o endereço de destino...">
           </div>
+          
           <div class="mt-16">
-            <button class="btn btn-orange" id="btn-solicitar" onclick="solicitarCorrida()" style="display:none">
-              🏍️ Solicitar Mototaxi Agora
-            </button>
-            <button class="btn btn-ghost" onclick="getLocation()" id="btn-get-loc">
-              📡 Compartilhar Localização
-            </button>
+            <label style="font-size:13px; color:var(--text2); display:block; margin-bottom:8px">TIPO DE CORRIDA</label>
+            <div style="display:flex; gap:10px">
+              <button class="btn btn-ghost flex-1" id="btn-tipo-municipal" onclick="setTipoCorrida('municipal')" style="padding:12px 5px; font-size:13px">🏙️ Municipal</button>
+              <button class="btn btn-ghost flex-1" id="btn-tipo-inter" onclick="setTipoCorrida('intermunicipal')" style="padding:12px 5px; font-size:13px">🛣️ Intermunicipal</button>
+            </div>
           </div>
         </div>
 
-        <!-- Card de destino -->
-        <div class="card" id="cliente-dest-card" style="display:none">
-          <h3>🏁 Para onde vai?</h3>
-          <div class="input-group">
-            <input type="text" id="destino-input" oninput="calcularPreco()" placeholder="Ex: Centro, Rodoviária, Shopping...">
+        <!-- PAINEL DE VISUALIZAÇÃO DE PREÇOS -->
+        <div class="card" id="painel-preco" style="display:none; background:rgba(0,200,150,0.05); border:1px solid var(--green)">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <div>
+              <div class="text-xs" style="color:var(--green)">VALOR ESTIMADO</div>
+              <div style="font-size:28px; font-weight:900" id="preco-display">R$ 0,00</div>
+            </div>
+            <div style="text-align:right">
+              <div class="text-xs" id="dist-display">0.0 km</div>
+              <div class="text-xs" style="opacity:0.6">Tempo est.: ~<span id="tempo-display">--</span> min</div>
+            </div>
           </div>
+        </div>
+
+        <div class="card">
           <div class="input-group">
-            <label>Tipo de corrida</label>
-            <select id="tipo-corrida" onchange="calcularPreco()">
-              <option value="municipal">🏙️ Municipal (Valor Fixo)</option>
-              <option value="intermunicipal">🛣️ Intermunicipal (Valor Fixo)</option>
+            <label>FORMA DE PAGAMENTO</label>
+            <select id="cliente-pagamento-sel" style="width:100%; background:var(--card2); color:white; border:1px solid #444; padding:12px; border-radius:10px">
+              <option value="dinheiro">💵 Dinheiro</option>
+              <option value="pix">💎 PIX (Direto com Piloto)</option>
+              <option value="cartao">💳 Cartão (Maquininha)</option>
             </select>
           </div>
-          <div id="preco-estimado" class="card" style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.2);padding:14px;margin-bottom:0">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <span class="text-sm">Preço estimado</span>
-              <span style="font-size:22px;font-weight:900;color:var(--green)" id="preco-val">R$ 8,00</span>
-            </div>
-            <div class="progress-bar mt-8"><div class="progress-fill" style="background:var(--green);width:0%" id="dist-bar"></div></div>
-            <div class="text-sm mt-8" id="dist-text">Distância calculando...</div>
+          <button class="btn btn-orange mt-16" id="btn-confirmar-corrida" onclick="confirmarCorrida()">🚀 Confirmar Corrida Agora</button>
+        </div>
+      </div>
+
+      <!-- PAINEL DE CORRIDA EM ANDAMENTO (Info Motorista e Moto) -->
+      <div id="cliente-painel-andamento" style="display:none">
+        <div class="card" style="border-left:5px solid var(--orange)">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px">
+            <h3 style="margin:0">🚦 Status da Corrida</h3>
+            <span class="badge badge-orange" id="status-ride-label">Procurando Piloto...</span>
           </div>
-          <div class="mt-16">
-            <button class="btn btn-orange" id="btn-confirmar-corrida" onclick="confirmarCorrida()">🏍️ Confirmar Corrida</button>
+          
+          <div id="info-motorista-aceitou" style="display:none; margin-top:15px; padding-top:15px; border-top:1px solid rgba(255,255,255,0.1)">
+            <div style="display:flex; align-items:center; gap:15px">
+              <div id="mot-foto-andamento" style="width:60px; height:60px; border-radius:50%; background:var(--green); display:flex; align-items:center; justify-content:center; font-size:30px">🏍️</div>
+              <div style="flex:1">
+                <div style="font-size:18px; font-weight:800" id="mot-nome-andamento">João Silva</div>
+                <div style="font-size:14px; color:var(--text2)" id="mot-moto-andamento">Honda Titan 160 • ABC-1234</div>
+                <div style="font-size:13px; color:var(--green)">⭐ 4.9 (500 corridas)</div>
+              </div>
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-top:20px">
+              <button class="btn btn-green flex-1" style="padding:12px" onclick="falarComMotorista()">💬 Falar com Motorista</button>
+              <button class="btn btn-ghost flex-1" style="padding:12px; border-color:var(--red); color:var(--red)" onclick="cancelarCorrida()">✖️ Cancelar</button>
+            </div>
+          </div>
+
+          <div id="waiting-pilot-msg" style="text-align:center; padding:20px 0">
+             <div class="loading-dots" style="font-size:24px; margin-bottom:10px">🏍️</div>
+             <p>Aguardando algum piloto aceitar seu pedido...</p>
+             <button class="btn btn-ghost mt-16" onclick="cancelarCorrida()" style="color:var(--red)">Cancelar Pedido</button>
           </div>
         </div>
 
-        <!-- Histórico -->
-        <div class="card">
-          <h3>📋 Histórico de Corridas</h3>
-          <div id="cliente-historico">
-            <div class="empty-state">
-              <div class="icon">🏍️</div>
-              <p>Nenhuma corrida ainda</p>
-            </div>
+        <!-- SISTEMA DE CHAT INTERNO -->
+        <div class="card" id="chat-container" style="display:none">
+          <h3>💬 Conversa com o Piloto</h3>
+          <div id="chat-messages" style="height:200px; overflow-y:auto; background:rgba(0,0,0,0.2); border-radius:10px; padding:10px; margin-bottom:10px; display:flex; flex-direction:column; gap:8px">
+             <div style="font-size:12px; text-align:center; opacity:0.5">Início da conversa</div>
+          </div>
+          <div style="display:flex; gap:8px">
+            <input type="text" id="chat-input" placeholder="Digite uma mensagem..." style="flex:1; background:var(--card2); border:1px solid #444; color:white; padding:10px; border-radius:8px">
+            <button class="btn btn-orange" style="width:auto; padding:10px 15px" onclick="enviarMensagemChat()">➡️</button>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </div>
@@ -650,15 +683,11 @@
       <div class="login-sub">Apenas motoristas cadastrados e autorizados têm acesso</div>
       <div class="login-form">
         <div class="input-group">
-          <label>CPF ou E-mail</label>
-          <input type="text" id="mot-user" placeholder="CPF ou e-mail">
+          <label>CPF Cadastrado</label>
+          <input type="tel" id="mot-user" placeholder="000.000.000-00">
         </div>
-        <div class="input-group">
-          <label>Senha</label>
-          <input type="password" id="mot-pass" placeholder="Sua senha">
-        </div>
-        <button class="btn btn-green mt-16" onclick="loginMotorista()">Entrar</button>
-        <p class="text-sm text-center mt-8">Problema de acesso? Fale com o administrador</p>
+        <button class="btn btn-green mt-16" onclick="loginMotorista()">Entrar no Painel</button>
+        <p class="text-sm text-center mt-8" style="opacity: 0.6">Não precisa de senha. Apenas o CPF que foi cadastrado pelo administrador.</p>
       </div>
     </div>
   </div>
@@ -674,6 +703,16 @@
   </div>
   <div class="content">
     <div class="content-max">
+      <!-- Cabeçalho de Perfil -->
+      <div class='card' style='display:flex;align-items:center;gap:15px;margin-bottom:20px;background:var(--card2)'>
+        <div id='cli-perfil-img' style='width:50px;height:50px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:24px'>👤</div>
+        <div>
+          <div style='font-size:14px;opacity:0.7'>Olá,</div>
+          <div id='cli-perfil-nome' style='font-size:18px;font-weight:800'>Passageiro</div>
+        </div>
+        <button class='btn btn-ghost' style='margin-left:auto;padding:5px 10px' onclick='document.getElementById("modal-cliente-cadastro").classList.add("open")'>✏️ Editar</button>
+      </div>
+
 
       <!-- ESTADO BLOQUEADO (MENSALIDADE) -->
       <div id="mot-bloqueado-screen" style="display:none;margin-bottom:20px">
@@ -842,6 +881,16 @@
   </div>
   <div class="content">
     <div class="content-max">
+      <!-- Cabeçalho de Perfil -->
+      <div class='card' style='display:flex;align-items:center;gap:15px;margin-bottom:20px;background:var(--card2)'>
+        <div id='cli-perfil-img' style='width:50px;height:50px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:24px'>👤</div>
+        <div>
+          <div style='font-size:14px;opacity:0.7'>Olá,</div>
+          <div id='cli-perfil-nome' style='font-size:18px;font-weight:800'>Passageiro</div>
+        </div>
+        <button class='btn btn-ghost' style='margin-left:auto;padding:5px 10px' onclick='document.getElementById("modal-cliente-cadastro").classList.add("open")'>✏️ Editar</button>
+      </div>
+
       <!-- Stats -->
       <div class="stats-grid">
         <div class="stat-card">
@@ -1109,12 +1158,27 @@ var STATE = {
 // INIT
 // =====================================================
 function init() {
+  getLocation();
+  getLocation();
   loadDB();
   verificarVencimentos(); // Bloqueia inadimplentes ao carregar
   if (DB.motoristas.length === 0) seedMotoristas();
   setTimeout(function() {
     document.getElementById('splash').style.display = 'none';
-    showHome();
+    
+    var urlParams = new URLSearchParams(window.location.search);
+    var screen = urlParams.get('screen');
+    
+    if (screen === 'adm') {
+      showScreen('admin-login');
+    } else if (screen === 'motorista') {
+      showScreen('motorista-login');
+    } else if (screen === 'cliente') {
+      showScreen('cliente-home');
+      if (!STATE.clienteLogado) document.getElementById('modal-cliente-cadastro').classList.add('open');
+    } else {
+      showHome();
+    }
   }, 2200);
 }
 
@@ -1280,6 +1344,15 @@ function fecharModal(id) {
 // ÁREA DO CLIENTE
 // =====================================================
 function initCliente() {
+
+  if (STATE.clienteLogado) {
+    document.getElementById('cli-perfil-nome').textContent = STATE.clienteLogado.nome.split(' ')[0];
+    if (STATE.clienteLogado.foto) {
+       document.getElementById('cli-perfil-img').innerHTML = '<img src="' + STATE.clienteLogado.foto + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+    }
+  }
+
+  getLocation();
   if (!STATE.clienteLogado) {
     document.getElementById('modal-cliente-cadastro').classList.add('open');
     return;
@@ -1291,90 +1364,13 @@ function initCliente() {
     var p = DB.precos;
     sel.innerHTML = 
       '<option value="basica">🛵 Básica (R$ ' + p.basica.valor.toFixed(2).replace('.',',') + ')</option>' +
-      '<option value="expressa">🚀 Expressa (R$ ' + p.expressa.valor.toFixed(2).replace('.',',') + ')</option>' +
-      '<option value="bandeirada">🚩 Bandeirada (R$ ' + p.bandeirada.toFixed(2).replace('.',',') + ')</option>';
+      '<option value="expressa">🚀 Expressa (R$ ' + p.expressa.valor.toFixed(2).replace('.',',') + ')</option>';
   }
 
   updateClienteRideStatus();
   // Força a busca da localização ao abrir a tela do cliente
   getLocation();
 }
-
-
-
-  toast('📡 Identificando sua localização...', 'info');
-  var options = { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 };
-  navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      STATE.clienteLat = pos.coords.latitude;
-      STATE.clienteLng = pos.coords.longitude;
-      onLocationObtained();
-    },
-    function(error) {
-      console.error('Geo error:', error);
-      document.getElementById('loc-display').innerHTML = 
-        '<div style="background:rgba(255,255,255,0.05);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.1)">' +
-        '<div class="bold" style="color:var(--orange);margin-bottom:6px">📍 Digite seu local de partida</div>' +
-        '<input type="text" id="origem-manual" placeholder="Ex: Rua João Pessoa, 123" style="width:100%;padding:10px;border-radius:8px;background:#222;border:1px solid #444;color:white;margin-bottom:10px">' +
-        '<button class="btn btn-orange" style="width:100%" onclick="usarOrigemManual()">Confirmar Local</button>' +
-        '</div>';
-    },
-    options
-  );
-
-  
-  toast('📡 Buscando sua localização...', 'info');
-  
-  var options = {
-    enableHighAccuracy: true,
-    timeout: 10000,
-    maximumAge: 0
-  };
-
-  navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      STATE.clienteLat = pos.coords.latitude;
-      STATE.clienteLng = pos.coords.longitude;
-      onLocationObtained();
-    },
-    function(error) {
-      console.error('Geo error:', error);
-      var msg = '❌ Erro ao obter localização.';
-      if (error.code === 1) msg = '⚠️ Por favor, ative a localização e dê permissão ao navegador.';
-      if (error.code === 3) msg = '⌛ Tempo esgotado ao buscar GPS. Tente novamente.';
-      toast(msg, 'error');
-      
-      // Se falhar no HTTPS, permite que o usuário digite o ponto de partida
-      document.getElementById('loc-display').innerHTML = 
-        '<div style="background:rgba(255,255,255,0.05);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.1)">' +
-        '<div class="bold" style="color:var(--orange);margin-bottom:6px">📍 Digite seu local atual</div>' +
-        '<input type="text" id="origem-manual" placeholder="Ex: Rua João Pessoa, 123" style="width:100%;padding:10px;border-radius:8px;background:#222;border:1px solid #444;color:white;margin-bottom:10px">' +
-        '<button class="btn btn-orange" style="width:100%" onclick="usarOrigemManual()">Usar este endereço</button>' +
-        '</div>';
-      document.getElementById('btn-get-loc').style.display = 'block';
-      document.getElementById('btn-get-loc').innerHTML = '🔄 Tentar GPS novamente';
-    },
-    options
-  );
-
-
-
-function getRuaAleatoria() {
-  var ruas = ['das Flores','dos Ipês','Brasil','São Paulo','das Palmeiras','da Paz','Três Marias','Santos Dumont','XV de Novembro','7 de Setembro'];
-  return ruas[Math.floor(Math.random() * ruas.length)];
-}
-
-function updateMapPin(x, y) {
-  var pin = document.getElementById('my-pin');
-  var acc = document.getElementById('my-accuracy');
-  pin.style.top = y + '%';
-  pin.style.left = x + '%';
-  acc.style.top  = y + '%';
-  acc.style.left = x + '%';
-}
-
-var calcTimer = null;
-
 function calculateHaversine(lat1, lon1, lat2, lon2) {
   var R = 6371;
   var dLat = (lat2 - lat1) * Math.PI / 180;
@@ -1387,75 +1383,46 @@ function calculateHaversine(lat1, lon1, lat2, lon2) {
 }
 
 function updatePrecoUI(dist, tarifa, band, tipo) {
-  var total = tarifa.valor || 8.00;
-  var labelDist = '🏙️ Percurso dentro da cidade';
-
+  var precoFinal = tarifa.valor || 8.00;
   if (tipo === 'intermunicipal') {
-    labelDist = '📏 Distância real: ' + dist.toFixed(1) + ' km';
-    // Se no futuro você quiser voltar a cobrar por KM no Intermunicipal, 
-    // a lógica está aqui, mas por enquanto o total é o valor fixo definido no ADM.
+    var kmMin = tarifa.km_minimo || 3.0;
+    var kmExtra = tarifa.km_extra || 2.0;
+    if (dist > kmMin) {
+      precoFinal += (dist - kmMin) * kmExtra;
+    }
   }
-
-  document.getElementById('preco-val').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-  var pct = Math.min(100, (dist / 10) * 100);
-  document.getElementById('dist-bar').style.width = pct + '%';
+  
+  document.getElementById('preco-val').textContent = 'R$ ' + precoFinal.toFixed(2).replace('.', ',');
+  var labelDist = tipo === 'intermunicipal' ? '📏 Distância: ' + dist.toFixed(1) + ' km' : '🏙️ Corrida Municipal';
   document.getElementById('dist-text').textContent = labelDist;
   
   STATE.ultimaDistCalc = dist;
+  STATE.ultimoPrecoCalc = precoFinal;
 }
 
+var calcTimer = null;
 async function calcularPreco() {
   var destino = document.getElementById('destino-input').value.trim();
-  var tipo  = document.getElementById('tipo-corrida').value;
-  var p = DB.precos || { municipal: { valor: 8.00 }, intermunicipal: { valor: 10.00 } };
+  var tipo = document.getElementById('tipo-corrida').value;
+  var p = DB.precos || { municipal: { valor: 8.00 }, intermunicipal: { valor: 10.00, km_minimo: 3.0, km_extra: 2.0 } };
   var tarifa = p[tipo] || p.municipal;
-  var btn = document.getElementById('btn-confirmar-corrida');
-  
-  if (destino.length < 5) {
-    updatePrecoUI(1.0, tarifa, 0, tipo);
-    return;
-  }
 
-  document.getElementById('dist-text').textContent = '📏 Calculando distância real (OSRM)...';
+  if (destino.length < 4) return;
   
   if (calcTimer) clearTimeout(calcTimer);
   calcTimer = setTimeout(async function() {
     try {
-      // Adicionando viewbox para priorizar resultados próximos (aproximadamente Brasil/Região)
-      var url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(destino) + '&limit=1&addressdetails=1';
-      if (STATE.clienteLat && STATE.clienteLng) {
-        // Cria uma caixa de busca de ~50km ao redor do usuário para evitar cidades distantes
-        var d = 0.5; 
-        url += '&viewbox=' + (STATE.clienteLng-d) + ',' + (STATE.clienteLat+d) + ',' + (STATE.clienteLng+d) + ',' + (STATE.clienteLat-d) + '&bounded=1';
+      var url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(destino) + '&limit=1';
+      var res = await fetch(url);
+      var data = await res.json();
+      if (data && data.length > 0) {
+        var dLat = parseFloat(data[0].lat);
+        var dLon = parseFloat(data[0].lon);
+        var dist = calculateHaversine(STATE.clienteLat, STATE.clienteLng, dLat, dLon) * 1.3; 
+        updatePrecoUI(dist, tarifa, 0, tipo);
       }
-      
-      var geoRes = await fetch(url);
-      var geoData = await geoRes.json();
-      
-      if (geoData && geoData.length > 0) {
-        var dLat = parseFloat(geoData[0].lat);
-        var dLon = parseFloat(geoData[0].lon);
-        
-        // Google Maps Link para conferência do usuário
-        var gMapsUrl = 'https://www.google.com/maps/dir/?api=1&origin=' + STATE.clienteLat + ',' + STATE.clienteLng + '&destination=' + dLat + ',' + dLon + '&travelmode=driving';
-        document.getElementById('dist-text').innerHTML = '📏 Distância via <a href="' + gMapsUrl + '" target="_blank" style="color:var(--orange);text-decoration:underline">Google Maps</a>';
-
-        var routeUrl = 'https://router.project-osrm.org/route/v1/driving/' + STATE.clienteLng + ',' + STATE.clienteLat + ';' + dLon + ',' + dLat + '?overview=false';
-        var routeRes = await fetch(routeUrl);
-        var routeData = await routeRes.json();
-        
-        if (routeData.code === 'Ok' && routeData.routes.length > 0) {
-          var distKm = routeData.routes[0].distance / 1000;
-          updatePrecoUI(distKm, tarifa, 0, tipo);
-        } else {
-          var distKm = calculateHaversine(STATE.clienteLat, STATE.clienteLng, dLat, dLon);
-          updatePrecoUI(distKm, tarifa, 0, tipo);
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }, 800);
+    } catch(e) {}
+  }, 1000);
 }
 
 function solicitarCorrida() {
@@ -1474,7 +1441,12 @@ function confirmarCorrida() {
   var tarifa = p[tipo] || p.municipal;
   
   var dist = STATE.ultimaDistCalc || 1.0; 
-  var preco = tarifa.valor || 0;
+  var preco = STATE.ultimoPrecoCalc || tarifa.valor || 0;
+
+  
+  var pagamento = document.getElementById('cliente-pagamento').value;
+  var troco     = document.getElementById('cliente-troco').value;
+  var obs       = document.getElementById('cliente-obs').value;
 
   STATE.corridaAtual = {
     id: Date.now(),
@@ -1486,6 +1458,9 @@ function confirmarCorrida() {
     tipo: tipo,
     preco: preco,
     dist: dist,
+    pagamento: pagamento,
+    troco: troco,
+    obs: obs,
     status: 'buscando',
     motorista: null,
     ts: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})
@@ -1669,14 +1644,13 @@ function updateClienteHistorico() {
 // =====================================================
 function loginMotorista() {
   var user = document.getElementById('mot-user').value.trim();
-  var pass = document.getElementById('mot-pass').value.trim();
-  if (!user || !pass) { toast('⚠️ Preencha todos os campos!', 'error'); return; }
+  if (!user) { toast('⚠️ Informe seu CPF!', 'error'); return; }
 
   var mot = DB.motoristas.find(function(m) {
-    return (m.cpf === user || m.tel === user || m.nome.toLowerCase() === user.toLowerCase()) && m.senha === pass;
+    return (m.cpf === user || m.tel === user || m.cpf.replace(/\D/g,'') === user.replace(/\D/g,''));
   });
 
-  if (!mot) { toast('❌ Usuário ou senha incorretos!', 'error'); return; }
+  if (!mot) { toast('❌ Motorista não encontrado!', 'error'); return; }
   
   // Permite login mesmo bloqueado para ver o aviso, mas redireciona
   STATE.motoristaLogado = mot;
@@ -1863,7 +1837,7 @@ function updateMotCorridasList() {
       '<div class="ride-info"><span>🏁 ' + emAndamento.destino + '</span><span>📏 ' + emAndamento.dist.toFixed(1) + ' km</span></div>' +
       '<div class="ride-info" style="margin-top:4px"><span>📍 ' + (emAndamento.origem || 'Localização do cliente') + '</span></div>' +
       '<div class="ride-actions" style="margin-top:10px">' +
-      '<button class="btn btn-sm flex-1" style="background:#1a73e8;color:white" onclick="abrirMapsCorrida(' + emAndamento.id + ')">📍 Maps</button>' +
+      '<button class="btn btn-sm flex-1" style="background:#1a73e8;color:white" onclick="abrirMapsCorrida(' + emAndamento.id + ', 'google')">📍 Maps</button><button class="btn btn-sm flex-1" style="background:#33ccff;color:white" onclick="abrirMapsCorrida(' + emAndamento.id + ', 'waze')">🚙 Waze</button>' +
       (isACaminho
         ? '<button class="btn btn-green btn-sm flex-1" onclick="chegueiCliente(' + emAndamento.id + ')">📣 Cheguei!</button>'
         : '<button class="btn btn-orange btn-sm flex-1" onclick="concluirCorridaMot(' + emAndamento.id + ')">🏁 Concluir</button>'
@@ -1931,12 +1905,16 @@ function recusarCorrida(id) {
   toast('Corrida recusada.', 'info');
 }
 
-function abrirMapsCorrida(id) {
+
+function abrirMapsCorrida(id, app) {
   var c = DB.corridas.find(function(x){ return x.id === id; });
-  if (!c || !c.clienteLat || !c.clienteLng) { toast('📍 Localização do cliente não disponível.', 'error'); return; }
-  var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + c.clienteLat + ',' + c.clienteLng + '&travelmode=driving';
-  window.open(mapsUrl, '_blank');
+  if (!c || !c.clienteLat || !c.clienteLng) { toast('📍 Localização não disponível.', 'error'); return; }
+  var lat = c.clienteLat;
+  var lng = c.clienteLng;
+  var url = (app === 'waze') ? 'https://waze.com/ul?ll=' + lat + ',' + lng + '&navigate=yes' : 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng + '&travelmode=driving';
+  window.open(url, '_blank');
 }
+
 
 function concluirCorridaMot(id) {
   var c = DB.corridas.find(function(x){ return x.id === id; });
@@ -2070,15 +2048,24 @@ function verificarVencimentos() {
   DB.motoristas.forEach(function(mot) {
     if (mot.data_pagamento) {
       var dataPag = new Date(mot.data_pagamento);
-      var diffTime = Math.abs(hoje - dataPag);
-      var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      var diffTime = hoje - dataPag; // Diferença real positiva se hoje > pagto
+      var diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       
-      // Se passou de 30 dias e ainda está autorizado, bloqueia
-      if (diffDays > 30 && mot.status === 'autorizado') {
+      // Bloqueio automático após 30 dias de uso
+      if (diffDays >= 30 && mot.status === 'autorizado') {
         mot.status = 'bloqueado';
-        mot.msg_admin = 'Sua mensalidade venceu após 30 dias. Realize o pagamento para liberar o acesso.';
+        mot.pagamento = 'late';
+        mot.msg_admin = '🚫 BLOQUEADO: Sua mensalidade venceu (' + diffDays + ' dias desde o último pagto). Procure o administrador.';
         alterado = true;
+      } else if (diffDays >= 30) {
+        mot.pagamento = 'late';
+      } else if (diffDays >= 27) {
+        mot.pagamento = 'pend'; // Alerta de vencimento próximo
+      } else {
+        mot.pagamento = 'ok';
       }
+    } else {
+      mot.pagamento = 'pend';
     }
   });
   if (alterado) saveDB();
@@ -2313,11 +2300,22 @@ function updateAdminPagamentos() {
   el.innerHTML = DB.motoristas.map(function(m) {
     var p = payMap[m.pagamento] || payMap.ok;
     var dataPagStr = m.data_pagamento ? new Date(m.data_pagamento).toLocaleDateString('pt-BR') : 'Nunca';
+    
+    // Cálculo de dias restantes para o vencimento
+    var diasRestantes = "—";
+    if (m.data_pagamento) {
+      var venc = new Date(m.data_pagamento);
+      venc.setDate(venc.getDate() + 30);
+      var hoje = new Date();
+      var diff = Math.ceil((venc - hoje) / (1000 * 60 * 60 * 24));
+      diasRestantes = diff > 0 ? diff + " dias" : "Vencido";
+    }
+
     return '<div class="user-item">' +
       '<div class="user-avatar" style="background:linear-gradient(135deg,var(--blue),#357ABD)">' + m.nome.charAt(0) + '</div>' +
       '<div class="user-info">' +
       '<div class="user-name">' + m.nome + '</div>' +
-      '<div class="user-detail">Último Pagto: ' + dataPagStr + '</div>' +
+      '<div class="user-detail">Último Pagto: ' + dataPagStr + ' <br> <b>Vence em: ' + diasRestantes + '</b></div>' +
       '</div>' +
       '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">' +
       '<span class="pay-badge ' + p.cls + '">' + p.txt + '</span>' +
@@ -2336,11 +2334,13 @@ function registrarPagamento(id) {
   mot.data_pagamento = hoje;
   mot.pagamento = 'ok';
   mot.status = 'autorizado'; // Libera automaticamente ao pagar
-  mot.msg_admin = 'Sua mensalidade foi confirmada! Próximo vencimento em 30 dias.';
+  mot.msg_admin = '✅ Mensalidade Confirmada! Seu acesso está liberado por mais 30 dias.';
   saveDB();
+  verificarVencimentos(); // Recalcula os status após o pagamento
   updateAdminPagamentos();
   updateAdminMotoristas();
-  toast('✅ Pagamento registrado e acesso liberado para ' + mot.nome, 'success');
+  updateAdminStats();
+  toast('💰 Pagamento de ' + mot.nome + ' registrado com sucesso!', 'success');
 }
 
 function setPayStatus(id, status) {
@@ -2354,7 +2354,7 @@ function updateAdminCorridas() {
     el.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>Nenhuma corrida registrada ainda</p></div>';
     return;
   }
-  el.innerHTML = DB.corridas.slice(-10).reverse().map(function(c) {
+  el.innerHTML = DB.corridas.slice(-30).reverse().map(function(c) {
     var st = { buscando:'🔍 Aguardando', a_caminho:'🏍️ A caminho', em_corrida:'⚡ Em corrida', concluida:'🎉 Concluída', cancelada:'❌ Cancelada' };
     return '<div class="ride-item ' + (c.status === 'concluida' ? 'accepted' : c.status === 'cancelada' ? 'completed' : '') + '">' +
       '<div class="ride-header"><span class="ride-client">🏁 ' + c.destino + '</span>' +
@@ -2405,29 +2405,24 @@ window.addEventListener('load', init);
 
 function getLocation() {
   if (!navigator.geolocation) {
-    toast('❌ Seu navegador não suporta GPS.', 'error');
+    toast("❌ Seu navegador não suporta GPS.", "error");
     return;
   }
-  toast('📡 Identificando sua localização...', 'info');
   var options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
   navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      STATE.clienteLat = pos.coords.latitude;
-      STATE.clienteLng = pos.coords.longitude;
+    function(position) {
+      STATE.clienteLat = position.coords.latitude;
+      STATE.clienteLng = position.coords.longitude;
       onLocationObtained();
     },
     function(error) {
-      console.error('Geo error:', error);
-      document.getElementById('loc-display').innerHTML = 
-        '<div style="background:rgba(255,255,255,0.05);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.1)">' +
-        '<div class="bold" style="color:var(--orange);margin-bottom:6px">📍 Digite seu local de partida</div>' +
-        '<input type="text" id="origem-manual" placeholder="Ex: Rua João Pessoa, 123" style="width:100%;padding:10px;border-radius:8px;background:#222;border:1px solid #444;color:white;margin-bottom:10px">' +
-        '<button class="btn btn-orange" style="width:100%" onclick="usarOrigemManual()">Confirmar Local</button>' +
-        '</div>';
+      console.error(error);
+      toast("❌ Erro ao obter localização. Verifique seu GPS.", "error");
     },
     options
   );
 }
+
 
 function onLocationObtained() {
   var lat = STATE.clienteLat;
@@ -2464,6 +2459,57 @@ function onLocationObtained() {
        document.getElementById('loc-display').innerHTML = '<div class="bold">📍 Localização obtida</div>'; 
     });
 }
+
+var STATE = STATE || {};
+STATE.currentRideType = 'municipal';
+
+function setTipoCorrida(tipo) {
+  STATE.currentRideType = tipo;
+  document.getElementById('btn-tipo-municipal').classList.toggle('btn-orange', tipo === 'municipal');
+  document.getElementById('btn-tipo-municipal').classList.toggle('btn-ghost', tipo !== 'municipal');
+  document.getElementById('btn-tipo-inter').classList.toggle('btn-orange', tipo === 'intermunicipal');
+  document.getElementById('btn-tipo-inter').classList.toggle('btn-ghost', tipo !== 'intermunicipal');
+  calcularPreco();
+}
+
+function falarComMotorista() {
+  document.getElementById('chat-container').style.display = 'block';
+  document.getElementById('chat-container').scrollIntoView({ behavior: 'smooth' });
+}
+
+function enviarMensagemChat() {
+  var input = document.getElementById('chat-input');
+  var msg = input.value.trim();
+  if (!msg) return;
+  
+  var chatBox = document.getElementById('chat-messages');
+  var msgEl = document.createElement('div');
+  msgEl.style.cssText = 'align-self:flex-end; background:var(--orange); color:white; padding:8px 12px; border-radius:12px 12px 0 12px; font-size:14px; max-width:80%';
+  msgEl.textContent = msg;
+  chatBox.appendChild(msgEl);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  input.value = '';
+  
+  // Simular resposta automática em 2 segundos para teste
+  setTimeout(function() {
+    var replyEl = document.createElement('div');
+    replyEl.style.cssText = 'align-self:flex-start; background:var(--card2); color:white; padding:8px 12px; border-radius:12px 12px 12px 0; font-size:14px; max-width:80%; border:1px solid #444';
+    replyEl.textContent = 'Ok, já estou a caminho!';
+    chatBox.appendChild(replyEl);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    toast('📱 Nova mensagem do piloto', 'info');
+  }, 2000);
+}
+
+function cancelarCorrida() {
+  if (confirm('Deseja realmente cancelar sua corrida?')) {
+    STATE.corridaAtual = null;
+    document.getElementById('cliente-painel-andamento').style.display = 'none';
+    document.getElementById('cliente-painel-pedido').style.display = 'block';
+    toast('❌ Corrida cancelada', 'error');
+  }
+}
+
 </script>
 </body>
 </html>
