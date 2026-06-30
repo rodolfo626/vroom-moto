@@ -18,6 +18,8 @@
   <meta name="apple-mobile-web-app-title" content="Vroom Moto">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
       --orange: #FF6B00;
@@ -1158,13 +1160,20 @@ var STATE = {
 // INIT
 // =====================================================
 function init() {
-  getLocation();
-  getLocation();
-  loadDB();
-  verificarVencimentos(); // Bloqueia inadimplentes ao carregar
-  if (DB.motoristas.length === 0) seedMotoristas();
+  try {
+    console.log("Iniciando app...");
+    getLocation();
+    loadDB();
+    verificarVencimentos();
+    if (DB.motoristas.length === 0) seedMotoristas();
+  } catch (e) {
+    console.error("Erro no init:", e);
+  }
+
   setTimeout(function() {
-    document.getElementById('splash').style.display = 'none';
+    console.log("Escondendo splash...");
+    const splash = document.getElementById('splash');
+    if (splash) splash.style.display = 'none';
     
     var urlParams = new URLSearchParams(window.location.search);
     var screen = urlParams.get('screen');
@@ -1190,8 +1199,9 @@ function loadDB() {
     
     if (saved) {
       var parsed = JSON.parse(saved);
-      DB.motoristas = parsed.motoristas || [];
-      DB.corridas   = parsed.corridas   || [];
+      if (!parsed) parsed = {};
+      DB.motoristas = Array.isArray(parsed.motoristas) ? parsed.motoristas : [];
+      DB.corridas   = Array.isArray(parsed.corridas)   ? parsed.corridas   : [];
       
       if (parsed.precos) {
         var p = parsed.precos;
@@ -1208,10 +1218,10 @@ function loadDB() {
       if (!DB.precos.municipal)      DB.precos.municipal = { valor: 8.00 };
       if (!DB.precos.intermunicipal) DB.precos.intermunicipal = { valor: 10.00 };
 
-      var savedAdmins = parsed.admins || [];
+      var savedAdmins = Array.isArray(parsed.admins) ? parsed.admins : [];
       var fixedAdmins = [{ user: 'admin', pass: 'admin123' }, { user: 'Rodolfo Oliveira', pass: 'Rm290198' }];
       fixedAdmins.forEach(function(fa) {
-        if (!savedAdmins.find(function(sa){ return sa.user === fa.user; })) savedAdmins.push(fa);
+        if (!savedAdmins.find(function(sa){ return sa && sa.user === fa.user; })) savedAdmins.push(fa);
       });
       DB.admins = savedAdmins;
     }
