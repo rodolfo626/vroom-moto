@@ -3,105 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADM MASTER - VROOM MOTO</title>
+    <title>ADM MASTER v20.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background: #020617; color: white; font-family: sans-serif; }
-        .card-pendente { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
+        body { background: #020617; color: white; font-family: 'Inter', sans-serif; }
+        .card-candidato { background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; margin-bottom: 12px; }
     </style>
 </head>
 <body class="p-6">
     <div class="max-w-md mx-auto">
-        <header class="flex justify-between items-center mb-8">
+        <header class="flex justify-between items-center mb-10">
             <div>
-                <h1 class="text-2xl font-black italic">PAINEL<span class="text-orange-500">ADM</span></h1>
-                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Controle Master v19.0</p>
+                <h1 class="text-3xl font-black italic italic tracking-tighter">ADM<span class="text-orange-500">MASTER</span></h1>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.3em]">Vroom Moto v20.0</p>
             </div>
-            <button onclick="location.href='index.html'" class="text-slate-500 text-xs font-bold underline">Sair</button>
+            <button onclick="location.href='index.html'" class="bg-slate-900 px-4 py-2 rounded-lg text-xs font-bold text-slate-500 border border-slate-800">Sair</button>
         </header>
 
-        <section class="mb-10">
-            <h2 class="text-xs font-black uppercase text-orange-500 mb-4 tracking-widest flex items-center gap-2">
-                <i class="fas fa-user-clock"></i> Candidatos Pendentes
+        <!-- SEÇÃO: PENDENTES -->
+        <section class="mb-12">
+            <h2 class="text-[11px] font-black uppercase text-orange-500 mb-5 tracking-widest flex items-center gap-2">
+                <i class="fas fa-hourglass-half"></i> Candidatos para Aprovação
             </h2>
-            <div id="lista-pendentes">
-                <!-- Pendentes aparecerão aqui -->
-            </div>
+            <div id="box-pendentes" class="space-y-4"></div>
         </section>
 
+        <!-- SEÇÃO: FROTA ATIVA -->
         <section>
-            <h2 class="text-xs font-black uppercase text-green-500 mb-4 tracking-widest flex items-center gap-2">
-                <i class="fas fa-motorcycle"></i> Frota Ativa
+            <h2 class="text-[11px] font-black uppercase text-green-500 mb-5 tracking-widest flex items-center gap-2">
+                <i class="fas fa-check-circle"></i> Frota de Pilotos Ativos
             </h2>
-            <div id="lista-aprovados" class="space-y-2">
-                <!-- Aprovados aparecerão aqui -->
-            </div>
+            <div id="box-ativos" class="space-y-3"></div>
         </section>
     </div>
 
     <script>
-        function loadADM() {
+        function atualizarTudo() {
             renderPendentes();
-            renderAprovados();
+            renderAtivos();
         }
 
         function renderPendentes() {
-            const container = document.getElementById('lista-pendentes');
+            const container = document.getElementById('box-pendentes');
             let pendentes = JSON.parse(localStorage.getItem('vroom_pendentes') || '[]');
             
             if(pendentes.length === 0) {
-                container.innerHTML = '<p class="text-slate-700 text-xs italic">Nenhum novo cadastro...</p>';
+                container.innerHTML = '<p class="text-slate-700 text-xs italic text-center py-4">Nenhum cadastro aguardando...</p>';
                 return;
             }
 
             container.innerHTML = pendentes.map(p => `
-                <div class="card-pendente">
-                    <p class="font-black italic text-sm mb-1">${p.nome}</p>
-                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-3">CPF: ${p.cpf} | CNH: ${p.cnh}</p>
-                    <p class="text-[10px] text-slate-400 mb-4">Moto: ${p.modelo} (${p.placa}) - ${p.corAno}</p>
-                    <div class="flex gap-2">
-                        <button onclick="aprovar(${p.id})" class="flex-1 bg-green-600 py-2 rounded font-black text-[10px] uppercase">Aprovar</button>
-                        <button onclick="reprovar(${p.id})" class="flex-1 bg-red-600 py-2 rounded font-black text-[10px] uppercase">Recusar</button>
+                <div class="card-candidato">
+                    <div class="flex justify-between items-start mb-3">
+                        <p class="font-black italic text-lg text-white">${p.nome}</p>
+                        <span class="text-[8px] bg-orange-950 text-orange-500 px-2 py-1 rounded-full font-bold uppercase">Pendente</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 space-y-1 mb-6">
+                        <p><i class="fas fa-id-card w-4"></i> CPF: ${p.cpf} | CNH: ${p.cnh}</p>
+                        <p><i class="fas fa-motorcycle w-4"></i> ${p.modelo} - ${p.placa} (${p.corAno})</p>
+                        <p><i class="fas fa-user-circle w-4"></i> Login: <b>${p.user}</b></p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="aprovar(${p.id})" class="flex-1 bg-green-600 hover:bg-green-500 py-3 rounded-xl font-black text-xs uppercase transition-colors">Aprovar</button>
+                        <button onclick="recusar(${p.id})" class="flex-1 bg-red-900/50 hover:bg-red-800 py-3 rounded-xl font-black text-xs uppercase text-red-500 border border-red-900 transition-colors">Recusar</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function renderAprovados() {
-            const container = document.getElementById('lista-aprovados');
-            let aprovados = JSON.parse(localStorage.getItem('vroom_motoristas_aprovados') || '[]');
-            container.innerHTML = aprovados.map(a => `
-                <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-800">
-                    <span class="text-xs font-bold">${a.nome}</span>
-                    <span class="text-[9px] bg-green-900 text-green-400 px-2 py-1 rounded uppercase font-black">Ativo</span>
+        function renderAtivos() {
+            const container = document.getElementById('box-ativos');
+            let ativos = JSON.parse(localStorage.getItem('vroom_motoristas_aprovados') || '[]');
+            
+            if(ativos.length === 0) {
+                container.innerHTML = '<p class="text-slate-800 text-[10px] font-bold text-center py-4 uppercase tracking-widest">Nenhum piloto ativo</p>';
+                return;
+            }
+
+            container.innerHTML = ativos.map(a => `
+                <div class="flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 font-black text-xs">${a.nome[0]}</div>
+                        <div>
+                            <p class="text-xs font-black italic text-white">${a.nome}</p>
+                            <p class="text-[9px] text-slate-500 uppercase">${a.modelo}</p>
+                        </div>
+                    </div>
+                    <button onclick="removerAtivo(${a.id})" class="text-slate-700 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
                 </div>
             `).join('');
         }
 
         function aprovar(id) {
             let pendentes = JSON.parse(localStorage.getItem('vroom_pendentes') || '[]');
-            let aprovados = JSON.parse(localStorage.getItem('vroom_motoristas_aprovados') || '[]');
+            let ativos = JSON.parse(localStorage.getItem('vroom_motoristas_aprovados') || '[]');
             
             const index = pendentes.findIndex(p => p.id === id);
             const motoboy = pendentes.splice(index, 1)[0];
             
-            aprovados.push(motoboy);
+            ativos.push(motoboy);
             localStorage.setItem('vroom_pendentes', JSON.stringify(pendentes));
-            localStorage.setItem('vroom_motoristas_aprovados', JSON.stringify(aprovados));
-            loadADM();
-            alert("Motorista aprovado! O login dele está ativo.");
+            localStorage.setItem('vroom_motoristas_aprovados', JSON.stringify(ativos));
+            atualizarTudo();
         }
 
-        function reprovar(id) {
+        function recusar(id) {
+            if(!confirm("Deseja realmente apagar este cadastro?")) return;
             let pendentes = JSON.parse(localStorage.getItem('vroom_pendentes') || '[]');
             const index = pendentes.findIndex(p => p.id === id);
             pendentes.splice(index, 1);
             localStorage.setItem('vroom_pendentes', JSON.stringify(pendentes));
-            loadADM();
+            atualizarTudo();
         }
 
-        loadADM();
+        function removerAtivo(id) {
+            if(!confirm("Remover este motorista da frota ativa?")) return;
+            let ativos = JSON.parse(localStorage.getItem('vroom_motoristas_aprovados') || '[]');
+            const index = ativos.findIndex(a => a.id === id);
+            ativos.splice(index, 1);
+            localStorage.setItem('vroom_motoristas_aprovados', JSON.stringify(ativos));
+            atualizarTudo();
+        }
+
+        atualizarTudo();
     </script>
 </body>
 </html>
