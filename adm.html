@@ -2,17 +2,78 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>ADM Centro de Serviços</title>
+    <title>ADM - Vroom Moto</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>body { background: #020617; color: white; }</style>
 </head>
-<body class="bg-slate-50 p-8">
-    <div class="max-w-md mx-auto">
-        <h1 class="text-3xl font-black italic mb-8">VROOM<span class="text-orange-500">ADM</span></h1>
-        <div class="bg-white p-6 rounded-3xl shadow-sm mb-6">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Pilotos Online</p>
-            <p class="text-3xl font-black italic">12</p>
+<body class="p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="text-3xl font-black italic">VROOM<span class="text-orange-500">ADM</span></h1>
+            <button onclick="location.href='index.html'" class="text-[10px] border border-slate-800 px-4 py-2 rounded-full uppercase font-bold">Voltar ao App</button>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <section>
+                <h2 class="text-orange-500 font-bold uppercase text-xs mb-4">Novos Recrutas (Pendente)</h2>
+                <div id="lista-p" class="space-y-4"></div>
+            </section>
+            <section>
+                <h2 class="text-green-500 font-bold uppercase text-xs mb-4">Pilotos Aprovados</h2>
+                <div id="lista-a" class="space-y-4"></div>
+            </section>
         </div>
-        <button onclick="location.href='index.html'" class="w-full bg-slate-900 text-white p-4 rounded-2xl font-bold uppercase italic">Voltar ao Terminal</button>
     </div>
+
+    <script>
+        function load() {
+            const p = JSON.parse(localStorage.getItem('vroom_db_pendentes') || '[]');
+            const a = JSON.parse(localStorage.getItem('vroom_db_ativos') || '[]');
+
+            document.getElementById('lista-p').innerHTML = p.map(x => `
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl">
+                    <p class="font-black italic text-lg">${x.nome}</p>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase mb-4">Placa: ${x.placa} | Usuário: ${x.user}</p>
+                    <div class="flex gap-2">
+                        <button onclick="approve(${x.id})" class="flex-1 bg-green-600 py-3 rounded-xl font-black text-[10px] uppercase">Aprovar</button>
+                        <button onclick="del(${x.id}, 'pendentes')" class="flex-1 bg-red-900/20 py-3 rounded-xl font-black text-[10px] uppercase text-red-500">Recusar</button>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-slate-800 text-xs italic">Ninguém aguardando...</p>';
+
+            document.getElementById('lista-a').innerHTML = a.map(x => `
+                <div class="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <div>
+                        <p class="text-sm font-black italic">${x.nome}</p>
+                        <p class="text-[9px] text-slate-500 uppercase font-bold">${x.placa}</p>
+                    </div>
+                    <button onclick="del(${x.id}, 'ativos')" class="text-slate-800 hover:text-red-500 transition-colors"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('') || '<p class="text-slate-800 text-xs italic">Nenhum piloto aprovado...</p>';
+        }
+
+        function approve(id) {
+            let p = JSON.parse(localStorage.getItem('vroom_db_pendentes') || '[]');
+            let a = JSON.parse(localStorage.getItem('vroom_db_ativos') || '[]');
+            const i = p.findIndex(x => x.id === id);
+            const m = p.splice(i, 1)[0];
+            a.push(m);
+            localStorage.setItem('vroom_db_pendentes', JSON.stringify(p));
+            localStorage.setItem('vroom_db_ativos', JSON.stringify(a));
+            load();
+        }
+
+        function del(id, tipo) {
+            const key = tipo === 'pendentes' ? 'vroom_db_pendentes' : 'vroom_db_ativos';
+            let db = JSON.parse(localStorage.getItem(key) || '[]');
+            const i = db.findIndex(x => x.id === id);
+            db.splice(i, 1);
+            localStorage.setItem(key, JSON.stringify(db));
+            load();
+        }
+
+        load();
+    </script>
 </body>
 </html>
