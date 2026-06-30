@@ -1160,6 +1160,10 @@ var STATE = {
 // INIT
 // =====================================================
 function init() {
+  window.onerror = function(msg, url, line, col, error) {
+    alert("ERRO: " + msg + "\nLinha: " + line);
+    return false;
+  };
   try {
     console.log("Iniciando app...");
     getLocation();
