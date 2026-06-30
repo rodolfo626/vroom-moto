@@ -179,91 +179,82 @@
     </div>
 
     
+    
     <script>
-        // Sistema de Navegação Global
-        function nav(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            const target = document.getElementById('screen-' + id);
-            if(target) target.classList.add('active');
-            if(id === 'driver-login') renderDriverProfiles();
+    function nav(id) {
+        console.log('Navegando para:', id);
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(s => s.classList.remove('active'));
+        
+        // Se a tela solicitada for 'solicitar-moto' e ela não existir, tenta 'cliente'
+        let targetId = 'screen-' + id;
+        if (id === 'solicitar-moto' && !document.getElementById(targetId)) {
+            targetId = 'screen-cliente';
         }
-
-        // Renderizar Perfis na Área do Motorista
-        function renderDriverProfiles() {
-            const container = document.getElementById('driver-select-container');
-            if(!container) return;
-            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
-            if(drivers.length === 0) {
-                container.innerHTML = '<div class="p-8 border-2 border-dashed border-slate-800 rounded-2xl"><p class="text-slate-500 uppercase font-black text-[10px]">Aguardando cadastro no ADM</p></div>';
-                return;
-            }
-            container.innerHTML = '<p class="text-slate-500 uppercase font-black text-[9px] mb-4">Escolha seu perfil para entrar</p>';
-            drivers.forEach(d => {
-                container.innerHTML += `
-                    <button onclick="selectDriver('${d.name}')" class="w-full bg-slate-800 p-5 rounded-2xl mb-3 flex items-center gap-4 border border-slate-700 hover:border-orange-500 transition-all">
-                        <div class="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-black text-white">${d.name[0].toUpperCase()}</div>
-                        <div class="text-left">
-                            <p class="text-base font-black text-white italic">${d.name}</p>
-                            <p class="text-[8px] text-green-500 font-black uppercase">Disponível</p>
-                        </div>
-                    </button>`;
-            });
+        
+        const target = document.getElementById(targetId);
+        if(target) {
+            target.classList.add('active');
+            window.scrollTo(0,0);
         }
+        
+        if(id === 'driver-login') renderDrivers();
+        if(id === 'driver-fila') renderFila();
+    }
 
-        function selectDriver(name) {
-            localStorage.setItem('vroom_current_driver', name);
-            const nameEl = document.getElementById('driver-display-name');
-            const initEl = document.getElementById('driver-initial');
-            if(nameEl) nameEl.innerText = name;
-            if(initEl) initEl.innerText = name[0].toUpperCase();
-            nav('driver-dashboard');
-        }
+    function runSystemTest() {
+        let d = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+        if(!d.find(x => x.id === 999)) d.push({id: 999, name: 'Motorista Teste'});
+        localStorage.setItem('vroom_drivers', JSON.stringify(d));
+        let p = JSON.parse(localStorage.getItem('vroom_pedidos') || '[]');
+        p.push({id: Date.now(), dest: 'Av. Paulista, 1000', time: new Date().toLocaleTimeString()});
+        localStorage.setItem('vroom_pedidos', JSON.stringify(p));
+        alert('Teste Iniciado!');
+        nav('driver-login');
+    }
 
-        // Simulação de Fila e Pedidos
-        function solicitarVroom() {
-            const dest = document.getElementById('input-dest').value;
-            if(!dest) return alert('Digite um destino!');
-            const pedido = { id: Date.now(), dest: dest, status: 'Pendente', time: new Date().toLocaleTimeString() };
-            let pedidos = JSON.parse(localStorage.getItem('vroom_pedidos') || '[]');
-            pedidos.push(pedido);
-            localStorage.setItem('vroom_pedidos', JSON.stringify(pedidos));
-            alert('Solicitado! Aguardando motorista...');
-            nav('portal');
-        }
+    function renderDrivers() {
+        const c = document.getElementById('driver-select-container');
+        if(!c) return;
+        const d = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+        c.innerHTML = d.map(x => '<button onclick="selectD(\''+x.name+'\')" class="w-full bg-slate-800 p-5 rounded-2xl mb-3 flex items-center gap-4 border border-slate-700 active:border-orange-500"><div class="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-black text-white">'+x.name[0].toUpperCase()+'</div><p class="text-base font-black text-white italic">'+x.name+'</p></button>').join('') || '<p class="text-slate-500 text-[10px] font-black uppercase">Vazio</p>';
+    }
 
-        function renderFila() {
-            const container = document.getElementById('fila-container');
-            if(!container) return;
-            const pedidos = JSON.parse(localStorage.getItem('vroom_pedidos') || '[]');
-            container.innerHTML = pedidos.length ? '' : '<p class="text-slate-500 text-center py-20 font-black uppercase text-[10px]">Nenhum pedido na fila</p>';
-            pedidos.forEach(p => {
-                container.innerHTML += `
-                    <div class="bg-slate-800 p-4 rounded-xl border-l-4 border-orange-500 mb-3">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="text-[10px] text-orange-500 font-black uppercase">Destino</p>
-                                <p class="text-sm font-black italic text-white">${p.dest}</p>
-                            </div>
-                            <button onclick="aceitarCorrida(${p.id})" class="bg-green-600 text-white px-4 py-2 rounded-lg font-black uppercase text-[10px]">Aceitar</button>
-                        </div>
-                    </div>`;
-            });
-        }
+    function selectD(n) {
+        localStorage.setItem('vroom_current_driver', n);
+        if(document.getElementById('driver-display-name')) document.getElementById('driver-display-name').innerText = n;
+        nav('driver-dashboard');
+    }
 
-        function aceitarCorrida(id) {
-            let pedidos = JSON.parse(localStorage.getItem('vroom_pedidos') || '[]');
-            pedidos = pedidos.filter(p => p.id != id);
-            localStorage.setItem('vroom_pedidos', JSON.stringify(pedidos));
-            alert('Corrida aceita! Iniciando navegação...');
-            renderFila();
-        }
+    function solicitarVroom() {
+        const input = document.getElementById('input-dest');
+        const dest = input ? input.value : 'Destino';
+        if(!dest) return alert('Digite o destino');
+        let p = JSON.parse(localStorage.getItem('vroom_pedidos') || '[]');
+        p.push({id: Date.now(), dest: dest, time: new Date().toLocaleTimeString()});
+        localStorage.setItem('vroom_pedidos', JSON.stringify(p));
+        alert('Solicitado!');
+        nav('portal');
+    }
 
-        // Polling simples para fila se estiver na aba fila
-        setInterval(() => {
-            const fila = document.getElementById('screen-driver-fila');
-            if(fila && fila.classList.contains('active')) renderFila();
-        }, 3000);
+    function renderFila() {
+        const c = document.getElementById('fila-container');
+        if(!c) return;
+        const p = JSON.parse(localStorage.getItem('vroom_pedidos') || '[]');
+        c.innerHTML = p.map(x => '<div class="bg-slate-800 p-5 rounded-2xl border-l-4 border-orange-500 mb-4 flex justify-between items-center"><p class="text-sm font-black italic text-white">'+x.dest+'</p><button onclick="aceitar('+x.id+')" class="bg-green-600 text-white px-4 py-2 rounded-lg font-black uppercase text-[10px]">Aceitar</button></div>').join('') || '<p class="text-slate-500 text-[10px] font-black uppercase">Fila Vazia</p>';
+    }
+
+    function aceitar(id) {
+        let p = JSON.parse(localStorage.getItem('vroom_pedidos') || '[]');
+        p = p.filter(x => x.id != id);
+        localStorage.setItem('vroom_pedidos', JSON.stringify(p));
+        alert('Aceito!');
+        nav('driver-dashboard');
+    }
+
+    window.onload = () => nav('portal');
     </script>
+    
     
 </body>
 </html>
