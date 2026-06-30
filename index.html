@@ -2,15 +2,111 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VROOM MOTO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VROOM MOTO v18.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>body { background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; min-height: screen; }</style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .screen { display: none; min-height: 100vh; padding: 20px; }
+        .screen.active { display: flex; flex-direction: column; }
+        .card-driver { background: #1e293b; border-radius: 16px; padding: 16px; border: 1px solid #334155; margin-bottom: 12px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+        .status-available { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+        .status-transit { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+    </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
-    <div class="text-center">
-        <h1 class="text-5xl font-black italic italic mb-4">VROOM<span class="text-orange-500">MOTO</span></h1>
-        <p class="text-slate-500 font-bold uppercase text-xs tracking-widest">Reiniciando o Projeto...</p>
+<body>
+
+    <!-- TELA INICIAL / PORTAL -->
+    <div id="screen-portal" class="screen active justify-center items-center">
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-black italic tracking-tighter">VROOM<span class="text-orange-500">MOTO</span></h1>
+            <p class="text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em] mt-2">Sua frota na palma da mão</p>
+        </div>
+        
+        <div class="w-full max-w-xs space-y-4">
+            <button onclick="nav('cliente')" class="w-full bg-orange-500 py-5 rounded-2xl font-black uppercase text-sm italic shadow-lg shadow-orange-900/20 active:scale-95 transition-all">Pedir uma Moto</button>
+            <button onclick="nav('motorista-lista')" class="w-full bg-slate-800 py-5 rounded-2xl font-black uppercase text-sm italic border border-slate-700 active:scale-95 transition-all">Frota de Motoristas</button>
+        </div>
     </div>
+
+    <!-- TELA: LISTA DE MOTORISTAS (NOVO REQUISITO) -->
+    <div id="screen-motorista-lista" class="screen">
+        <div class="flex items-center justify-between mb-8">
+            <button onclick="nav('portal')" class="text-slate-400"><i class="fas fa-arrow-left text-xl"></i></button>
+            <h2 class="text-xl font-black italic uppercase">Status da Frota</h2>
+            <div class="w-6"></div>
+        </div>
+
+        <div id="fleet-container" class="space-y-3">
+            <!-- Motoristas serão listados aqui -->
+        </div>
+
+        <div class="mt-auto pt-6 text-center">
+            <p class="text-[9px] text-slate-600 font-black uppercase tracking-widest">Atualizado em tempo real</p>
+        </div>
+    </div>
+
+    <!-- TELA: CLIENTE (SIMPLIFICADA) -->
+    <div id="screen-cliente" class="screen">
+        <button onclick="nav('portal')" class="text-slate-400 mb-6"><i class="fas fa-arrow-left text-xl"></i></button>
+        <h2 class="text-2xl font-black italic uppercase mb-8">Onde você está?</h2>
+        <input type="text" placeholder="Origem..." class="w-full bg-slate-800 border border-slate-700 p-4 rounded-xl mb-4">
+        <input type="text" placeholder="Para onde vamos?" class="w-full bg-slate-800 border border-slate-700 p-4 rounded-xl mb-6">
+        <button onclick="alert('Funcionalidade sendo reconstruída...')" class="w-full bg-orange-500 py-4 rounded-xl font-black uppercase shadow-lg shadow-orange-900/20">Calcular Rota</button>
+    </div>
+
+    <script>
+        // Banco de Dados Simulado (v18.0)
+        let motoristas = [
+            { name: "Rodolfo Oliveira", status: "available", phone: "11999999999" },
+            { name: "João Silva", status: "transit", phone: "11888888888" },
+            { name: "Marcos Souza", status: "available", phone: "11777777777" }
+        ];
+
+        function nav(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + id).classList.add('active');
+            if(id === 'motorista-lista') renderFleet();
+        }
+
+        function renderFleet() {
+            const container = document.getElementById('fleet-container');
+            container.innerHTML = '';
+            
+            motoristas.forEach(m => {
+                const isAvailable = m.status === 'available';
+                const statusText = isAvailable ? 'Disponível' : 'Em Trânsito';
+                const statusClass = isAvailable ? 'status-available' : 'status-transit';
+                
+                container.innerHTML += `
+                    <div class="card-driver">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center font-black text-lg text-orange-500">
+                                    ${m.name[0]}
+                                </div>
+                                <div>
+                                    <p class="text-base font-black italic text-white">${m.name}</p>
+                                    <div class="flex items-center">
+                                        <span class="status-dot ${statusClass}"></span>
+                                        <p class="text-[10px] font-black uppercase ${isAvailable ? 'text-green-500' : 'text-amber-500'} italic">
+                                            ${statusText}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <button onclick="window.open('https://wa.me/${m.phone}')" class="text-slate-500 hover:text-green-500">
+                                    <i class="fab fa-whatsapp text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    </script>
 </body>
 </html>
