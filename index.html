@@ -3,155 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v24.0 - Centro de Serviços</title>
+    <title>VROOM MOTO v24.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
-        body { background: #f8fafc; color: #0f172a; font-family: 'Inter', sans-serif; }
-        .vroom-card { background: white; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; }
-        .screen { display: none; min-height: 100vh; flex-direction: column; }
+        body { background: #f8fafc; color: #0f172a; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .vroom-card { background: white; border-radius: 28px; box-shadow: 0 4px 25px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; }
+        .screen { display: none; min-height: 100vh; flex-direction: column; width: 100%; }
         .screen.active { display: flex; }
-        .btn-action { padding: 16px; border-radius: 18px; font-weight: 800; text-align: center; font-size: 14px; text-transform: uppercase; transition: 0.2s; }
-        .btn-orange { background: #f97316; color: white; }
-        .btn-ghost { background: #f1f5f9; color: #64748b; }
-        .status-badge { padding: 4px 12px; border-radius: 100px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; }
-        .pulse-orange { animation: pulse-orange 2s infinite; }
-        @keyframes pulse-orange { 0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); } 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); } }
+        .vroom-input { background: #f8fafc; border: 2px solid #f1f5f9; padding: 18px; border-radius: 20px; width: 100%; outline: none; font-weight: 600; transition: 0.3s; }
+        .vroom-input:focus { border-color: #f97316; background: white; }
+        .btn-main { background: #f97316; color: white; padding: 20px; border-radius: 22px; font-weight: 900; text-transform: uppercase; width: 100%; letter-spacing: 0.05em; }
     </style>
 </head>
-<body class="bg-slate-50">
+<body>
 
-    <!-- TELA ÚNICA: ÁREA DO CLIENTE - CENTRAL DE SERVIÇOS -->
+    <!-- TELA 1: TERMINAL DO CLIENTE (MANTIDA) -->
     <div id="screen-cliente" class="screen active p-4 pb-24">
-        
-        <!-- HEADER -->
-        <header class="flex justify-between items-center mb-6 px-2">
+        <header class="flex justify-between items-center mb-6 px-2 pt-4">
             <div>
-                <h1 class="text-3xl font-black italic tracking-tighter">VROOM<span class="text-orange-500">MOTO</span></h1>
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Painel de Solicitação</p>
+                <h1 class="text-3xl font-black italic tracking-tighter leading-none">VROOM<span class="text-orange-500">MOTO</span></h1>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Painel do Cliente</p>
             </div>
-            <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
-                <i class="fas fa-headset text-orange-500"></i>
+            <div onclick="nav('login')" class="bg-white h-12 w-12 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center cursor-pointer">
+                <i class="fas fa-user-circle text-slate-300 text-xl"></i>
             </div>
         </header>
 
-        <!-- SEÇÃO 1: O PEDIDO -->
         <div class="vroom-card p-6 mb-6">
-            <h3 class="text-xs font-black uppercase text-slate-400 tracking-widest mb-4 italic">Solicitar Serviço</h3>
+            <h3 class="text-xs font-black uppercase text-slate-400 tracking-widest mb-4 italic">Onde vamos?</h3>
             <div class="space-y-3">
                 <div class="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <i class="fas fa-location-dot text-orange-500"></i>
-                    <input id="cli-origem" type="text" placeholder="Origem (Detectando...)" class="bg-transparent outline-none w-full text-sm font-bold">
+                    <input type="text" placeholder="Origem" class="bg-transparent outline-none w-full text-sm font-bold" value="Rua Rodolfo Oliveira, 626">
                 </div>
                 <div class="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <i class="fas fa-flag-checkered text-slate-400"></i>
-                    <input id="cli-destino" type="text" placeholder="Para onde vamos?" class="bg-transparent outline-none w-full text-sm font-bold">
-                </div>
-                <div class="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <i class="fas fa-map-pin text-slate-400"></i>
-                    <input id="cli-ref" type="text" placeholder="Referência (Ex: Portão Azul)" class="bg-transparent outline-none w-full text-sm font-bold">
+                    <input type="text" placeholder="Para onde vamos?" class="bg-transparent outline-none w-full text-sm font-bold">
                 </div>
             </div>
-            <button onclick="buscarPiloto()" class="btn-action btn-orange w-full mt-4 pulse-orange">Confirmar e Ver Piloto</button>
-        </div>
-
-        <!-- SEÇÃO 2: INFORMAÇÕES DO SERVIÇO (CENTRO DE PRESTAÇÃO) -->
-        <div id="info-servico" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div class="vroom-card overflow-hidden">
-                <!-- STATUS DA VIAGEM -->
-                <div class="bg-orange-500 p-3 text-center">
-                    <span class="text-white text-[10px] font-black uppercase tracking-widest">Piloto em Deslocamento para sua Posição</span>
-                </div>
-
-                <div class="p-6">
-                    <!-- O PILOTO -->
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-20 h-20 bg-slate-100 rounded-3xl border-4 border-white shadow-md flex items-center justify-center overflow-hidden">
-                            <i class="fas fa-user-tie text-4xl text-slate-300"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="text-xl font-black italic uppercase leading-none mb-1">Claudio Piloto</h4>
-                            <div class="flex items-center gap-2">
-                                <span class="bg-green-100 text-green-600 status-badge">Verificado</span>
-                                <div class="flex text-yellow-400 text-xs">
-                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase leading-none">Chegada</p>
-                            <p class="text-xl font-black italic">4 MIN</p>
-                        </div>
-                    </div>
-
-                    <!-- A MÁQUINA -->
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Moto / Modelo</p>
-                            <p class="text-sm font-black italic">CG Titan 160</p>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Placa / Cor</p>
-                            <p class="text-sm font-black italic text-orange-600">ABC-1234 / Azul</p>
-                        </div>
-                    </div>
-
-                    <!-- VALOR E PAGAMENTO -->
-                    <div class="flex justify-between items-center py-4 border-y border-slate-100 mb-6">
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase italic">Valor do Serviço</p>
-                            <p class="text-3xl font-black text-green-600 italic">R$ 10,00</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase italic">Pagamento</p>
-                            <p class="text-sm font-black italic">Dinheiro / Pix</p>
-                        </div>
-                    </div>
-
-                    <!-- BOTÕES DE CONTATO -->
-                    <div class="flex gap-3">
-                        <button class="flex-1 btn-action btn-ghost flex items-center justify-center gap-2">
-                            <i class="fab fa-whatsapp text-green-500 text-xl"></i> Chat
-                        </button>
-                        <button class="flex-1 btn-action bg-red-50 text-red-600 border border-red-100 flex items-center justify-center gap-2">
-                            <i class="fas fa-shield-halved"></i> SOS
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <button class="btn-main mt-4 shadow-lg shadow-orange-200">Chamar Agora</button>
         </div>
     </div>
 
-    <!-- NAVEGAÇÃO RÁPIDA (FOCO NO CLIENTE) -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 flex justify-around items-center z-50">
-        <div class="text-orange-500 flex flex-col items-center gap-1">
-            <i class="fas fa-motorcycle text-xl"></i>
-            <span class="text-[9px] font-bold uppercase">Serviço</span>
+    <!-- TELA 2: LOGIN DO PILOTO (LIBERADA E ESTILIZADA) -->
+    <div id="screen-login" class="screen p-6 justify-center">
+        <div class="w-full max-w-sm mx-auto">
+            <div class="text-center mb-10">
+                <div class="w-20 h-20 bg-orange-500 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-orange-100">
+                    <i class="fas fa-helmet-safety text-white text-3xl"></i>
+                </div>
+                <h2 class="text-3xl font-black italic uppercase tracking-tighter">Área do <span class="text-orange-500">Piloto</span></h2>
+                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">Acesse seu centro de prestação</p>
+            </div>
+
+            <div class="vroom-card p-8 space-y-4">
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Usuário</label>
+                    <input id="user" type="text" placeholder="Digite seu user" class="vroom-input">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Senha</label>
+                    <input id="pass" type="password" placeholder="••••••••" class="vroom-input">
+                </div>
+                <button onclick="alert('Autenticando...')" class="btn-main !mt-8 shadow-lg">Entrar no Turno</button>
+            </div>
+
+            <p onclick="nav('cliente')" class="text-center mt-10 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer">Voltar ao Início</p>
         </div>
-        <div onclick="location.href='adm.html'" class="text-slate-300 flex flex-col items-center gap-1">
-            <i class="fas fa-shield-halved text-xl"></i>
-            <span class="text-[9px] font-bold uppercase">Gestão</span>
+    </div>
+
+    <!-- NAV BAR -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 flex justify-around items-center z-50">
+        <div onclick="nav('cliente')" class="flex flex-col items-center gap-1 cursor-pointer">
+            <i class="fas fa-motorcycle text-xl text-orange-500"></i>
+            <span class="text-[9px] font-black uppercase text-orange-500">Serviço</span>
+        </div>
+        <div onclick="nav('login')" class="flex flex-col items-center gap-1 cursor-pointer">
+            <i class="fas fa-helmet-safety text-xl text-slate-300"></i>
+            <span class="text-[9px] font-black uppercase text-slate-400">Piloto</span>
+        </div>
+        <div onclick="location.href='adm.html'" class="flex flex-col items-center gap-1 cursor-pointer">
+            <i class="fas fa-shield-halved text-xl text-slate-300"></i>
+            <span class="text-[9px] font-black uppercase text-slate-400">ADM</span>
         </div>
     </nav>
 
     <script>
-        function buscarPiloto() {
-            // Simulação de busca rápida
-            document.querySelector('.btn-orange').innerText = "Buscando Piloto...";
-            setTimeout(() => {
-                document.getElementById('info-servico').classList.remove('hidden');
-                document.querySelector('.btn-orange').closest('.vroom-card').style.display = 'none';
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 1000);
+        function nav(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + id).classList.add('active');
+            window.scrollTo(0,0);
         }
-
-        // Simular GPS Automático
-        window.onload = () => {
-            setTimeout(() => {
-                document.getElementById('cli-origem').value = "Rua Rodolfo Oliveira, 626";
-            }, 1500);
-        };
     </script>
 </body>
 </html>
