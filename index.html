@@ -7,53 +7,109 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Outfit:wght@400;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Outfit:wght@400;700;900&display=swap');
         
-        body { background: #0f172a; color: white; font-family: 'Outfit', sans-serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
+        body { background: #0f172a; color: white; font-family: 'Outfit', sans-serif; margin: 0; min-height: 100vh; overflow-x: hidden; }
         .bg-gradient { background: radial-gradient(circle at top right, #f97316 0%, transparent 40%), radial-gradient(circle at bottom left, #4338ca 0%, transparent 40%); position: fixed; inset: 0; z-index: 0; opacity: 0.3; }
         
-        .main-content { position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px; }
-        .logo-vroom { font-family: 'Archivo Black', sans-serif; font-size: 64px; line-height: 0.8; letter-spacing: -4px; text-transform: uppercase; font-style: italic; text-align: center; margin-bottom: 50px; }
+        .screen { position: relative; z-index: 10; min-height: 100vh; display: none; flex-direction: column; padding: 25px; transition: 0.3s; }
+        .screen.active { display: flex; }
+
+        .logo-vroom { font-family: 'Archivo Black', sans-serif; font-size: 40px; line-height: 0.8; letter-spacing: -2px; text-transform: uppercase; font-style: italic; }
         
-        .btn-impact { width: 100%; max-width: 340px; padding: 22px; border-radius: 24px; font-weight: 900; text-transform: uppercase; font-size: 16px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px; }
-        .btn-impact:active { transform: scale(0.96); }
-        .btn-orange { background: #f97316; box-shadow: 0 10px 20px -5px rgba(249, 115, 22, 0.4); }
-        .btn-dark { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); }
-        .btn-outline { background: transparent; border: 2px solid #f97316; color: #f97316; }
-        .btn-adm { background: #1e293b; color: #64748b; font-size: 10px; padding: 12px 24px; border-radius: 12px; letter-spacing: 2px; }
+        .vroom-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border-radius: 32px; border: 1px solid rgba(255,255,255,0.05); padding: 25px; }
+        
+        .input-group { margin-bottom: 20px; }
+        .input-label { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: #64748b; margin-left: 12px; margin-bottom: 8px; display: block; }
+        .vroom-input { background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(255,255,255,0.05); padding: 18px; border-radius: 20px; width: 100%; outline: none; font-weight: 700; color: white; transition: 0.3s; }
+        .vroom-input:focus { border-color: #f97316; background: rgba(15, 23, 42, 0.8); }
+
+        .category-pill { background: rgba(255,255,255,0.05); border: 2px solid transparent; padding: 12px 20px; border-radius: 16px; flex: 1; text-align: center; cursor: pointer; transition: 0.3s; }
+        .category-pill.active { border-color: #f97316; background: rgba(249, 115, 22, 0.1); color: #f97316; }
+
+        .btn-main { background: #f97316; color: white; padding: 22px; border-radius: 24px; font-weight: 900; text-transform: uppercase; width: 100%; letter-spacing: 1px; box-shadow: 0 10px 20px -5px rgba(249, 115, 22, 0.4); margin-top: 10px; }
+        .btn-main:active { transform: scale(0.96); }
+
+        .back-btn { width: 45px; height: 45px; border-radius: 15px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; }
     </style>
 </head>
 <body>
     <div class="bg-gradient"></div>
 
-    <div class="main-content">
-        <div class="logo-vroom">VROOM<br><span class="text-orange-500">MOTO</span></div>
-
-        <div class="w-full flex flex-col items-center gap-2">
-            <!-- CLIENTE -->
-            <button class="btn-impact btn-orange">
+    <!-- TELA 1: PORTAL (MANTIDA) -->
+    <div id="screen-portal" class="screen active justify-center items-center">
+        <div class="logo-vroom mb-12 text-center">VROOM<br><span class="text-orange-500 text-6xl">MOTO</span></div>
+        <div class="w-full max-w-sm space-y-3">
+            <button onclick="nav('cliente')" class="btn-main flex items-center justify-center gap-3">
                 <i class="fas fa-motorcycle"></i> Pedir Viagem
             </button>
-
-            <!-- PILOTO -->
-            <button class="btn-impact btn-dark">
+            <button onclick="alert('Área do Piloto em breve')" style="background: rgba(255,255,255,0.1); box-shadow: none;" class="btn-main flex items-center justify-center gap-3">
                 <i class="fas fa-helmet-safety"></i> Sou Piloto
             </button>
-
-            <!-- CADASTRO -->
-            <button class="btn-impact btn-outline mt-2">
+            <button onclick="alert('Cadastro em breve')" style="background: transparent; border: 2px solid #f97316; color: #f97316; box-shadow: none;" class="btn-main flex items-center justify-center gap-3 mt-4 text-sm">
                 <i class="fas fa-user-plus"></i> Novo Cadastro
             </button>
-            
-            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-2 italic">Seja um parceiro Vroom</p>
         </div>
+        <button onclick="alert('ADM em breve')" class="absolute bottom-10 text-[9px] font-black uppercase tracking-[4px] text-slate-600">Administração</button>
+    </div>
 
-        <!-- BOTÃO ADM VISÍVEL -->
-        <div class="mt-16 w-full flex justify-center">
-            <button class="btn-adm font-black uppercase">
-                <i class="fas fa-lock mr-2"></i> Área Administrativa
-            </button>
+    <!-- TELA 2: ÁREA DO CLIENTE (A NOVIDADE) -->
+    <div id="screen-cliente" class="screen">
+        <header class="flex justify-between items-center mb-6">
+            <div onclick="nav('portal')" class="back-btn"><i class="fas fa-chevron-left"></i></div>
+            <div class="logo-vroom text-right text-lg">VROOM<span class="text-orange-500 italic">MOTO</span></div>
+        </header>
+
+        <h2 class="text-3xl font-black italic uppercase mb-8 leading-tight">Para onde<br><span class="text-orange-500">vamos hoje?</span></h2>
+
+        <div class="vroom-card">
+            <div class="input-group">
+                <label class="input-label">Origem</label>
+                <input type="text" value="Minha Localização atual" class="vroom-input" readonly>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Destino Final</label>
+                <input id="dest" type="text" placeholder="Digite o endereço de destino" class="vroom-input">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Ponto de Referência</label>
+                <input type="text" placeholder="Ex: Casa verde, Portão preto" class="vroom-input">
+            </div>
+
+            <label class="input-label">Tipo de Serviço</label>
+            <div class="flex gap-3 mb-8">
+                <div onclick="selectCat(this)" class="category-pill active">
+                    <p class="font-black italic text-sm">BÁSICA</p>
+                    <p class="text-[9px] opacity-60">Mais econômica</p>
+                </div>
+                <div onclick="selectCat(this)" class="category-pill">
+                    <p class="font-black italic text-sm">EXPRESSA</p>
+                    <p class="text-[9px] opacity-60">Entrega rápida</p>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end mb-6 px-2">
+                <p class="text-xs font-bold text-slate-400 uppercase italic">Valor Estimado</p>
+                <p class="text-3xl font-black italic text-green-500">R$ 10,00</p>
+            </div>
+
+            <button onclick="alert('Buscando piloto para: ' + document.getElementById('dest').value)" class="btn-main">Chamar Vroom</button>
         </div>
     </div>
+
+    <script>
+        function nav(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + id).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        function selectCat(el) {
+            document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+        }
+    </script>
 </body>
 </html>
