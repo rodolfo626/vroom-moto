@@ -4,7 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VROOM MOTO v15.2 - ADM ULTIMATE CONTROL</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">
+        // Função para abrir modal de cadastro
+        function openAddDriver() {
+            document.getElementById('modal-add-driver').classList.remove('hidden');
+        }
+        function closeAddDriver() {
+            document.getElementById('modal-add-driver').classList.add('hidden');
+        }
+        
+        // Função para salvar novo motorista (simulado no local)
+        function saveNewDriver() {
+            const name = document.getElementById('new-driver-name').value;
+            if(!name) return alert('Digite o nome!');
+            
+            const list = document.getElementById('drivers-list-container');
+            const id = Date.now();
+            const newItem = `
+                <div class="adm-card" id="driver-${id}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex gap-3">
+                            <div class="w-10 h-10 rounded-full border-2 border-orange-500 bg-slate-700 flex items-center justify-center font-black">${name[0]}</div>
+                            <div><p class="text-sm font-black italic">${name}</p><p class="text-[9px] text-slate-500 font-bold uppercase">Cadastrado via ADM</p></div>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="badge badge-green">Ativo</span>
+                            <button onclick="deleteDriver(${id})" class="text-red-500 p-1"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="bg-slate-700 text-[9px] font-black uppercase py-2 rounded-lg">Ver Documentos</button>
+                        <button class="bg-green-600 text-[9px] font-black uppercase py-2 rounded-lg">Dar Baixa (Pix)</button>
+                    </div>
+                </div>
+            `;
+            list.insertAdjacentHTML('afterbegin', newItem);
+            closeAddDriver();
+            alert('Motorista cadastrado com sucesso!');
+        }
+
+        // Função para deletar motorista
+        function deleteDriver(id) {
+            if(confirm('Tem certeza que deseja EXCLUIR permanentemente este motorista do sistema?')) {
+                const el = document.getElementById('driver-' + id);
+                if(el) el.remove();
+                alert('Motorista removido!');
+            }
+        }
+    
+</script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
@@ -79,9 +127,31 @@
 
         <!-- ABA MOTORISTAS (Mensalidades e Bloqueios) -->
         <div id="tab-drivers" class="hidden space-y-4">
-            <div class="section-title"><i class="fas fa-motorcycle"></i> Controle de Equipe</div>
+            <div class="flex justify-between items-center mb-2">
+                <div class="section-title !mb-0"><i class="fas fa-motorcycle"></i> Controle de Equipe</div>
+                <button onclick="openAddDriver()" class="bg-orange-500 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1">
+                    <i class="fas fa-plus"></i> Novo Motorista
+                </button>
+            </div>
             
-            <div class="space-y-3">
+            <div class="space-y-3" id="drivers-list-container">
+                <!-- Motorista Rodolfo (Default) -->
+                <div class="adm-card" id="driver-master">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex gap-3">
+                            <div class="w-10 h-10 rounded-full border-2 border-orange-500 overflow-hidden"><img src="https://i.pravatar.cc/100?u=rodolfo" class="w-full h-full object-cover"></div>
+                            <div><p class="text-sm font-black italic">Rodolfo Oliveira</p><p class="text-[9px] text-slate-500 font-bold uppercase">Master Driver</p></div>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="badge badge-green">Em Dia</span>
+                            <button onclick="deleteDriver('master')" class="text-red-500 p-1"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="bg-slate-700 text-[9px] font-black uppercase py-2 rounded-lg">Ver Documentos</button>
+                        <button class="bg-green-600 text-[9px] font-black uppercase py-2 rounded-lg">Dar Baixa (Pix)</button>
+                    </div>
+                </div>
                 <!-- Rodolfo -->
                 <div class="adm-card">
                     <div class="flex justify-between items-start mb-4">
@@ -169,6 +239,76 @@
             document.getElementById('nav-drivers').classList.toggle('active', t === 'drivers');
             document.getElementById('nav-settings').classList.toggle('active', t === 'settings');
         }
-    </script>
+    
+        // Função para abrir modal de cadastro
+        function openAddDriver() {
+            document.getElementById('modal-add-driver').classList.remove('hidden');
+        }
+        function closeAddDriver() {
+            document.getElementById('modal-add-driver').classList.add('hidden');
+        }
+        
+        // Função para salvar novo motorista (simulado no local)
+        function saveNewDriver() {
+            const name = document.getElementById('new-driver-name').value;
+            if(!name) return alert('Digite o nome!');
+            
+            const list = document.getElementById('drivers-list-container');
+            const id = Date.now();
+            const newItem = `
+                <div class="adm-card" id="driver-${id}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex gap-3">
+                            <div class="w-10 h-10 rounded-full border-2 border-orange-500 bg-slate-700 flex items-center justify-center font-black">${name[0]}</div>
+                            <div><p class="text-sm font-black italic">${name}</p><p class="text-[9px] text-slate-500 font-bold uppercase">Cadastrado via ADM</p></div>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="badge badge-green">Ativo</span>
+                            <button onclick="deleteDriver(${id})" class="text-red-500 p-1"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="bg-slate-700 text-[9px] font-black uppercase py-2 rounded-lg">Ver Documentos</button>
+                        <button class="bg-green-600 text-[9px] font-black uppercase py-2 rounded-lg">Dar Baixa (Pix)</button>
+                    </div>
+                </div>
+            `;
+            list.insertAdjacentHTML('afterbegin', newItem);
+            closeAddDriver();
+            alert('Motorista cadastrado com sucesso!');
+        }
+
+        // Função para deletar motorista
+        function deleteDriver(id) {
+            if(confirm('Tem certeza que deseja EXCLUIR permanentemente este motorista do sistema?')) {
+                const el = document.getElementById('driver-' + id);
+                if(el) el.remove();
+                alert('Motorista removido!');
+            }
+        }
+    
+</script>
+
+    <!-- MODAL NOVO MOTORISTA -->
+    <div id="modal-add-driver" class="hidden fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-6">
+        <div class="adm-card w-full max-w-sm">
+            <h3 class="text-xl font-black italic uppercase text-orange-500 mb-6">Cadastrar Motorista</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[9px] font-black uppercase text-slate-500">Nome do Motorista</label>
+                    <input type="text" id="new-driver-name" placeholder="Ex: Marcos Silva" class="input-vroom">
+                </div>
+                <div>
+                    <label class="text-[9px] font-black uppercase text-slate-500">Telefone / WhatsApp</label>
+                    <input type="tel" id="new-driver-phone" placeholder="(00) 00000-0000" class="input-vroom">
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="saveNewDriver()" class="vroom-btn flex-1 !py-3">Salvar</button>
+                    <button onclick="closeAddDriver()" class="bg-slate-700 text-white px-6 rounded-xl font-black uppercase text-xs">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 </body>
 </html>
