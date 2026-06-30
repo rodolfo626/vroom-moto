@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VROOM MOTO v23.1</title>
+    <title>VROOM MOTO v23.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -15,15 +15,13 @@
         .vroom-input { background: #f8fafc; border: 2px solid #f1f5f9; padding: 16px; border-radius: 16px; width: 100%; outline: none; }
         .btn-main { background: #f97316; color: white; padding: 18px; border-radius: 20px; font-weight: 800; text-transform: uppercase; width: 100%; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; }
-        .online { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+        .online { background: #22c55e; }
         .offline { background: #ef4444; }
     </style>
 </head>
 <body>
 
-    <!-- TELAS ORIGINAIS (PORTAL, CLIENTE, RECRUTAMENTO, LOGIN) MANTIDAS E INTEGRADAS -->
-    <!-- ... (Estrutura da v23.0 continua aqui, vou focar na nova tela de Dashboard do Piloto) ... -->
-
+    <!-- PORTAL -->
     <div id="screen-portal" class="screen active justify-center items-center">
         <h1 class="text-6xl font-extrabold tracking-tighter text-slate-900 leading-none">VROOM<br><span class="text-orange-500 italic">MOTO</span></h1>
         <div class="w-full max-w-sm space-y-4 mt-12">
@@ -35,121 +33,108 @@
                 <div class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 text-2xl"><i class="fas fa-helmet-safety"></i></div>
                 <div><h3 class="font-bold text-xl">Área do Piloto</h3><p class="text-xs text-slate-400">Acesse seu trabalho</p></div>
             </div>
+            <p onclick="nav('recrutamento')" class="text-center text-slate-400 font-bold text-xs uppercase tracking-widest pt-6 cursor-pointer">Quero ser um Piloto Vroom</p>
         </div>
-        <button onclick="location.href='adm.html'" class="mt-20 text-slate-300 font-bold text-[10px] uppercase border border-slate-200 px-4 py-2 rounded-full">ADM</button>
+        <button onclick="location.href='adm.html'" class="mt-20 text-slate-300 font-bold text-[10px] uppercase border border-slate-200 px-4 py-2 rounded-full">Acesso ADM</button>
     </div>
 
     <!-- TELA CLIENTE -->
     <div id="screen-cliente" class="screen">
-        <button onclick="nav('portal')" class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-sm mb-6"><i class="fas fa-chevron-left"></i></button>
+        <button onclick="nav('portal')" class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center mb-6 shadow-sm"><i class="fas fa-chevron-left"></i></button>
         <div class="vroom-card p-6 space-y-4">
-            <h2 class="font-extrabold text-xl uppercase italic mb-4">Nova Viagem</h2>
+            <h2 class="font-extrabold text-xl uppercase italic mb-4 text-orange-500">Onde vamos?</h2>
             <input id="cli-origem" type="text" placeholder="Origem" class="vroom-input">
             <input id="cli-destino" type="text" placeholder="Destino" class="vroom-input">
             <input id="cli-ref" type="text" placeholder="Ponto de Referência" class="vroom-input">
-            <button onclick="alert('Solicitando...')" class="btn-main">Confirmar</button>
+            <button onclick="alert('Buscando piloto...')" class="btn-main">Chamar Vroom</button>
         </div>
     </div>
 
-    <!-- TELA LOGIN PILOTO -->
+    <!-- TELA RECRUTAMENTO (CORRIGIDA) -->
+    <div id="screen-recrutamento" class="screen overflow-y-auto">
+        <button onclick="nav('portal')" class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center mb-6 shadow-sm"><i class="fas fa-chevron-left"></i></button>
+        <div class="vroom-card p-6 space-y-4 mb-20">
+            <h2 class="text-2xl font-extrabold italic uppercase mb-2">Seja um Piloto</h2>
+            <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4 italic">Preencha seus dados para análise</p>
+            
+            <input id="rec-nome" type="text" placeholder="Nome Completo" class="vroom-input">
+            <input id="rec-cpf" type="tel" placeholder="CPF" class="input-vroom vroom-input">
+            <input id="rec-placa" type="text" placeholder="Placa da Moto" class="vroom-input">
+            
+            <div class="h-px bg-slate-100 my-4"></div>
+            
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Crie seu Acesso</p>
+            <input id="rec-user" type="text" placeholder="Escolha um Usuário" class="vroom-input">
+            <input id="rec-pass" type="password" placeholder="Crie uma Senha" class="vroom-input">
+            
+            <button onclick="enviarCadastro()" class="btn-main mt-6">Enviar Candidatura</button>
+        </div>
+    </div>
+
+    <!-- LOGIN PILOTO -->
     <div id="screen-piloto-login" class="screen justify-center items-center">
-        <div class="vroom-card w-full max-w-sm p-8">
-            <h2 class="text-2xl font-extrabold text-center mb-8 italic">LOGIN PILOTO</h2>
+        <div class="vroom-card w-full max-w-sm p-8 text-center">
+            <h2 class="text-2xl font-extrabold italic mb-10">LOGIN PILOTO</h2>
             <input id="log-user" type="text" placeholder="Usuário" class="vroom-input mb-4">
-            <input id="log-pass" type="password" placeholder="Senha" class="vroom-input mb-8">
-            <button onclick="loginPiloto()" class="btn-main">Entrar no Turno</button>
-            <p onclick="nav('portal')" class="text-center text-slate-400 font-bold text-xs uppercase mt-6 cursor-pointer">Voltar</p>
+            <input id="log-pass" type="password" placeholder="Senha" class="vroom-input mb-10">
+            <button onclick="loginPiloto()" class="btn-main">Entrar</button>
+            <p onclick="nav('portal')" class="text-xs font-bold text-slate-400 uppercase mt-8 cursor-pointer">Voltar</p>
         </div>
     </div>
 
-    <!-- NOVA TELA: DASHBOARD DO PILOTO (PRO) -->
+    <!-- DASHBOARD PILOTO (MANTIDO) -->
     <div id="screen-piloto-dash" class="screen">
-        <div class="flex justify-between items-center mb-8">
-            <div class="flex items-center gap-3">
-                <div id="pilot-status-dot" class="status-dot online"></div>
-                <h2 id="pilot-name" class="font-extrabold text-xl italic uppercase">Olá, Piloto</h2>
-            </div>
-            <button onclick="nav('portal')" class="text-[10px] font-extrabold bg-slate-100 px-4 py-2 rounded-xl text-slate-500 uppercase">Sair</button>
+        <div class="flex justify-between items-center mb-10">
+            <h2 id="pilot-name" class="font-extrabold italic uppercase">Piloto Online</h2>
+            <button onclick="nav('portal')" class="text-[10px] font-bold bg-slate-100 px-4 py-2 rounded-full uppercase">Sair</button>
         </div>
-
-        <!-- CARD DE GANHOS -->
-        <div class="vroom-card p-6 flex justify-between items-center mb-6">
-            <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ganhos de Hoje</p>
-                <p class="text-3xl font-extrabold text-green-600">R$ 0,00</p>
-            </div>
-            <div class="text-right">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Corridas</p>
-                <p class="text-xl font-extrabold">0</p>
-            </div>
+        <div class="vroom-card p-8 text-center border-2 border-green-500">
+            <p class="text-xs font-bold text-slate-400 uppercase italic mb-2">Ganhos de Hoje</p>
+            <p class="text-4xl font-extrabold text-green-600 italic">R$ 0,00</p>
         </div>
-
-        <!-- CONTROLE DE STATUS -->
-        <div id="status-toggle" onclick="toggleStatus()" class="vroom-card p-5 flex items-center justify-between mb-8 cursor-pointer border-2 border-green-500">
-            <p class="font-extrabold text-sm uppercase italic" id="status-text">Você está ONLINE</p>
-            <i class="fas fa-power-off text-green-500 text-xl"></i>
-        </div>
-
-        <!-- RADAR DE PEDIDOS -->
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 ml-2 italic">Radar de Corridas</h3>
-        <div id="radar-list" class="space-y-4">
-            <!-- EXEMPLO DE PEDIDO CHEGANDO -->
-            <div class="vroom-card p-6 border-l-8 border-orange-500 animate-pulse">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <p class="font-extrabold text-lg">Nova Corrida!</p>
-                        <p class="text-xs font-bold text-slate-400 uppercase">A 1.2 KM de você</p>
-                    </div>
-                    <p class="text-xl font-extrabold text-orange-600 italic">R$ 10,00</p>
-                </div>
-                <div class="space-y-2 mb-6">
-                    <p class="text-sm"><b>De:</b> Centro, Rua 7</p>
-                    <p class="text-sm"><b>Para:</b> Bairro Novo</p>
-                    <p class="text-[10px] bg-slate-100 p-2 rounded-lg text-slate-500"><b>Ref:</b> Portão Laranja</p>
-                </div>
-                <button onclick="alert('Corrida Aceita! Navegando...')" class="btn-main">Aceitar Corrida</button>
+        <div class="mt-10">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic mb-4">Nenhuma corrida no radar</p>
+            <div class="p-10 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-slate-300">
+                <i class="fas fa-satellite-dish text-4xl mb-4"></i>
+                <p class="text-xs font-bold uppercase italic">Buscando passageiros...</p>
             </div>
         </div>
     </div>
 
     <script>
-        let isOnline = true;
-
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-' + id).classList.add('active');
             window.scrollTo(0,0);
         }
 
-        function toggleStatus() {
-            isOnline = !isOnline;
-            const dot = document.getElementById('pilot-status-dot');
-            const text = document.getElementById('status-text');
-            const card = document.getElementById('status-toggle');
+        function enviarCadastro() {
+            const data = {
+                id: Date.now(),
+                nome: document.getElementById('rec-nome').value,
+                user: document.getElementById('rec-user').value,
+                pass: document.getElementById('rec-pass').value,
+                status: 'pendente'
+            };
+            if(!data.nome || !data.user || !data.pass) return alert("Por favor, preencha todos os campos.");
             
-            if(isOnline) {
-                dot.className = 'status-dot online';
-                text.innerText = 'Você está ONLINE';
-                card.className = 'vroom-card p-5 flex items-center justify-between mb-8 cursor-pointer border-2 border-green-500';
-            } else {
-                dot.className = 'status-dot offline';
-                text.innerText = 'Você está OFFLINE';
-                card.className = 'vroom-card p-5 flex items-center justify-between mb-8 cursor-pointer border-2 border-red-500';
-            }
+            let db = JSON.parse(localStorage.getItem('vroom_db_v23') || '[]');
+            db.push(data);
+            localStorage.setItem('vroom_db_v23', JSON.stringify(db));
+            alert("Cadastro enviado com sucesso! Aguarde aprovação do Rodolfo.");
+            nav('portal');
         }
 
         function loginPiloto() {
             const u = document.getElementById('log-user').value;
             const p = document.getElementById('log-pass').value;
-            // Simulação de login - Na v23.0 já salvamos os aprovados no localStorage 'vroom_ativos_v23'
             let ativos = JSON.parse(localStorage.getItem('vroom_ativos_v23') || '[]');
             const found = ativos.find(m => m.user === u && m.pass === p);
-            
             if(found) {
-                document.getElementById('pilot-name').innerText = "Piloto: " + found.nome.split(' ')[0];
+                document.getElementById('pilot-name').innerText = found.nome;
                 nav('piloto-dash');
             } else {
-                alert("Acesso negado. Motorista não aprovado ou dados incorretos.");
+                alert("Acesso negado. Aguarde aprovação do Rodolfo.");
             }
         }
     </script>
