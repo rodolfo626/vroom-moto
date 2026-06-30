@@ -61,7 +61,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .btn-impact:active { transform: scale(0.95); }
@@ -77,6 +77,18 @@
             border: 1px solid rgba(255,255,255,0.1);
         }
 
+        .link-cadastro {
+            margin-top: 10px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #f97316;
+            text-decoration: underline;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
         .footer-link {
             position: absolute;
             bottom: 40px;
@@ -84,7 +96,7 @@
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 4px;
-            color: rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.1);
             cursor: pointer;
         }
     </style>
@@ -101,20 +113,23 @@
 
         <!-- BOTÕES DE AÇÃO -->
         <div class="w-full flex flex-col items-center">
-            <button class="btn-impact btn-orange">
+            <button class="btn-impact btn-orange" onclick="alert('Indo para Área do Cliente...')">
                 <span>Chamar Agora</span>
                 <i class="fas fa-arrow-right"></i>
             </button>
 
-            <button class="btn-impact btn-dark">
+            <button class="btn-impact btn-dark" onclick="alert('Indo para Área do Piloto...')">
                 <span>Sou Piloto</span>
                 <i class="fas fa-helmet-safety"></i>
             </button>
+
+            <!-- CAMPO DE CADASTRO ADICIONADO -->
+            <p class="link-cadastro" onclick="alert('Abrindo Cadastro de Piloto...')">Quero ser um Piloto</p>
         </div>
 
         <!-- ACESSO ADM -->
         <div onclick="alert('Área Restrita')" class="footer-link">
-            Painel Administrativo
+            Administração
         </div>
     </div>
 
