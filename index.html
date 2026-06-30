@@ -78,20 +78,30 @@
         </div>
     </div>
 
+    
     <!-- 4. TELA: CLIENTE (PEDIDO) -->
     <div id="screen-cliente" class="screen">
-        <div class="flex items-center gap-4 mb-8">
+        <div class="flex items-center gap-4 mb-4">
             <button onclick="nav('portal')" class="text-slate-400"><i class="fas fa-arrow-left"></i></button>
             <h2 class="text-2xl font-black italic uppercase">Chamar Moto</h2>
         </div>
+        
+        <div id="map" class="w-full h-56 rounded-3xl mb-4 border border-slate-800 bg-slate-900 shadow-inner"></div>
+
         <div class="card mb-6">
-            <input type="text" placeholder="Sua localização..." class="vroom-input">
-            <input type="text" placeholder="Para onde você vai?" class="vroom-input">
-            <div class="flex justify-between items-center py-4 px-2 border-t border-slate-700 mt-4">
-                <span class="text-slate-400 font-bold">Tarifa Estimada:</span>
-                <span class="text-xl font-black text-green-500 italic">R$ 10,00</span>
+            <div class="relative mb-2">
+                <input id="input-origem" type="text" placeholder="Onde você está?" class="vroom-input pr-12">
+                <button onclick="geolocalizar()" class="absolute right-4 top-4 text-orange-500">
+                    <i class="fas fa-location-crosshairs text-xl"></i>
+                </button>
             </div>
-            <button onclick="alert('Funcionalidade de Mapa em breve na v21')" class="btn-primary">Confirmar Pedido</button>
+            <input id="input-destino" type="text" placeholder="Para onde vamos?" class="vroom-input">
+            
+            <div class="flex justify-between items-center py-4 px-2 border-t border-slate-700 mt-4">
+                <span class="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Tarifa Estimada</span>
+                <span id="valor-tarifa" class="text-xl font-black text-green-500 italic">R$ 0,00</span>
+            </div>
+            <button onclick="alert('Buscando motoristas próximos...')" class="btn-primary">Confirmar Pedido</button>
         </div>
     </div>
 
@@ -120,6 +130,21 @@
             nav('portal');
         }
 
+        
+        function geolocalizar() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    alert("Localização encontrada! Carregando endereço...");
+                    // Aqui entra o Geocoder do Google para transformar lat/lng em nome de rua
+                    document.getElementById('input-origem').value = "Localização Atual (Lat: " + lat.toFixed(4) + ")";
+                }, (error) => {
+                    alert("Erro ao obter localização. Verifique as permissões do seu GPS.");
+                });
+            }
+        }
+    
         function fazerLogin() {
             const user = document.getElementById('log-user').value;
             const pass = document.getElementById('log-pass').value;
