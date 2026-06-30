@@ -178,193 +178,92 @@
         </div>
     </div>
 
+    
     <script>
-        let isOnline = false;
-        let ridesQueue = [];
-        const bip = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
-
+        // Sistema de Navegação Global
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('screen-' + id).classList.add('active');
+            const target = document.getElementById('screen-' + id);
+            if(target) target.classList.add('active');
+            if(id === 'driver-login') renderDriverProfiles();
         }
 
-        function toggleOnline() {
-            isOnline = !isOnline;
-            const pill = document.getElementById('status-pill');
-            if(isOnline) {
-                pill.className = 'status-pill online';
-                pill.innerHTML = '<i class="fas fa-power-off"></i> <span>Online</span>';
-                alert('Você está online! Novas corridas aparecerão na aba FILA.');
-            } else {
-                pill.className = 'status-pill offline';
-                pill.innerHTML = '<i class="fas fa-power-off"></i> <span>Offline</span>';
-            }
-        }
-
-        function switchTab(t) {
-            document.getElementById('tab-map').classList.toggle('hidden', t !== 'map');
-            document.getElementById('tab-queue').classList.toggle('hidden', t !== 'queue');
-            document.getElementById('tab-finance').classList.toggle('hidden', t !== 'finance');
-            
-            document.getElementById('nav-map').classList.toggle('active', t === 'map');
-            document.getElementById('nav-queue').classList.toggle('active', t === 'queue');
-            document.getElementById('nav-finance').classList.toggle('active', t === 'finance');
-        }
-
-        // CLIENTE ENVIANDO CORRIDA
-        function sendToQueue() {
-            const dest = document.getElementById('dest-input').value;
-            const user = JSON.parse(localStorage.getItem('vroom_user')) || {n: 'Cliente Anônimo'};
-            if(!dest) return alert('Digite o destino!');
-            
-            const newRide = {
-                id: Date.now(),
-                client: user.n,
-                dest: dest,
-                price: 'R$ 7,00',
-                time: new Date().toLocaleTimeString([], {hour: '2min', minute: '2min'})
-            };
-            
-            // Simula salvar na nuvem/fila
-            let currentQueue = JSON.parse(localStorage.getItem('vroom_queue') || '[]');
-            currentQueue.push(newRide);
-            localStorage.setItem('vroom_queue', JSON.stringify(currentQueue));
-            
-            alert('Chamado enviado para a fila!');
-            nav('portal');
-        }
-
-        // MOTORISTA ATUALIZANDO FILA
-        setInterval(() => {
-            if(!isOnline) return;
-            const currentQueue = JSON.parse(localStorage.getItem('vroom_queue') || '[]');
-            if(currentQueue.length > ridesQueue.length) bip.play(); // Toca bip se houver nova corrida
-            ridesQueue = currentQueue;
-            renderQueue();
-        }, 3000);
-
-        function renderQueue() {
-            const list = document.getElementById('queue-list');
-            const empty = document.getElementById('empty-queue');
-            const count = document.getElementById('queue-count');
-            
-            count.innerText = ridesQueue.length;
-            
-            if(ridesQueue.length === 0) {
-                empty.classList.remove('hidden');
-                list.innerHTML = '';
-                return;
-            }
-            
-            empty.classList.add('hidden');
-            list.innerHTML = ridesQueue.map(ride => `
-                <div class="queue-card pulse-orange">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <p class="text-[10px] font-black text-orange-500 uppercase">Solicitado às ${ride.time}</p>
-                            <h4 class="text-lg font-black text-slate-800 italic">${ride.client}</h4>
-                        </div>
-                        <p class="text-xl font-black text-orange-600 italic">${ride.price}</p>
-                    </div>
-                    <div class="flex items-center gap-2 mb-4">
-                        <i class="fas fa-map-marker-alt text-slate-400 text-xs"></i>
-                        <p class="text-xs font-bold text-slate-500">${ride.dest}</p>
-                    </div>
-                    <button onclick="acceptFromQueue(${ride.id})" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs">Aceitar Corrida</button>
-                </div>
-            `).join('');
-        }
-
-        function acceptFromQueue(id) {
-            let currentQueue = JSON.parse(localStorage.getItem('vroom_queue') || '[]');
-            currentQueue = currentQueue.filter(r => r.id !== id);
-            localStorage.setItem('vroom_queue', JSON.stringify(currentQueue));
-            alert('Corrida aceita! O GPS será iniciado.');
-            switchTab('map');
-        }
-
-        // HELPERS CLIENTE
-        function checkClientAccess() {
-            if(localStorage.getItem('vroom_user')) { nav('cliente'); initMap('client-map'); }
-            else nav('cadastro');
-        }
-        function finalizeRegistry() {
-            const n = document.getElementById('reg-name').value;
-            if(n) { localStorage.setItem('vroom_user', JSON.stringify({n})); nav('cliente'); initMap('client-map'); }
-            else alert('Digite seu nome!');
-        }
-        function initMap(id) {
-            navigator.geolocation.getCurrentPosition(p => {
-                document.getElementById(id).src = `https://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}&z=15&output=embed`;
-            });
-        }
-    
-        function renderDriverSelection() {
-            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
-            const container = document.getElementById('driver-select-container');
-            
-            if(drivers.length === 0) {
-                container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black">Nenhum motorista cadastrado pelo ADM</p>';
-                return;
-            }
-            
-            container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black mb-3">Selecione seu Perfil</p>';
-            drivers.forEach(d => {
-                container.innerHTML += `
-                    <button onclick="selectDriverProfile('${d.name}')" class="w-full bg-slate-800 p-4 rounded-xl mb-2 flex items-center gap-3 border border-slate-700 active:border-orange-500">
-                        <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center font-black text-xs text-white">${d.name[0]}</div>
-                        <div class="text-left">
-                            <p class="text-sm font-black text-white italic">${d.name}</p>
-                            <p class="text-[8px] text-green-500 font-black uppercase italic">Liberado</p>
-                        </div>
-                    </button>
-                `;
-            });
-        }
-
-        function selectDriverProfile(name) {
-            localStorage.setItem('vroom_current_driver', name);
-            document.getElementById('driver-display-name').innerText = name;
-            document.getElementById('driver-initial').innerText = name[0];
-            nav('driver-dashboard');
-            initMap('map-frame');
-        }
-
-        // Chamar renderização ao abrir tela de login
-        const oldNav = nav;
-        nav = function(id) {
-            if(id === 'driver-login') renderDriverSelection();
-            oldNav(id);
-        }
-    
-
-        function renderDriverSelection() {
-            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
+        // Renderizar Perfis na Área do Motorista
+        function renderDriverProfiles() {
             const container = document.getElementById('driver-select-container');
             if(!container) return;
+            const drivers = JSON.parse(localStorage.getItem('vroom_drivers') || '[]');
             if(drivers.length === 0) {
-                container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black">Nenhum motorista cadastrado no ADM</p>';
+                container.innerHTML = '<div class="p-8 border-2 border-dashed border-slate-800 rounded-2xl"><p class="text-slate-500 uppercase font-black text-[10px]">Aguardando cadastro no ADM</p></div>';
                 return;
             }
-            container.innerHTML = '<p class="text-[10px] text-slate-500 uppercase font-black mb-3">Selecione seu Perfil</p>';
+            container.innerHTML = '<p class="text-slate-500 uppercase font-black text-[9px] mb-4">Escolha seu perfil para entrar</p>';
             drivers.forEach(d => {
                 container.innerHTML += `
-                    <button onclick="selectDriverProfile('${d.name}')" class="w-full bg-slate-800 p-4 rounded-xl mb-2 flex items-center gap-3 border border-slate-700 active:border-orange-500">
-                        <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center font-black text-xs text-white">${d.name[0]}</div>
-                        <div class="text-left"><p class="text-sm font-black text-white italic">${d.name}</p><p class="text-[8px] text-green-500 font-black uppercase italic">Liberado</p></div>
+                    <button onclick="selectDriver('${d.name}')" class="w-full bg-slate-800 p-5 rounded-2xl mb-3 flex items-center gap-4 border border-slate-700 hover:border-orange-500 transition-all">
+                        <div class="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-black text-white">${d.name[0].toUpperCase()}</div>
+                        <div class="text-left">
+                            <p class="text-base font-black text-white italic">${d.name}</p>
+                            <p class="text-[8px] text-green-500 font-black uppercase">Disponível</p>
+                        </div>
                     </button>`;
             });
         }
-        function selectDriverProfile(name) {
+
+        function selectDriver(name) {
             localStorage.setItem('vroom_current_driver', name);
-            document.getElementById('driver-display-name').innerText = name;
-            document.getElementById('driver-initial').innerText = name[0];
+            const nameEl = document.getElementById('driver-display-name');
+            const initEl = document.getElementById('driver-initial');
+            if(nameEl) nameEl.innerText = name;
+            if(initEl) initEl.innerText = name[0].toUpperCase();
             nav('driver-dashboard');
-            initMap('map-frame');
         }
-        const oldNav = nav;
-        nav = function(id) { if(id === 'driver-login') renderDriverSelection(); oldNav(id); }
+
+        // Simulação de Fila e Pedidos
+        function solicitarVroom() {
+            const dest = document.getElementById('input-dest').value;
+            if(!dest) return alert('Digite um destino!');
+            const pedido = { id: Date.now(), dest: dest, status: 'Pendente', time: new Date().toLocaleTimeString() };
+            let pedidos = JSON.parse(localStorage.getItem('vroom_pedidos') || '[]');
+            pedidos.push(pedido);
+            localStorage.setItem('vroom_pedidos', JSON.stringify(pedidos));
+            alert('Solicitado! Aguardando motorista...');
+            nav('portal');
+        }
+
+        function renderFila() {
+            const container = document.getElementById('fila-container');
+            if(!container) return;
+            const pedidos = JSON.parse(localStorage.getItem('vroom_pedidos') || '[]');
+            container.innerHTML = pedidos.length ? '' : '<p class="text-slate-500 text-center py-20 font-black uppercase text-[10px]">Nenhum pedido na fila</p>';
+            pedidos.forEach(p => {
+                container.innerHTML += `
+                    <div class="bg-slate-800 p-4 rounded-xl border-l-4 border-orange-500 mb-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-[10px] text-orange-500 font-black uppercase">Destino</p>
+                                <p class="text-sm font-black italic text-white">${p.dest}</p>
+                            </div>
+                            <button onclick="aceitarCorrida(${p.id})" class="bg-green-600 text-white px-4 py-2 rounded-lg font-black uppercase text-[10px]">Aceitar</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function aceitarCorrida(id) {
+            let pedidos = JSON.parse(localStorage.getItem('vroom_pedidos') || '[]');
+            pedidos = pedidos.filter(p => p.id != id);
+            localStorage.setItem('vroom_pedidos', JSON.stringify(pedidos));
+            alert('Corrida aceita! Iniciando navegação...');
+            renderFila();
+        }
+
+        // Polling simples para fila se estiver na aba fila
+        setInterval(() => {
+            const fila = document.getElementById('screen-driver-fila');
+            if(fila && fila.classList.contains('active')) renderFila();
+        }, 3000);
+    </script>
     
-</script>
 </body>
 </html>
