@@ -108,11 +108,11 @@
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Litros Diesel</label>
-                        <input type="number" step="0.01" class="form-control" id="v_liters" required>
+                        <input type="number" step="0.01" class="form-control" id="v_liters" placeholder="0.00" required>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Litros Arla (Opt)</label>
-                        <input type="number" step="0.01" class="form-control" id="v_arla">
+                        <input type="number" step="0.01" class="form-control" id="v_arla" placeholder="0.00">
                     </div>
                     <div class="col-md-2 d-flex align-items-end gap-1">
                         <button type="submit" class="btn btn-save w-100">Salvar</button>
@@ -275,10 +275,20 @@
 
     document.getElementById('vehicleForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        const plate = document.getElementById('v_plate').value.toUpperCase();
-        const km = parseFloat(document.getElementById('v_km').value);
-        const diesel = parseFloat(document.getElementById('v_liters').value);
-        const arla = parseFloat(document.getElementById('v_arla').value) || 0;
+        const plate = document.getElementById('v_plate').value.trim().toUpperCase();
+        const kmInput = document.getElementById('v_km').value;
+        const dieselInput = document.getElementById('v_liters').value;
+        const arlaInput = document.getElementById('v_arla').value;
+
+        // Validação rigorosa: Placa, KM e Diesel são obrigatórios
+        if (!plate || kmInput === "" || dieselInput === "") {
+            alert("⚠️ Atenção: Preencha todos os campos obrigatórios (Placa, KM e Litros Diesel)!");
+            return;
+        }
+
+        const km = parseFloat(kmInput);
+        const diesel = parseFloat(dieselInput);
+        const arla = parseFloat(arlaInput) || 0;
 
         // Calc KM Dia - Busca o último KM registrado especificamente para ESTA PLACA
         // Se for o primeiro registro da placa, o KM Dia será 0.
