@@ -228,7 +228,7 @@
     let db = JSON.parse(localStorage.getItem('vale_paraiso_db')) || { 
         days: {}, // { "YYYY-MM-DD": { pumpDiesel: {start, end}, pumpArla: {start, end}, vehicles: [] } }
         vehicleHistory: {}, // { "PLATE": lastKM }
-        plates: [] // [ "ABC-1234", ... ]
+        plates: ["OXD-7054", "OXD-6001", "OXD-7075", "OXD-7045", "OXD-7065", "PZZ-2503", "PZZ-2507", "RNY-5H18", "RTP-5G07", "SIZ-8I26", "TCG-7G96", "TCX-6J60"] // [ "ABC-1234", ... ]
     };
 
     let today = new Date().toISOString().split('T')[0];
