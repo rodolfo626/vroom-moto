@@ -134,14 +134,43 @@
 
 <!-- Modal Lista Extra -->
 <div class="modal fade" id="extraListModal" tabindex="-1">
+...
+</div>
+
+<!-- Modal Alterar Lançamento -->
+<div class="modal fade" id="editEntryModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Seleção de Placa</h5>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Alterar / Excluir Lançamento</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div id="extraListButtons" class="d-flex flex-wrap gap-2"></div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Placa</label>
+                    <input type="text" class="form-control" id="edit_plate">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">KM Atual</label>
+                    <input type="number" class="form-control" id="edit_km">
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold">Diesel (L)</label>
+                        <input type="number" step="0.01" class="form-control" id="edit_liters">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold">Arla (L)</label>
+                        <input type="number" step="0.01" class="form-control" id="edit_arla">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-danger" onclick="deleteCurrentEntry()">EXCLUIR</button>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="saveEdit()">SALVAR ALTERAÇÃO</button>
+                </div>
             </div>
         </div>
     </div>
@@ -305,20 +334,78 @@
         body.innerHTML = '';
         db.days[today].entries.forEach((e, index) => {
             body.innerHTML += `
-                <tr>
+                <tr onclick="showEditMenu(${index})" style="cursor:pointer">
                     <td>${e.time}</td>
                     <td>${e.plate}</td>
                     <td>${e.km}</td>
                     <td>${e.liters} L</td>
                     <td><span class="badge bg-success">${e.avg} KM/L</span></td>
                     <td>${e.arla} L</td>
-                    <td><button class="btn btn-sm btn-outline-danger" onclick="deleteEntry(${index})">X</button></td>
+                    <td><i class="bi bi-pencil-square text-primary"></i></td>
                 </tr>
             `;
         });
     }
 
+    let editingIndex = -1;
+    function showEditMenu(index) {
+        editingIndex = index;
+        const entry = db.days[today].entries[index];
+        
+        document.getElementById('edit_plate').value = entry.plate;
+        document.getElementById('edit_km').value = entry.km;
+        document.getElementById('edit_liters').value = entry.liters;
+        document.getElementById('edit_arla').value = entry.arla;
+        
+        new bootstrap.Modal(document.getElementById('editEntryModal')).show();
+    }
+
+    function saveEdit() {
+        if (editingIndex === -1) return;
+        
+        const plate = document.getElementById('edit_plate').value.trim().toUpperCase();
+        const km = parseFloat(document.getElementById('edit_km').value);
+        const liters = parseFloat(document.getElementById('edit_liters').value);
+        const arla = parseFloat(document.getElementById('edit_arla').value) || 0;
+        
+        // Recalcular média
+        const dayEntries = db.days[today].entries;
+        // Pega o KM anterior (se houver um lançamento anterior para esta placa HOJE)
+        let previousKM = 0;
+        for (let i = editingIndex - 1; i >= 0; i--) {
+            if (dayEntries[i].plate === plate) {
+                previousKM = dayEntries[i].km;
+                break;
+            }
+        }
+        // Se não achou hoje, usa o KM de referência do db.history (aproximação)
+        if (previousKM === 0) previousKM = km - dayEntries[editingIndex].diffKM;
+
+        const diffKM = km - previousKM;
+        const avg = diffKM > 0 ? (diffKM / liters).toFixed(2) : "0.00";
+
+        dayEntries[editingIndex] = {
+            ...dayEntries[editingIndex],
+            plate, km, liters, arla, diffKM, avg
+        };
+        
+        db.history[plate] = km;
+        save();
+        renderTable();
+        bootstrap.Modal.getInstance(document.getElementById('editEntryModal')).hide();
+    }
+
+    function deleteCurrentEntry() {
+        if (confirm("Tem certeza que deseja EXCLUIR este lançamento?")) {
+            db.days[today].entries.splice(editingIndex, 1);
+            save();
+            renderTable();
+            bootstrap.Modal.getInstance(document.getElementById('editEntryModal')).hide();
+        }
+    }
+
     function deleteEntry(index) {
+        // Mantido apenas por compatibilidade, mas agora usamos o showEditMenu
         if (confirm("Excluir este lançamento?")) {
             db.days[today].entries.splice(index, 1);
             save();
