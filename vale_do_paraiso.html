@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Diesel - Rodolfo Oliveira</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #e9ecef; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .container { max-width: 600px; margin-top: 30px; }
+        .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; }
+        .header-section { background-color: #343a40; color: white; padding: 20px; border-radius: 15px 15px 0 0; margin-bottom: 0; }
+        .btn-primary { background-color: #198754; border: none; }
+        .btn-primary:hover { background-color: #157347; }
+        .history-item { border-bottom: 1px solid #dee2e6; padding: 12px 0; }
+        .history-item:last-child { border-bottom: none; }
+        .stats-box { background-color: #d1e7dd; color: #0f5132; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card mb-4">
+            <div class="header-section text-center">
+                <h2 class="mb-0">⛽ Controle de Diesel</h2>
+                <small>Rodolfo Oliveira - Sistema Pessoal</small>
+            </div>
+            <div class="card-body p-4">
+                <form id="fuelForm">
+                    <div class="mb-3">
+                        <label for="km" class="form-label">Kilometragem Atual (KM)</label>
+                        <input type="number" class="form-control" id="km" placeholder="Ex: 45000" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="liters" class="form-label">Litros de Diesel</label>
+                        <input type="number" step="0.01" class="form-control" id="liters" placeholder="Ex: 50.5" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Preço por Litro (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="price" placeholder="Ex: 5.89" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">REGISTRAR ABASTECIMENTO</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card p-4">
+            <h4 class="mb-3 border-bottom pb-2">Histórico de Consumo</h4>
+            <div id="stats" class="stats-box d-none"></div>
+            <div id="history">
+                <!-- Registros aparecerão aqui -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fuelForm = document.getElementById('fuelForm');
+        const historyDiv = document.getElementById('history');
+        const statsDiv = document.getElementById('stats');
+
+        // Chave separada para o controle de diesel
+        let records = JSON.parse(localStorage.getItem('diesel_fuel_records')) || [];
+
+        function updateUI() {
+            historyDiv.innerHTML = '';
+            if (records.length === 0) {
+                historyDiv.innerHTML = '<p class="text-muted text-center">Nenhum registro encontrado.</p>';
+                statsDiv.classList.add('d-none');
+                return;
+            }
+
+            records.sort((a, b) => b.timestamp - a.timestamp).forEach((record) => {
+                const date = new Date(record.timestamp).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${record.km} KM</strong><br>
+                            <small class="text-muted">${date}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold text-success">R$ ${record.total.toFixed(2)}</span><br>
+                            <small class="text-muted">${record.liters}L - R$ ${record.price}/L</small>
+                        </div>
+                    </div>
+                `;
+                historyDiv.appendChild(div);
+            });
+
+            if (records.length >= 2) {
+                const sortedRecords = [...records].sort((a, b) => b.km - a.km);
+                const latest = sortedRecords[0];
+                const previous = sortedRecords[1];
+                const dist = latest.km - previous.km;
+                
+                if (dist > 0) {
+                    const consumption = dist / latest.liters;
+                    statsDiv.innerHTML = `<strong>Média Atual:</strong> ${consumption.toFixed(2)} KM/L Diesel`;
+                    statsDiv.classList.remove('d-none');
+                } else {
+                    statsDiv.classList.add('d-none');
+                }
+            } else {
+                statsDiv.classList.add('d-none');
+            }
+        }
+
+        fuelForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const km = parseFloat(document.getElementById('km').value);
+            const liters = parseFloat(document.getElementById('liters').value);
+            const price = parseFloat(document.getElementById('price').value);
+            
+            const newRecord = {
+                km,
+                liters,
+                price,
+                total: liters * price,
+                timestamp: Date.now()
+            };
+
+            records.push(newRecord);
+            localStorage.setItem('diesel_fuel_records', JSON.stringify(records));
+            fuelForm.reset();
+            updateUI();
+        });
+
+        updateUI();
+    </script>
+</body>
+</html>
