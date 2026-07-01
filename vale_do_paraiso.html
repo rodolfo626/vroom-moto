@@ -260,22 +260,35 @@
     // Inicializar Select de Placas
     function updatePlateSelect() {
         const select = document.getElementById('v_plate');
-        if (!select) return;
+        if (!select) {
+            console.error("Elemento v_plate não encontrado");
+            return;
+        }
+        
         const currentVal = select.value;
-        select.innerHTML = '<option value="">Selecione uma placa...</option>';
+        select.options.length = 0; // Limpa todas as opções
+        
+        // Opção padrão
+        const defaultOpt = new Option("Selecione uma placa...", "");
+        select.add(defaultOpt);
+
+        // Adicionar placas do banco
         if (db.plates && Array.isArray(db.plates)) {
-            db.plates.sort().forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p;
-                opt.textContent = p;
-                select.appendChild(opt);
+            const uniquePlates = [...new Set(db.plates)].sort();
+            uniquePlates.forEach(p => {
+                const opt = new Option(p, p);
+                select.add(opt);
             });
         }
-        select.value = currentVal;
+        
+        if (currentVal) select.value = currentVal;
+        console.log("Select de placas atualizado com", db.plates.length, "placas.");
     }
     
-    // Executar após o carregamento do DOM
-    window.addEventListener('DOMContentLoaded', (event) => {
+    // Executar imediatamente e também no DOMContentLoaded
+    updatePlateSelect();
+    
+    window.addEventListener('load', () => {
         updatePlateSelect();
         render();
     });
