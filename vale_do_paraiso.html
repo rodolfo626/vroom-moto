@@ -239,20 +239,39 @@
     }
 
     // Load Pumps
-    document.getElementById('pump_diesel_start').value = db.days[today].pumpDiesel.start;
-    document.getElementById('pump_diesel_end').value = db.days[today].pumpDiesel.end;
-    document.getElementById('pump_arla_start').value = db.days[today].pumpArla.start;
-    document.getElementById('pump_arla_end').value = db.days[today].pumpArla.end;
+    if (db.days[today]) {
+        document.getElementById('pump_diesel_start').value = db.days[today].pumpDiesel.start || "";
+        document.getElementById('pump_diesel_end').value = db.days[today].pumpDiesel.end || "";
+        document.getElementById('pump_arla_start').value = db.days[today].pumpArla.start || "";
+        document.getElementById('pump_arla_end').value = db.days[today].pumpArla.end || "";
+    }
 
     function actionDay(type) {
-        db.days[today].pumpDiesel.start = parseFloat(document.getElementById('pump_diesel_start').value) || 0;
-        db.days[today].pumpDiesel.end = parseFloat(document.getElementById('pump_diesel_end').value) || 0;
-        db.days[today].pumpArla.start = parseFloat(document.getElementById('pump_arla_start').value) || 0;
-        db.days[today].pumpArla.end = parseFloat(document.getElementById('pump_arla_end').value) || 0;
+        const d_start = parseFloat(document.getElementById('pump_diesel_start').value) || 0;
+        const d_end = parseFloat(document.getElementById('pump_diesel_end').value) || 0;
+        const a_start = parseFloat(document.getElementById('pump_arla_start').value) || 0;
+        const a_end = parseFloat(document.getElementById('pump_arla_end').value) || 0;
+
+        db.days[today].pumpDiesel = { start: d_start, end: d_end };
+        db.days[today].pumpArla = { start: a_start, end: a_end };
         
         saveDB();
-        alert(type === 'start' ? 'Dia iniciado!' : 'Dia finalizado e fechamento salvo!');
+        alert(type === 'start' ? 'Início do dia registrado! As leituras ficarão salvas no painel.' : 'Dia finalizado e fechamento salvo!');
     }
+
+    // Auto-save pump values on change to ensure they stay visible even if page reloads
+    ['pump_diesel_start', 'pump_diesel_end', 'pump_arla_start', 'pump_arla_end'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            const field = id.split('_')[1]; // diesel or arla
+            const moment = id.split('_')[2]; // start or end
+            const val = parseFloat(document.getElementById(id).value) || 0;
+            
+            if (field === 'diesel') db.days[today].pumpDiesel[moment] = val;
+            else db.days[today].pumpArla[moment] = val;
+            
+            saveDB();
+        });
+    });
 
     document.getElementById('vehicleForm').addEventListener('submit', function(e) {
         e.preventDefault();
