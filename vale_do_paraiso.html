@@ -108,8 +108,26 @@
             </thead>
             <tbody id="todayTableBody"></tbody>
         </table>
-        <div class="text-end">
+        <div class="d-flex justify-content-between">
+            <button class="btn btn-outline-primary" onclick="showHistory()"><i class="bi bi-calendar3"></i> Histórico do Mês</button>
             <button class="btn btn-danger" onclick="finalizeDay()">FINALIZAR DIA / GERAR RELATÓRIO</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Histórico Mensal -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Histórico de Relatórios (Mês Atual)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group" id="historyList">
+                    <!-- JS -->
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -359,17 +377,23 @@
 
     function shareExcel() {
         const day = db.days[today];
+        generateExcelForDay(today, day);
+    }
+
+    function generateExcelForDay(dateStr, dayData) {
+        if (!dayData || dayData.entries.length === 0) return;
+        
         let data = [
-            ["RELATÓRIO VALE DO PARAÍSO", today],
+            ["RELATÓRIO VALE DO PARAÍSO", dateStr.split('-').reverse().join('/')],
             [],
             ["BOMBA DIESEL", "INÍCIO", "FINAL", "TOTAL"],
-            ["DIESEL", day.diesel.s, day.diesel.e, day.diesel.e - day.diesel.s],
-            ["ARLA", day.arla.s, day.arla.e, day.arla.e - day.arla.s],
+            ["DIESEL", dayData.diesel.s, dayData.diesel.e, dayData.diesel.e - dayData.diesel.s],
+            ["ARLA", dayData.arla.s, dayData.arla.e, dayData.arla.e - dayData.arla.s],
             [],
             ["PLACA", "KM ATUAL", "KM PERCORRIDO", "L DIESEL", "MÉDIA", "L ARLA"]
         ];
 
-        day.entries.forEach(e => {
+        dayData.entries.forEach(e => {
             data.push([e.plate, e.km, e.diffKM, e.liters, e.avg, e.arla]);
         });
 
@@ -378,17 +402,55 @@
         XLSX.utils.book_append_sheet(wb, ws, "Combustível");
         const wbout = XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
         const blob = new Blob([wbout], {type: 'application/octet-stream'});
-        const file = new File([blob], `Relatorio_${today}.xlsx`, {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+        const file = new File([blob], `Relatorio_${dateStr}.xlsx`, {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 
         if (navigator.share) {
-            navigator.share({ files: [file], title: 'Relatório Vale do Paraíso', text: 'Segue relatório de combustível do dia.' });
+            navigator.share({ files: [file], title: 'Relatório Vale do Paraíso', text: `Segue relatório de combustível - ${dateStr}` });
         } else {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `Relatorio_${today}.xlsx`;
+            a.download = `Relatorio_${dateStr}.xlsx`;
             a.click();
         }
+    }
+
+    function showHistory() {
+        const list = document.getElementById('historyList');
+        list.innerHTML = '';
+        
+        // Pegar todos os dias que tem lançamentos, ordenados pelo mais recente
+        const sortedDays = Object.keys(db.days).sort((a,b) => b.localeCompare(a));
+        
+        // Filtrar apenas o mês atual para não sobrecarregar
+        const currentMonth = new Date().toISOString().substring(0, 7); // "YYYY-MM"
+        
+        const monthDays = sortedDays.filter(d => d.startsWith(currentMonth));
+
+        if (monthDays.length === 0) {
+            list.innerHTML = '<p class="text-center p-3">Nenhum relatório salvo este mês.</p>';
+        } else {
+            monthDays.forEach(d => {
+                const dayData = db.days[d];
+                const count = dayData.entries.length;
+                if (count > 0) {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        <div>
+                            <strong>${d.split('-').reverse().join('/')}</strong>
+                            <br><small class="text-muted">${count} lançamentos</small>
+                        </div>
+                        <button class="btn btn-sm btn-success" onclick="generateExcelForDay('${d}', db.days['${d}'])">
+                            <i class="bi bi-file-earmark-excel"></i> Baixar Excel
+                        </button>
+                    `;
+                    list.appendChild(item);
+                }
+            });
+        }
+        
+        new bootstrap.Modal(document.getElementById('historyModal')).show();
     }
 
     window.onload = init;
