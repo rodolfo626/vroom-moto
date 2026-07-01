@@ -100,10 +100,11 @@
                 <div class="row g-3">
                     <div class="col-md-3" id="plateContainer">
                         <label class="form-label">Placa do Veículo</label>
-                        <select class="form-select" id="v_plate" required>
-                            <option value="">Carregando placas...</option>
-                        </select>
-                        <button type="button" class="btn btn-link btn-sm p-0 mt-1" onclick="addNewPlate()">+ Cadastrar nova placa</button>
+                        <input type="text" class="form-control" id="v_plate" list="platesList" placeholder="Digite ou selecione..." required>
+                        <datalist id="platesList">
+                            <!-- JS -->
+                        </datalist>
+                        <button type="button" class="btn btn-link btn-sm p-0 mt-1" onclick="addNewPlate()">+ Salvar nova placa na lista</button>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">KM no Painel</label>
@@ -257,40 +258,20 @@
         };
     }
 
-    // Inicializar Select de Placas - RECONSTRUÇÃO TOTAL
+    // Inicializar Datalist de Placas
     function updatePlateSelect() {
-        const container = document.getElementById('plateContainer');
-        if (!container) return;
+        const list = document.getElementById('platesList');
+        if (!list) return;
 
-        // Recriamos o HTML do select do zero para limpar qualquer erro
-        const currentVal = db.lastSelectedPlate || "";
-        
-        let selectHtml = `
-            <label class="form-label">Placa do Veículo</label>
-            <select class="form-select" id="v_plate" required>
-                <option value="">Selecione uma placa...</option>
-        `;
-
+        list.innerHTML = '';
         if (db.plates && Array.isArray(db.plates)) {
             const uniquePlates = [...new Set(db.plates)].sort();
             uniquePlates.forEach(p => {
-                const selected = (p === currentVal) ? 'selected' : '';
-                selectHtml += `<option value="${p}" ${selected}>${p}</option>`;
+                const opt = document.createElement('option');
+                opt.value = p;
+                list.appendChild(opt);
             });
         }
-
-        selectHtml += `
-            </select>
-            <button type="button" class="btn btn-link btn-sm p-0 mt-1" onclick="addNewPlate()">+ Cadastrar nova placa</button>
-        `;
-
-        container.innerHTML = selectHtml;
-        
-        // Re-adicionar o listener de mudança para salvar a última seleção
-        document.getElementById('v_plate').addEventListener('change', function() {
-            db.lastSelectedPlate = this.value;
-            saveDB();
-        });
     }
     
     window.onload = function() {
@@ -299,20 +280,20 @@
     };
 
     function addNewPlate() {
-        const newPlate = prompt("Digite a nova placa (Ex: ABC1234):");
-        if (newPlate) {
-            const p = newPlate.trim().toUpperCase();
-            if (p) {
-                if (!db.plates.includes(p)) {
-                    db.plates.push(p);
-                    db.lastSelectedPlate = p;
-                    saveDB();
-                    updatePlateSelect();
-                } else {
-                    alert("Esta placa já está cadastrada!");
-                    document.getElementById('v_plate').value = p;
-                }
+        const input = document.getElementById('v_plate');
+        const p = input.value.trim().toUpperCase();
+        
+        if (p) {
+            if (!db.plates.includes(p)) {
+                db.plates.push(p);
+                saveDB();
+                updatePlateSelect();
+                alert("Placa " + p + " salva na lista!");
+            } else {
+                alert("Esta placa já está na lista.");
             }
+        } else {
+            alert("Digite uma placa primeiro.");
         }
     }
 
@@ -353,8 +334,8 @@
 
     document.getElementById('vehicleForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        const plateSelect = document.getElementById('v_plate');
-        const plate = plateSelect.value;
+        const plateInput = document.getElementById('v_plate');
+        const plate = plateInput.value.trim().toUpperCase();
         const kmInput = document.getElementById('v_km').value;
         const dieselInput = document.getElementById('v_liters').value;
         const arlaInput = document.getElementById('v_arla').value;
