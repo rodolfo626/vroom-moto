@@ -245,14 +245,25 @@
     // Inicializar Select de Placas
     function updatePlateSelect() {
         const select = document.getElementById('v_plate');
+        if (!select) return;
         const currentVal = select.value;
         select.innerHTML = '<option value="">Selecione uma placa...</option>';
-        db.plates.sort().forEach(p => {
-            select.innerHTML += `<option value="${p}">${p}</option>`;
-        });
+        if (db.plates && Array.isArray(db.plates)) {
+            db.plates.sort().forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                select.appendChild(opt);
+            });
+        }
         select.value = currentVal;
     }
-    updatePlateSelect();
+    
+    // Executar após o carregamento do DOM
+    window.addEventListener('DOMContentLoaded', (event) => {
+        updatePlateSelect();
+        render();
+    });
 
     function addNewPlate() {
         const newPlate = prompt("Digite a nova placa (Ex: ABC1234 ou ABC-1234):");
