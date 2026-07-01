@@ -68,7 +68,7 @@
                         <datalist id="platesList"></datalist>
                         <div class="d-flex gap-2 mt-1">
                             <button type="button" class="btn btn-link btn-sm p-0" onclick="savePlateToList()">+ Salvar Placa</button>
-                            <button type="button" class="btn btn-link btn-sm p-0 text-secondary" onclick="showExtraList()">Lista Extra</button>
+                            <button type="button" class="btn btn-primary btn-sm px-2 text-white" onclick="showExtraList()" style="text-decoration:none">VER LISTA DE PLACAS</button>
                         </div>
                     </div>
                     <div class="col-md-2">
@@ -297,36 +297,40 @@
     }
 
     function showExtraList() {
+        console.log("Iniciando showExtraList");
         const container = document.getElementById('extraListButtons');
-        container.innerHTML = '';
+        if (!container) {
+            alert("Erro: Container da lista não encontrado!");
+            return;
+        }
         
-        // Garantir que temos placas
-        if (!db.plates || db.plates.length === 0) {
-            container.innerHTML = '<p class="text-center">Nenhuma placa cadastrada.</p>';
+        container.innerHTML = '';
+        const plates = db.plates || [];
+        
+        if (plates.length === 0) {
+            container.innerHTML = '<p class="text-center w-100">Nenhuma placa cadastrada.</p>';
         } else {
-            db.plates.sort().forEach(p => {
+            plates.sort().forEach(p => {
                 let btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'btn btn-outline-dark fw-bold py-2';
+                btn.className = 'btn btn-outline-dark fw-bold py-3';
+                btn.style.fontSize = '1.1rem';
                 btn.innerText = p;
                 btn.onclick = function() {
-                    const plateInput = document.getElementById('v_plate');
-                    plateInput.value = p;
-                    
-                    // Fechar o modal
+                    document.getElementById('v_plate').value = p;
+                    // Fechar usando API nativa
                     const modalEl = document.getElementById('extraListModal');
-                    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
                     modalInstance.hide();
-                    
-                    // Focar no próximo campo
                     setTimeout(() => document.getElementById('v_km').focus(), 300);
                 };
                 container.appendChild(btn);
             });
         }
         
+        // Abrir usando API nativa
         const modalEl = document.getElementById('extraListModal');
-        const modalInstance = new bootstrap.Modal(modalEl);
+        const modalInstance = new bootstrap.Modal(modalEl, { backdrop: true });
         modalInstance.show();
     }
 
