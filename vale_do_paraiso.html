@@ -54,7 +54,8 @@
             <div class="d-flex gap-2 mt-4">
                 <button class="btn btn-start flex-grow-1" onclick="actionDay('start')"><i class="bi bi-play-fill"></i> Iniciar Dia</button>
                 <button class="btn btn-end flex-grow-1" onclick="actionDay('end')"><i class="bi bi-stop-fill"></i> Finalizar Dia</button>
-                <button class="btn btn-outline-dark flex-grow-1" onclick="generateReport()"><i class="bi bi-file-earmark-text"></i> Relatório Final</button>
+                <button class="btn btn-outline-dark flex-grow-1" onclick="generateReport()"><i class="bi bi-file-earmark-text"></i> Relatório</button>
+                <button class="btn btn-primary flex-grow-1" onclick="shareReport()"><i class="bi bi-share"></i> Compartilhar</button>
             </div>
         </div>
     </div>
@@ -298,6 +299,41 @@
         a.download = `Relatorio_Vale_Paraiso_${today}.txt`;
         a.click();
         alert('Relatório gerado com sucesso!');
+    }
+
+    async function shareReport() {
+        const dayData = db.days[today];
+        let totalDieselVehicles = 0;
+        let totalArlaVehicles = 0;
+        
+        dayData.vehicles.forEach(v => {
+            totalDieselVehicles += v.diesel;
+            totalArlaVehicles += v.arla;
+        });
+
+        const dieselPumpUsed = dayData.pumpDiesel.end - dayData.pumpDiesel.start;
+        const arlaPumpUsed = dayData.pumpArla.end - dayData.pumpArla.start;
+
+        let report = `📊 VALE DO PARAÍSO - ${today.split('-').reverse().join('/')}\n\n`;
+        report += `⛽ BOMBA DIESEL: ${dieselPumpUsed.toFixed(2)}L\n`;
+        report += `💧 BOMBA ARLA: ${arlaPumpUsed.toFixed(2)}L\n`;
+        report += `🚛 TOTAL VEÍCULOS: ${totalDieselVehicles.toFixed(2)}L\n`;
+        report += `⚠️ DIFERENÇA: ${(dieselPumpUsed - totalDieselVehicles).toFixed(2)}L\n\n`;
+        
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Relatório Vale do Paraíso',
+                    text: report
+                });
+            } catch (err) {
+                console.log('Erro ao compartilhar', err);
+            }
+        } else {
+            // Fallback: Copy to clipboard
+            navigator.clipboard.writeText(report);
+            alert('Relatório copiado para a área de transferência!');
+        }
     }
 
     function deleteEntry(id) {
