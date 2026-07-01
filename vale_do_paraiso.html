@@ -452,10 +452,52 @@
         
         if (navigator.share) {
             try {
-                await navigator.share({
-                    title: 'Relatório Vale do Paraíso',
-                    text: report
+                // Criar arquivo Excel para compartilhar
+                const dayData = db.days[today];
+                const pumpData = [
+                    ["RELATÓRIO VALE DO PARAÍSO", "", "", "", "", ""],
+                    ["DATA:", today.split('-').reverse().join('/'), "", "", "", ""],
+                    ["", "", "", "", "", ""],
+                    ["BOMBA", "INÍCIO", "FIM", "TOTAL (L)", "", ""],
+                    ["DIESEL", dayData.pumpDiesel.start, dayData.pumpDiesel.end, (dayData.pumpDiesel.end - dayData.pumpDiesel.start).toFixed(2), "", ""],
+                    ["ARLA", dayData.pumpArla.start, dayData.pumpArla.end, (dayData.pumpArla.end - dayData.pumpArla.start).toFixed(2), "", ""],
+                    ["", "", "", "", "", ""],
+                    ["VEÍCULOS", "", "", "", "", ""],
+                    ["PLACA", "KM PAINEL", "KM DIA", "DIESEL (L)", "ARLA (L)", "MÉDIA"]
+                ];
+
+                let totalD = 0; let totalA = 0;
+                dayData.vehicles.forEach(v => {
+                    pumpData.push([v.plate, v.km, v.kmDia, v.diesel, v.arla, v.media]);
+                    totalD += v.diesel; totalA += v.arla;
                 });
+
+                pumpData.push(["", "", "", "", "", ""]);
+                pumpData.push(["TOTAIS VEÍCULOS", "", "", totalD.toFixed(2), totalA.toFixed(2), ""]);
+                const diff = ((dayData.pumpDiesel.end - dayData.pumpDiesel.start) - totalD).toFixed(2);
+                pumpData.push(["DIFERENÇA (BOMBA x VEÍCULO)", "", "", diff, "", ""]);
+
+                const ws = XLSX.utils.aoa_to_sheet(pumpData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Fechamento");
+                const wbout = XLSX.write(wb, {bookType:'xlsx',  type: 'array'});
+                
+                const file = new File([wbout], `Relatorio_Vale_Paraiso_${today}.xlsx`, {
+                    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Relatório Vale do Paraíso',
+                        text: 'Segue planilha de fechamento detalhada.'
+                    });
+                } else {
+                    await navigator.share({
+                        title: 'Relatório Vale do Paraíso',
+                        text: report
+                    });
+                }
             } catch (err) {
                 console.log('Erro ao compartilhar', err);
             }
