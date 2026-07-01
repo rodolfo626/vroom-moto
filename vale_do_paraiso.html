@@ -104,7 +104,10 @@
                         <datalist id="platesList">
                             <!-- JS -->
                         </datalist>
-                        <button type="button" class="btn btn-link btn-sm p-0 mt-1" onclick="addNewPlate()">+ Salvar nova placa na lista</button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-link btn-sm p-0 mt-1" onclick="addNewPlate()">+ Salvar placa</button>
+                            <button type="button" class="btn btn-link btn-sm p-0 mt-1 text-secondary" onclick="openExtraList()"><i class="bi bi-list-ul"></i> Lista Extra</button>
+                        </div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">KM no Painel</label>
@@ -224,6 +227,24 @@
   </div>
 </div>
 
+<!-- Modal Lista Extra -->
+<div class="modal fade" id="extraListModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Lista Extra de Placas</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small">Clique em uma placa para selecionar rapidamente:</p>
+        <div id="extraListButtons" class="d-flex flex-wrap gap-2">
+            <!-- JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let db = JSON.parse(localStorage.getItem('vale_paraiso_db')) || { 
@@ -295,6 +316,25 @@
         } else {
             alert("Digite uma placa primeiro.");
         }
+    }
+
+    function openExtraList() {
+        const container = document.getElementById('extraListButtons');
+        container.innerHTML = '';
+        
+        db.plates.sort().forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-outline-dark btn-sm';
+            btn.innerText = p;
+            btn.onclick = () => {
+                document.getElementById('v_plate').value = p;
+                bootstrap.Modal.getInstance(document.getElementById('extraListModal')).hide();
+                document.getElementById('v_km').focus();
+            };
+            container.appendChild(btn);
+        });
+        
+        new bootstrap.Modal(document.getElementById('extraListModal')).show();
     }
 
     // Load Pumps
