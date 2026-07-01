@@ -98,10 +98,10 @@
             <h5 class="section-title">Abastecimento por Veículo</h5>
             <form id="vehicleForm">
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-3" id="plateContainer">
                         <label class="form-label">Placa do Veículo</label>
                         <select class="form-select" id="v_plate" required>
-                            <option value="">Selecione uma placa...</option>
+                            <option value="">Carregando placas...</option>
                         </select>
                         <button type="button" class="btn btn-link btn-sm p-0 mt-1" onclick="addNewPlate()">+ Cadastrar nova placa</button>
                     </div>
@@ -257,53 +257,61 @@
         };
     }
 
-    // Inicializar Select de Placas
+    // Inicializar Select de Placas - RECONSTRUÇÃO TOTAL
     function updatePlateSelect() {
-        const select = document.getElementById('v_plate');
-        if (!select) {
-            console.error("Elemento v_plate não encontrado");
-            return;
-        }
-        
-        const currentVal = select.value;
-        select.options.length = 0; // Limpa todas as opções
-        
-        // Opção padrão
-        const defaultOpt = new Option("Selecione uma placa...", "");
-        select.add(defaultOpt);
+        const container = document.getElementById('plateContainer');
+        if (!container) return;
 
-        // Adicionar placas do banco
+        // Recriamos o HTML do select do zero para limpar qualquer erro
+        const currentVal = db.lastSelectedPlate || "";
+        
+        let selectHtml = `
+            <label class="form-label">Placa do Veículo</label>
+            <select class="form-select" id="v_plate" required>
+                <option value="">Selecione uma placa...</option>
+        `;
+
         if (db.plates && Array.isArray(db.plates)) {
             const uniquePlates = [...new Set(db.plates)].sort();
             uniquePlates.forEach(p => {
-                const opt = new Option(p, p);
-                select.add(opt);
+                const selected = (p === currentVal) ? 'selected' : '';
+                selectHtml += `<option value="${p}" ${selected}>${p}</option>`;
             });
         }
+
+        selectHtml += `
+            </select>
+            <button type="button" class="btn btn-link btn-sm p-0 mt-1" onclick="addNewPlate()">+ Cadastrar nova placa</button>
+        `;
+
+        container.innerHTML = selectHtml;
         
-        if (currentVal) select.value = currentVal;
-        console.log("Select de placas atualizado com", db.plates.length, "placas.");
+        // Re-adicionar o listener de mudança para salvar a última seleção
+        document.getElementById('v_plate').addEventListener('change', function() {
+            db.lastSelectedPlate = this.value;
+            saveDB();
+        });
     }
     
-    // Executar imediatamente e também no DOMContentLoaded
-    updatePlateSelect();
-    
-    window.addEventListener('load', () => {
+    window.onload = function() {
         updatePlateSelect();
         render();
-    });
+    };
 
     function addNewPlate() {
-        const newPlate = prompt("Digite a nova placa (Ex: ABC1234 ou ABC-1234):");
+        const newPlate = prompt("Digite a nova placa (Ex: ABC1234):");
         if (newPlate) {
             const p = newPlate.trim().toUpperCase();
-            if (p && !db.plates.includes(p)) {
-                db.plates.push(p);
-                saveDB();
-                updatePlateSelect();
-                document.getElementById('v_plate').value = p;
-            } else if (db.plates.includes(p)) {
-                alert("Esta placa já está cadastrada!");
+            if (p) {
+                if (!db.plates.includes(p)) {
+                    db.plates.push(p);
+                    db.lastSelectedPlate = p;
+                    saveDB();
+                    updatePlateSelect();
+                } else {
+                    alert("Esta placa já está cadastrada!");
+                    document.getElementById('v_plate').value = p;
+                }
             }
         }
     }
@@ -345,7 +353,8 @@
 
     document.getElementById('vehicleForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        const plate = document.getElementById('v_plate').value;
+        const plateSelect = document.getElementById('v_plate');
+        const plate = plateSelect.value;
         const kmInput = document.getElementById('v_km').value;
         const dieselInput = document.getElementById('v_liters').value;
         const arlaInput = document.getElementById('v_arla').value;
