@@ -1121,7 +1121,7 @@
 </div>
 
 <script>
-alert("Script rodando!");
+
 // Auxiliar para preview da foto no cadastro
 function previewCliFoto(input) {
   if (input.files && input.files[0]) {
@@ -1166,7 +1166,7 @@ function init() {
     return false;
   };
   try {
-    console.log("Iniciando app...");
+    
     getLocation();
     loadDB();
     verificarVencimentos();
@@ -1175,8 +1175,8 @@ function init() {
     console.error("Erro no init:", e);
   }
 
-  setTimeout(function() {
-    console.log("Escondendo splash...");
+  setTimeout(function() { console.log("Timeout finalizado");
+    
     const splash = document.getElementById('splash');
     if (splash) splash.style.display = 'none';
     
@@ -1331,7 +1331,7 @@ function toast(msg, type) {
   var el = document.getElementById('toast');
   el.textContent = msg;
   el.className = 'show ' + (type || 'info');
-  setTimeout(function() { el.classList.remove('show'); }, 3000);
+  setTimeout(function() { console.log("Timeout finalizado"); el.classList.remove('show'); }, 3000);
 }
 
 // =====================================================
@@ -1384,9 +1384,9 @@ function initCliente() {
 
   // Inicializa o mapa se ainda não existir
   if (!window.map && typeof L !== 'undefined') {
-    var mapEl = document.getElementById('cliente-map');
+    var mapEl = document.getElementById('map');
     if (mapEl) {
-      window.map = L.map('cliente-map').setView([-23.5505, -46.6333], 13);
+      window.map = L.map('map').setView([-23.5505, -46.6333], 13);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(window.map);
@@ -1492,7 +1492,7 @@ function confirmarCorrida() {
   saveDB();
 
   document.getElementById('cliente-dest-card').style.display = 'none';
-  document.getElementById('cliente-map').style.display = 'none';
+  document.getElementById('map').style.display = 'none';
   document.getElementById('cliente-loc-card').style.display = 'none';
   updateClienteRideStatus();
   toast('🔍 Procurando motorista...', 'info');
@@ -1536,7 +1536,7 @@ function cancelarCorrida() {
   STATE.corridaAtual = null;
 
   document.getElementById('cliente-loc-card').style.display = 'block';
-  document.getElementById('cliente-map').style.display = 'block';
+  document.getElementById('map').style.display = 'block';
   updateClienteRideStatus();
   toast('Corrida cancelada.', 'info');
 }
@@ -1544,7 +1544,7 @@ function cancelarCorrida() {
 function novaCorridaCliente() {
   STATE.corridaAtual = null;
   document.getElementById('cliente-loc-card').style.display = 'block';
-  document.getElementById('cliente-map').style.display = 'block';
+  document.getElementById('map').style.display = 'block';
   document.getElementById('cliente-ride-status').style.display = 'none';
   updateClienteHistorico();
 }
@@ -1904,7 +1904,7 @@ function aceitarCorrida(id) {
   // Abre Google Maps com rota até o cliente
   if (c.clienteLat && c.clienteLng) {
     var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + c.clienteLat + ',' + c.clienteLng + '&travelmode=driving';
-    setTimeout(function() { window.open(mapsUrl, '_blank'); }, 800);
+    setTimeout(function() { console.log("Timeout finalizado"); window.open(mapsUrl, '_blank'); }, 800);
   }
 }
 
@@ -2449,7 +2449,7 @@ function getLocation() {
 function onLocationObtained() {
   var lat = STATE.clienteLat;
   var lng = STATE.clienteLng;
-  document.getElementById('loc-display').innerHTML = '<div class="loading-dots">📍 Identificando rua e número...</div>';
+  document.getElementById('loc-status-text').innerHTML = '<div class="loading-dots">📍 Identificando rua e número...</div>';
   
   fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1&accept-language=pt-BR')
     .then(function(r) { return r.json(); })
@@ -2463,7 +2463,7 @@ function onLocationObtained() {
         addr = (r + (n ? ", " + n : "") + (b ? " - " + b : "") + (c ? " (" + c + ")" : "")).trim();
       }
       STATE.clienteAddr = addr;
-      document.getElementById('loc-display').innerHTML = 
+      document.getElementById('loc-status-text').innerHTML = 
         '<div class="card" style="background:var(--card2);border:1px solid var(--orange)">' +
         '<div class="text-xs" style="color:var(--orange);margin-bottom:2px">VOCÊ ESTÁ EM:</div>' +
         '<div class="bold">📍 ' + addr + '</div>' +
@@ -2478,7 +2478,7 @@ function onLocationObtained() {
     })
     .catch(function(err) { 
        console.error(err);
-       document.getElementById('loc-display').innerHTML = '<div class="bold">📍 Localização obtida</div>'; 
+       document.getElementById('loc-status-text').innerHTML = '<div class="bold">📍 Localização obtida</div>'; 
     });
 }
 
@@ -2513,7 +2513,7 @@ function enviarMensagemChat() {
   input.value = '';
   
   // Simular resposta automática em 2 segundos para teste
-  setTimeout(function() {
+  setTimeout(function() { console.log("Timeout finalizado");
     var replyEl = document.createElement('div');
     replyEl.style.cssText = 'align-self:flex-start; background:var(--card2); color:white; padding:8px 12px; border-radius:12px 12px 12px 0; font-size:14px; max-width:80%; border:1px solid #444';
     replyEl.textContent = 'Ok, já estou a caminho!';
