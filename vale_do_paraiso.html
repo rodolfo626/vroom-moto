@@ -228,8 +228,23 @@
     let db = JSON.parse(localStorage.getItem('vale_paraiso_db')) || { 
         days: {}, // { "YYYY-MM-DD": { pumpDiesel: {start, end}, pumpArla: {start, end}, vehicles: [] } }
         vehicleHistory: {}, // { "PLATE": lastKM }
-        plates: ["OXD-7054", "OXD-6001", "OXD-7075", "OXD-7045", "OXD-7065", "PZZ-2503", "PZZ-2507", "RNY-5H18", "RTP-5G07", "SIZ-8I26", "TCG-7G96", "TCX-6J60"] // [ "ABC-1234", ... ]
+        plates: [] // [ "ABC-1234", ... ]
     };
+
+    // Lista de placas iniciais solicitadas pelo Rodolfo
+    const initialPlates = [
+        "OXD-7054 - 01", "OXD-6001 - 02", "OXD-7075 - 03", "OXD-7045 - 04",
+        "OXD-7065 - 05", "PZZ-2503 - 06", "PZZ-2507 - 07", "RNY-5H18 - 09",
+        "RTP-5G07 - 10", "SIZ-8I26 - 11", "TCG-7G96 - 12", "TCX-6J60 - 13"
+    ];
+
+    // Adiciona as placas iniciais se a lista estiver vazia ou para garantir que elas existam
+    initialPlates.forEach(p => {
+        if (!db.plates.includes(p)) {
+            db.plates.push(p);
+        }
+    });
+    localStorage.setItem('vale_paraiso_db', JSON.stringify(db));
 
     let today = new Date().toISOString().split('T')[0];
     document.getElementById('displayDate').innerText = today.split('-').reverse().join('/');
