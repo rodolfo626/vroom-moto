@@ -261,8 +261,9 @@
         const diesel = parseFloat(document.getElementById('v_liters').value);
         const arla = parseFloat(document.getElementById('v_arla').value) || 0;
 
-        // Calc KM Dia
-        const lastKM = db.vehicleHistory[plate] || km;
+        // Calc KM Dia - Busca o último KM registrado especificamente para ESTA PLACA
+        // Se for o primeiro registro da placa, o KM Dia será 0.
+        const lastKM = db.vehicleHistory[plate] !== undefined ? db.vehicleHistory[plate] : km;
         const kmDia = km - lastKM;
         const media = diesel > 0 ? (kmDia / diesel).toFixed(2) : '0.00';
 
@@ -277,11 +278,16 @@
         };
 
         db.days[today].vehicles.push(entry);
+        
+        // Atualiza o histórico global de KM apenas para esta placa
         db.vehicleHistory[plate] = km;
         
         saveDB();
         render();
+        
+        // Limpa o formulário e foca na placa para o próximo veículo
         this.reset();
+        document.getElementById('v_plate').focus();
     });
 
     function saveDB() {
