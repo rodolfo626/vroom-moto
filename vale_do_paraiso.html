@@ -133,8 +133,19 @@
 </div>
 
 <!-- Modal Lista Extra -->
-<div class="modal fade" id="extraListModal" tabindex="-1">
-...
+<div class="modal fade" id="extraListModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Seleção de Placa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                <p class="text-muted small mb-3">Toque na placa para selecionar:</p>
+                <div id="extraListButtons" class="d-grid gap-2" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal Alterar Lançamento -->
@@ -288,18 +299,35 @@
     function showExtraList() {
         const container = document.getElementById('extraListButtons');
         container.innerHTML = '';
-        db.plates.sort().forEach(p => {
-            let btn = document.createElement('button');
-            btn.className = 'btn btn-outline-dark btn-sm';
-            btn.innerText = p;
-            btn.onclick = () => {
-                document.getElementById('v_plate').value = p;
-                bootstrap.Modal.getInstance(document.getElementById('extraListModal')).hide();
-                document.getElementById('v_km').focus();
-            };
-            container.appendChild(btn);
-        });
-        new bootstrap.Modal(document.getElementById('extraListModal')).show();
+        
+        // Garantir que temos placas
+        if (!db.plates || db.plates.length === 0) {
+            container.innerHTML = '<p class="text-center">Nenhuma placa cadastrada.</p>';
+        } else {
+            db.plates.sort().forEach(p => {
+                let btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-outline-dark fw-bold py-2';
+                btn.innerText = p;
+                btn.onclick = function() {
+                    const plateInput = document.getElementById('v_plate');
+                    plateInput.value = p;
+                    
+                    // Fechar o modal
+                    const modalEl = document.getElementById('extraListModal');
+                    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modalInstance.hide();
+                    
+                    // Focar no próximo campo
+                    setTimeout(() => document.getElementById('v_km').focus(), 300);
+                };
+                container.appendChild(btn);
+            });
+        }
+        
+        const modalEl = document.getElementById('extraListModal');
+        const modalInstance = new bootstrap.Modal(modalEl);
+        modalInstance.show();
     }
 
     // LANÇAMENTO DE VEÍCULO
