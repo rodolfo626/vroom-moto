@@ -100,7 +100,10 @@
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label">Placa do Veículo</label>
-                        <input type="text" class="form-control" id="v_plate" placeholder="ABC-1234" required>
+                        <select class="form-select" id="v_plate" required>
+                            <option value="">Selecione uma placa...</option>
+                        </select>
+                        <button type="button" class="btn btn-link btn-sm p-0 mt-1" onclick="addNewPlate()">+ Cadastrar nova placa</button>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">KM no Painel</label>
@@ -224,7 +227,8 @@
 <script>
     let db = JSON.parse(localStorage.getItem('vale_paraiso_db')) || { 
         days: {}, // { "YYYY-MM-DD": { pumpDiesel: {start, end}, pumpArla: {start, end}, vehicles: [] } }
-        vehicleHistory: {} // { "PLATE": lastKM }
+        vehicleHistory: {}, // { "PLATE": lastKM }
+        plates: [] // [ "ABC-1234", ... ]
     };
 
     let today = new Date().toISOString().split('T')[0];
@@ -236,6 +240,33 @@
             pumpArla: {start: 0, end: 0}, 
             vehicles: [] 
         };
+    }
+
+    // Inicializar Select de Placas
+    function updatePlateSelect() {
+        const select = document.getElementById('v_plate');
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">Selecione uma placa...</option>';
+        db.plates.sort().forEach(p => {
+            select.innerHTML += `<option value="${p}">${p}</option>`;
+        });
+        select.value = currentVal;
+    }
+    updatePlateSelect();
+
+    function addNewPlate() {
+        const newPlate = prompt("Digite a nova placa (Ex: ABC1234 ou ABC-1234):");
+        if (newPlate) {
+            const p = newPlate.trim().toUpperCase();
+            if (p && !db.plates.includes(p)) {
+                db.plates.push(p);
+                saveDB();
+                updatePlateSelect();
+                document.getElementById('v_plate').value = p;
+            } else if (db.plates.includes(p)) {
+                alert("Esta placa já está cadastrada!");
+            }
+        }
     }
 
     // Load Pumps
@@ -275,7 +306,7 @@
 
     document.getElementById('vehicleForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        const plate = document.getElementById('v_plate').value.trim().toUpperCase();
+        const plate = document.getElementById('v_plate').value;
         const kmInput = document.getElementById('v_km').value;
         const dieselInput = document.getElementById('v_liters').value;
         const arlaInput = document.getElementById('v_arla').value;
