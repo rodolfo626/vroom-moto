@@ -16,6 +16,37 @@
         .btn-end { background-color: #c0392b; color: white; }
         .btn-save { background-color: var(--accent); color: white; font-weight: bold; }
         .status-badge { font-size: 0.8rem; }
+
+        /* Estilo Folha de Papel */
+        .paper-report {
+            background: #fff;
+            padding: 40px;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            font-family: 'Courier New', Courier, monospace;
+            color: #333;
+            max-width: 800px;
+            margin: 20px auto;
+            position: relative;
+        }
+        .paper-report::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 5px;
+            background: repeating-linear-gradient(90deg, #f39c12, #f39c12 10px, #fff 10px, #fff 20px);
+        }
+        .report-header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 15px; margin-bottom: 20px; }
+        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .report-table th, .report-table td { border: 1px solid #333; padding: 8px; text-align: left; font-size: 0.85rem; }
+        .report-footer { margin-top: 30px; border-top: 2px dashed #333; padding-top: 15px; font-weight: bold; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #reportSection, #reportSection * { visibility: visible; }
+            #reportSection { position: absolute; left: 0; top: 0; width: 100%; }
+            .btn-close, .btn-print-action { display: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -91,7 +122,7 @@
     </div>
 
     <!-- Histórico do Dia -->
-    <div class="card">
+    <div class="card mb-4">
         <div class="card-body">
             <h5 class="section-title">Registros do Dia: <span id="displayDate">--/--/----</span></h5>
             <div class="table-responsive">
@@ -111,6 +142,58 @@
                         <!-- JS -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Área de Visualização do Relatório -->
+    <div id="reportSection" class="d-none">
+        <div class="paper-report">
+            <button class="btn-close position-absolute top-0 end-0 m-3" onclick="document.getElementById('reportSection').classList.add('d-none')"></button>
+            
+            <div class="report-header">
+                <h3>VALE DO PARAÍSO</h3>
+                <p>FECHAMENTO DIÁRIO - <span id="reportDate"></span></p>
+            </div>
+
+            <div class="report-grid">
+                <div>
+                    <strong>BOMBA DIESEL</strong><br>
+                    Início: <span id="r_diesel_start"></span><br>
+                    Fim: <span id="r_diesel_end"></span><br>
+                    <strong>Total: <span id="r_diesel_total"></span> L</strong>
+                </div>
+                <div>
+                    <strong>BOMBA ARLA</strong><br>
+                    Início: <span id="r_arla_start"></span><br>
+                    Fim: <span id="r_arla_end"></span><br>
+                    <strong>Total: <span id="r_arla_total"></span> L</strong>
+                </div>
+            </div>
+
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Placa</th>
+                        <th>KM Painel</th>
+                        <th>KM Dia</th>
+                        <th>Diesel</th>
+                        <th>Arla</th>
+                        <th>Média</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody"></tbody>
+            </table>
+
+            <div class="report-footer">
+                <p>Total Diesel Veículos: <span id="r_v_diesel"></span> L</p>
+                <p>Total Arla Veículos: <span id="r_v_arla"></span> L</p>
+                <p style="font-size: 1.2rem; color: #c0392b;">Diferença (Bomba/Veículos): <span id="r_diff"></span> L</p>
+            </div>
+
+            <div class="mt-4 btn-print-action">
+                <button class="btn btn-dark" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir</button>
+                <button class="btn btn-primary" onclick="shareReport()"><i class="bi bi-share"></i> Compartilhar</button>
             </div>
         </div>
     </div>
@@ -270,35 +353,42 @@
         let totalDieselVehicles = 0;
         let totalArlaVehicles = 0;
         
+        const tableBody = document.getElementById('reportTableBody');
+        tableBody.innerHTML = '';
+
         dayData.vehicles.forEach(v => {
             totalDieselVehicles += v.diesel;
             totalArlaVehicles += v.arla;
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${v.plate}</td>
+                    <td>${v.km}</td>
+                    <td>${v.kmDia}</td>
+                    <td>${v.diesel}L</td>
+                    <td>${v.arla}L</td>
+                    <td>${v.media}</td>
+                </tr>
+            `;
         });
 
         const dieselPumpUsed = dayData.pumpDiesel.end - dayData.pumpDiesel.start;
         const arlaPumpUsed = dayData.pumpArla.end - dayData.pumpArla.start;
-        const diffDiesel = (dieselPumpUsed - totalDieselVehicles).toFixed(2);
 
-        let report = `RELATÓRIO FINAL DO DIA - ${today.split('-').reverse().join('/')}\n\n`;
-        report += `--- BOMBAS ---\n`;
-        report += `DIESEL: Início: ${dayData.pumpDiesel.start} | Fim: ${dayData.pumpDiesel.end} | Total: ${dieselPumpUsed.toFixed(2)}L\n`;
-        report += `ARLA: Início: ${dayData.pumpArla.start} | Fim: ${dayData.pumpArla.end} | Total: ${arlaPumpUsed.toFixed(2)}L\n\n`;
-        report += `--- VEÍCULOS ---\n`;
-        report += `Total Diesel Veículos: ${totalDieselVehicles.toFixed(2)}L\n`;
-        report += `Total Arla Veículos: ${totalArlaVehicles.toFixed(2)}L\n`;
-        report += `Diferença (Bomba x Veículos): ${diffDiesel}L\n\n`;
-        report += `--- DETALHAMENTO ---\n`;
+        document.getElementById('reportDate').innerText = today.split('-').reverse().join('/');
+        document.getElementById('r_diesel_start').innerText = dayData.pumpDiesel.start;
+        document.getElementById('r_diesel_end').innerText = dayData.pumpDiesel.end;
+        document.getElementById('r_diesel_total').innerText = dieselPumpUsed.toFixed(2);
         
-        dayData.vehicles.forEach(v => {
-            report += `${v.plate}: ${v.diesel}L Diesel | ${v.arla}L Arla | KM: ${v.km} | Média: ${v.media}\n`;
-        });
+        document.getElementById('r_arla_start').innerText = dayData.pumpArla.start;
+        document.getElementById('r_arla_end').innerText = dayData.pumpArla.end;
+        document.getElementById('r_arla_total').innerText = arlaPumpUsed.toFixed(2);
 
-        const blob = new Blob([report], { type: 'text/plain' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `Relatorio_Vale_Paraiso_${today}.txt`;
-        a.click();
-        alert('Relatório gerado com sucesso!');
+        document.getElementById('r_v_diesel').innerText = totalDieselVehicles.toFixed(2);
+        document.getElementById('r_v_arla').innerText = totalArlaVehicles.toFixed(2);
+        document.getElementById('r_diff').innerText = (dieselPumpUsed - totalDieselVehicles).toFixed(2);
+
+        document.getElementById('reportSection').classList.remove('d-none');
+        window.scrollTo(0, document.body.scrollHeight);
     }
 
     async function shareReport() {
