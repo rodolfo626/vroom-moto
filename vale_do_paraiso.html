@@ -310,27 +310,47 @@
         if (plates.length === 0) {
             container.innerHTML = '<p class="text-center w-100">Nenhuma placa cadastrada.</p>';
         } else {
-            plates.sort().forEach(p => {
+            plates.sort().forEach((p, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'd-flex align-items-center gap-1 mb-2 w-100';
+                
+                // Botão da Placa (Selecionar)
                 let btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'btn btn-outline-dark fw-bold py-3';
+                btn.className = 'btn btn-outline-dark fw-bold py-3 flex-grow-1 text-start px-3';
                 btn.style.fontSize = '1.1rem';
                 btn.innerText = p;
                 btn.onclick = function() {
                     document.getElementById('v_plate').value = p;
-                    // Fechar usando API nativa
                     const modalEl = document.getElementById('extraListModal');
                     const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
                     modalInstance.hide();
                     setTimeout(() => document.getElementById('v_km').focus(), 300);
                 };
-                container.appendChild(btn);
+                
+                // Botão de Excluir Placa da Lista
+                let delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.className = 'btn btn-danger py-3 px-3';
+                delBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                delBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    if (confirm(`Deseja remover a placa ${p} da lista permanente?`)) {
+                        db.plates = db.plates.filter(plate => plate !== p);
+                        save();
+                        updatePlateUI();
+                        showExtraList(); // Recarrega a lista no modal
+                    }
+                };
+                
+                wrapper.appendChild(btn);
+                wrapper.appendChild(delBtn);
+                container.appendChild(wrapper);
             });
         }
         
-        // Abrir usando API nativa
         const modalEl = document.getElementById('extraListModal');
-        const modalInstance = new bootstrap.Modal(modalEl, { backdrop: true });
+        const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
         modalInstance.show();
     }
 
