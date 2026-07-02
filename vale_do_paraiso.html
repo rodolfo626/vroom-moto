@@ -335,31 +335,49 @@
     }
 
     // LANÇAMENTO DE VEÍCULO
-    document.getElementById('vehicleForm').onsubmit = function(e) {
+    document.getElementById('vehicleForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        const plate = document.getElementById('v_plate').value.trim().toUpperCase();
-        const km = parseFloat(document.getElementById('v_km').value);
-        const liters = parseFloat(document.getElementById('v_liters').value);
-        const arla = parseFloat(document.getElementById('v_arla').value) || 0;
-
-        // Cálculo de KM Percorrido e Média
-        const lastKM = db.history[plate] || km;
-        const diffKM = km - lastKM;
-        const avg = diffKM > 0 ? (diffKM / liters).toFixed(2) : "0.00";
-
-        const entry = {
-            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            plate, km, liters, arla, diffKM, avg
-        };
-
-        db.days[today].entries.push(entry);
-        db.history[plate] = km; // Atualiza histórico global
-        save();
+        console.log("Iniciando salvamento de veículo...");
         
-        this.reset();
-        document.getElementById('v_plate').focus();
-        renderTable();
-    };
+        try {
+            const plate = document.getElementById('v_plate').value.trim().toUpperCase();
+            const km = parseFloat(document.getElementById('v_km').value);
+            const liters = parseFloat(document.getElementById('v_liters').value);
+            const arla = parseFloat(document.getElementById('v_arla').value) || 0;
+
+            if (!plate || isNaN(km) || isNaN(liters)) {
+                alert("Por favor, preencha Placa, KM e Litros Diesel corretamente.");
+                return;
+            }
+
+            // Cálculo de KM Percorrido e Média
+            const lastKM = db.history[plate] || km;
+            const diffKM = km - lastKM;
+            const avg = diffKM > 0 ? (diffKM / liters).toFixed(2) : "0.00";
+
+            const entry = {
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                plate, km, liters, arla, diffKM, avg
+            };
+
+            // Garantir estrutura do dia
+            if (!db.days[today]) {
+                db.days[today] = { diesel: {s:0, e:0}, arla: {s:0, e:0}, entries: [] };
+            }
+
+            db.days[today].entries.push(entry);
+            db.history[plate] = km; // Atualiza histórico global
+            save();
+            
+            this.reset();
+            renderTable();
+            document.getElementById('v_plate').focus();
+            console.log("Veículo salvo com sucesso!");
+        } catch (err) {
+            console.error("Erro ao salvar veículo:", err);
+            alert("Erro ao salvar! Tente atualizar a página.");
+        }
+    });
 
     function renderTable() {
         const body = document.getElementById('todayTableBody');
