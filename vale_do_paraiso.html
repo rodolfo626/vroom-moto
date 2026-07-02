@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root { --primary-color: #2c3e50; --secondary-color: #18bc9c; }
         body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-bottom: 50px; }
@@ -194,9 +195,9 @@
     <div id="reportArea" style="display:none;">
     <div class="container py-4 text-center no-print">
         <div class="d-grid gap-2 d-md-block">
-            <button class="btn btn-success" onclick="shareExcel()"><i class="bi bi-file-earmark-excel"></i> Compartilhar Excel</button>
-            <button class="btn btn-info text-white" onclick="shareText()"><i class="bi bi-whatsapp"></i> Enviar Texto p/ WhatsApp</button>
-            <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir / PDF</button>
+            <button class="btn btn-danger" onclick="generatePDF()"><i class="bi bi-file-earmark-pdf"></i> Compartilhar PDF</button>
+            <button class="btn btn-success" onclick="shareExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn btn-info text-white" onclick="shareText()"><i class="bi bi-whatsapp"></i> Texto</button>
             <button class="btn btn-secondary" onclick="location.reload()">Voltar</button>
         </div>
     </div>
@@ -630,6 +631,44 @@
         
         const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
         window.open(url, '_blank');
+    }
+
+    function generatePDF() {
+        const element = document.getElementById('reportArea');
+        const options = {
+            margin: 10,
+            filename: `Relatorio_Vale_${today.split('-').reverse().join('_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Esconder botões na geração do PDF
+        document.querySelector('#reportArea .no-print').style.display = 'none';
+
+        html2pdf().set(options).from(element).toPdf().get('pdf').then(function(pdf) {
+            const blob = pdf.output('blob');
+            const fileName = options.filename;
+            const file = new File([blob], fileName, { type: 'application/pdf' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    files: [file],
+                    title: 'Relatório Vale do Paraíso',
+                    text: 'Segue relatório de combustível em PDF'
+                }).then(() => {
+                    document.querySelector('#reportArea .no-print').style.display = 'block';
+                }).catch(err => {
+                    console.error("Erro ao compartilhar:", err);
+                    pdf.save(fileName);
+                    document.querySelector('#reportArea .no-print').style.display = 'block';
+                });
+            } else {
+                pdf.save(fileName);
+                document.querySelector('#reportArea .no-print').style.display = 'block';
+                alert("O PDF foi baixado. Agora você pode anexá-lo no WhatsApp.");
+            }
+        });
     }
 
     function showHistory() {
