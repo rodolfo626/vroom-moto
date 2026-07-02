@@ -23,10 +23,13 @@
 </head>
 <body>
 
-<div class="header-panel no-print">
+    <div class="header-panel no-print">
     <div class="container text-center">
         <h2>Controle de Combustível Vale do Paraíso</h2>
-        <p class="mb-0" id="currentDateTime"></p>
+        <div class="d-flex justify-content-center align-items-center gap-2 mt-2">
+            <label for="changeDate" class="mb-0">Data:</label>
+            <input type="date" id="changeDate" class="form-control form-control-sm w-auto" onchange="changeSystemDate(this.value)">
+        </div>
     </div>
 </div>
 
@@ -246,10 +249,7 @@
         days: {} // { "YYYY-MM-DD": { diesel: {s,e}, arla: {s,e}, entries: [] } }
     };
 
-    const today = new Date().toISOString().split('T')[0];
-    if (!db.days[today]) {
-        db.days[today] = { diesel: {s:0, e:0}, arla: {s:0, e:0}, entries: [] };
-    }
+    let today = new Date().toISOString().split('T')[0];
 
     function save() { 
         localStorage.setItem('vale_paraiso_v2', JSON.stringify(db)); 
@@ -258,13 +258,28 @@
 
     // CARREGAR DADOS INICIAIS
     function init() {
+        document.getElementById('changeDate').value = today;
+        refreshDayData();
+        updatePlateUI();
+        renderTable();
+    }
+
+    function refreshDayData() {
+        if (!db.days[today]) {
+            db.days[today] = { diesel: {s:0, e:0}, arla: {s:0, e:0}, entries: [] };
+        }
         const dayData = db.days[today];
         document.getElementById('pump_diesel_start').value = dayData.diesel.s || "";
         document.getElementById('pump_diesel_end').value = dayData.diesel.e || "";
         document.getElementById('pump_arla_start').value = dayData.arla.s || "";
         document.getElementById('pump_arla_end').value = dayData.arla.e || "";
-        document.getElementById('currentDateTime').innerText = "Data: " + today.split('-').reverse().join('/');
-        updatePlateUI();
+    }
+
+    function changeSystemDate(newDate) {
+        if (!newDate) return;
+        today = newDate;
+        console.log("Data alterada para:", today);
+        refreshDayData();
         renderTable();
     }
 
