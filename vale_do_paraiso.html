@@ -191,11 +191,14 @@
 </div>
 
 <!-- Área do Relatório -->
-<div id="reportArea" style="display:none;">
+    <div id="reportArea" style="display:none;">
     <div class="container py-4 text-center no-print">
-        <button class="btn btn-success" onclick="shareExcel()"><i class="bi bi-whatsapp"></i> Compartilhar Excel</button>
-        <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir</button>
-        <button class="btn btn-secondary" onclick="location.reload()">Novo Lançamento</button>
+        <div class="d-grid gap-2 d-md-block">
+            <button class="btn btn-success" onclick="shareExcel()"><i class="bi bi-file-earmark-excel"></i> Compartilhar Excel</button>
+            <button class="btn btn-info text-white" onclick="shareText()"><i class="bi bi-whatsapp"></i> Enviar Texto p/ WhatsApp</button>
+            <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Imprimir / PDF</button>
+            <button class="btn btn-secondary" onclick="location.reload()">Voltar</button>
+        </div>
     </div>
 
     <div class="report-sheet" id="printableReport">
@@ -556,38 +559,77 @@
     }
 
     function generateExcelForDay(dateStr, dayData) {
-        if (!dayData || dayData.entries.length === 0) return;
-        
-        let data = [
-            ["RELATÓRIO VALE DO PARAÍSO", dateStr.split('-').reverse().join('/')],
-            [],
-            ["BOMBA DIESEL", "INÍCIO", "FINAL", "TOTAL"],
-            ["DIESEL", dayData.diesel.s, dayData.diesel.e, dayData.diesel.e - dayData.diesel.s],
-            ["ARLA", dayData.arla.s, dayData.arla.e, dayData.arla.e - dayData.arla.s],
-            [],
-            ["PLACA", "KM ATUAL", "KM PERCORRIDO", "L DIESEL", "MÉDIA", "L ARLA"]
-        ];
-
-        dayData.entries.forEach(e => {
-            data.push([e.plate, e.km, e.diffKM, e.liters, e.avg, e.arla]);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Combustível");
-        const wbout = XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
-        const blob = new Blob([wbout], {type: 'application/octet-stream'});
-        const file = new File([blob], `Relatorio_${dateStr}.xlsx`, {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-
-        if (navigator.share) {
-            navigator.share({ files: [file], title: 'Relatório Vale do Paraíso', text: `Segue relatório de combustível - ${dateStr}` });
-        } else {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `Relatorio_${dateStr}.xlsx`;
-            a.click();
+        if (!dayData || dayData.entries.length === 0) {
+            alert("Não há lançamentos para esta data.");
+            return;
         }
+        
+        try {
+            let data = [
+                ["RELATÓRIO VALE DO PARAÍSO", dateStr.split('-').reverse().join('/')],
+                [],
+                ["BOMBA DIESEL", "INÍCIO", "FINAL", "TOTAL"],
+                ["DIESEL", dayData.diesel.s, dayData.diesel.e, (dayData.diesel.e - dayData.diesel.s).toFixed(2)],
+                ["ARLA", dayData.arla.s, dayData.arla.e, (dayData.arla.e - dayData.arla.s).toFixed(2)],
+                [],
+                ["PLACA", "KM ATUAL", "KM PERCORRIDO", "L DIESEL", "MÉDIA", "L ARLA"]
+            ];
+
+            dayData.entries.forEach(e => {
+                data.push([e.plate, e.km, e.diffKM, e.liters, e.avg, e.arla]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Combustível");
+            const wbout = XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
+            const blob = new Blob([wbout], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+            const fileName = `Relatorio_Vale_${dateStr.split('-').reverse().join('_')}.xlsx`;
+            const file = new File([blob], fileName, {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    files: [file],
+                    title: 'Relatório Vale do Paraíso',
+                    text: `Segue relatório de combustível - ${dateStr.split('-').reverse().join('/')}`
+                }).catch(err => {
+                    console.error("Erro no compartilhamento:", err);
+                    downloadFallback(blob, fileName);
+                });
+            } else {
+                downloadFallback(blob, fileName);
+            }
+        } catch (err) {
+            console.error("Erro ao gerar Excel:", err);
+            alert("Erro ao gerar o arquivo. Tente novamente.");
+        }
+    }
+
+    function downloadFallback(blob, fileName) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        alert("O arquivo foi baixado. Agora você pode anexá-lo no WhatsApp.");
+    }
+
+    function shareText() {
+        const day = db.days[today];
+        if (!day || day.entries.length === 0) return alert("Sem dados.");
+        
+        let text = `*VALE DO PARAÍSO - ${today.split('-').reverse().join('/')}*\n\n`;
+        text += `*BOMBA DIESEL:* ${day.diesel.s} -> ${day.diesel.e} (Total: ${(day.diesel.e-day.diesel.s).toFixed(2)}L)\n`;
+        text += `*BOMBA ARLA:* ${day.arla.s} -> ${day.arla.e} (Total: ${(day.arla.e-day.arla.s).toFixed(2)}L)\n\n`;
+        text += `*LANÇAMENTOS:*\n`;
+        
+        day.entries.forEach(e => {
+            text += `- ${e.plate}: ${e.liters}L | Média: ${e.avg}\n`;
+        });
+        
+        const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
     }
 
     function showHistory() {
