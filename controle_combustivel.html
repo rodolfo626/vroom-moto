@@ -3,210 +3,810 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vroom Moto - Controle de Combustível</title>
+    <title>Vale do Paraíso - Controle de Combustível</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Vale%20Paraiso%22,%22short_name%22:%22Vale%20Paraiso%22,%22start_url%22:%22vale_do_paraiso.html%22,%22display%22:%22standalone%22,%22background_color%22:%22#2c3e50%22,%22theme_color%22:%22#2c3e50%22}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Vale Paraiso">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .btn-primary { background-color: #ffc107; border: none; color: #000; font-weight: bold; }
-        .btn-primary:hover { background-color: #e0a800; color: #000; }
-        .header { background-color: #212529; color: #ffc107; padding: 20px 0; text-align: center; margin-bottom: 30px; border-bottom: 4px solid #ffc107; }
-        .stats-card { text-align: center; padding: 15px; }
-        .stats-val { font-size: 1.5rem; font-weight: bold; color: #212529; }
-        .stats-label { color: #6c757d; font-size: 0.9rem; }
-        .history-table { background: white; border-radius: 10px; overflow: hidden; }
+        :root { --primary-color: #2c3e50; --secondary-color: #18bc9c; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-bottom: 50px; }
+        .header-panel { background: var(--primary-color); color: white; padding: 20px 0; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .section-title { border-left: 5px solid var(--secondary-color); padding-left: 15px; margin-bottom: 20px; color: var(--primary-color); font-weight: bold; }
+        .btn-save { background-color: var(--secondary-color); color: white; font-weight: bold; }
+        .btn-save:hover { background-color: #15a589; color: white; }
+        .table-container { background: white; border-radius: 15px; padding: 20px; overflow-x: auto; }
+        .report-sheet { background: white; padding: 40px; border: 1px solid #ddd; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 900px; margin: 20px auto; position: relative; }
+        .report-header { text-align: center; border-bottom: 2px solid #333; margin-bottom: 20px; padding-bottom: 10px; }
+        @media print { .no-print { display: none; } .report-sheet { border: none; box-shadow: none; width: 100%; margin: 0; padding: 10px; } }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h1><i class="bi bi-fuel-pump-fill"></i> Vroom Moto</h1>
-    <p class="mb-0">Controle de Combustível</p>
+    <div class="header-panel no-print">
+    <div class="container text-center">
+        <h2>Controle de Combustível Vale do Paraíso</h2>
+        <div class="d-flex justify-content-center align-items-center gap-2 mt-2">
+            <label for="changeDate" class="mb-0">Data:</label>
+            <input type="date" id="changeDate" class="form-control form-control-sm w-auto" onchange="changeSystemDate(this.value)">
+        </div>
+    </div>
 </div>
 
-<div class="container">
-    <!-- Dashboard -->
-    <div class="row mb-4">
-        <div class="col-6 col-md-3">
-            <div class="card stats-card">
-                <div class="stats-label">Total Gasto</div>
-                <div class="stats-val" id="totalSpent">R$ 0,00</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card stats-card">
-                <div class="stats-label">Média KM/L</div>
-                <div class="stats-val" id="avgConsum">0,00</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card stats-card">
-                <div class="stats-label">Total Litros</div>
-                <div class="stats-val" id="totalLiters">0,0 L</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card stats-card">
-                <div class="stats-label">KM Rodados</div>
-                <div class="stats-val" id="totalKM">0</div>
+<div class="container no-print">
+    <!-- Leitura das Bombas -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="section-title">Leitura das Bombas (Litros)</h5>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label text-primary fw-bold">Diesel - Início Dia</label>
+                    <input type="number" step="0.01" class="form-control" id="pump_diesel_start" onchange="savePumps()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-danger fw-bold">Diesel - Final Dia</label>
+                    <input type="number" step="0.01" class="form-control" id="pump_diesel_end" onchange="savePumps()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-primary fw-bold">Arla - Início Dia</label>
+                    <input type="number" step="0.01" class="form-control" id="pump_arla_start" onchange="savePumps()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-danger fw-bold">Arla - Final Dia</label>
+                    <input type="number" step="0.01" class="form-control" id="pump_arla_end" onchange="savePumps()">
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Novo Registro -->
+    <!-- Lançamento Veículo -->
     <div class="card">
         <div class="card-body">
-            <h5 class="card-title mb-3"><i class="bi bi-plus-circle"></i> Novo Abastecimento</h5>
-            <form id="fuelForm">
+            <h5 class="section-title">Abastecimento por Veículo</h5>
+            <form id="vehicleForm">
                 <div class="row g-3">
-                    <div class="col-md-3 col-6">
-                        <label class="form-label">Data</label>
-                        <input type="date" class="form-control" id="date" required>
-                    </div>
-                    <div class="col-md-3 col-6">
-                        <label class="form-label">Odômetro (KM)</label>
-                        <input type="number" class="form-control" id="km" placeholder="00000" required>
-                    </div>
-                    <div class="col-md-2 col-6">
-                        <label class="form-label">Litros</label>
-                        <input type="number" step="0.01" class="form-control" id="liters" placeholder="0.00" required>
-                    </div>
-                    <div class="col-md-2 col-6">
-                        <label class="form-label">Preço p/ L</label>
-                        <input type="number" step="0.01" class="form-control" id="price" placeholder="R$ 0.00" required>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Placa do Veículo</label>
+                        <input type="text" class="form-control" id="v_plate" list="platesList" placeholder="Digite ou selecione..." required>
+                        <datalist id="platesList"></datalist>
+                        <div class="d-flex gap-2 mt-1">
+                            <button type="button" class="btn btn-link btn-sm p-0" onclick="savePlateToList()">+ Salvar Placa</button>
+                            <button type="button" class="btn btn-primary btn-sm px-2 text-white" onclick="showExtraList()" style="text-decoration:none">VER LISTA DE PLACAS</button>
+                        </div>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">&nbsp;</label>
-                        <button type="submit" class="btn btn-primary w-100">Salvar</button>
+                        <label class="form-label fw-bold">KM no Painel</label>
+                        <input type="number" class="form-control" id="v_km" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Diesel (Litros)</label>
+                        <input type="number" step="0.01" class="form-control" id="v_liters" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">Arla (Litros)</label>
+                        <input type="number" step="0.01" class="form-control" id="v_arla" value="0">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-save w-100">SALVAR LANÇAMENTO</button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Histórico -->
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="card-title mb-0"><i class="bi bi-clock-history"></i> Histórico</h5>
-                <button class="btn btn-sm btn-outline-secondary" onclick="exportCSV()"><i class="bi bi-download"></i> Exportar</button>
+    <!-- Tabela do Dia -->
+    <div class="table-container mb-4">
+        <h5 class="section-title">Lançamentos de Hoje</h5>
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Hora</th>
+                    <th>Placa</th>
+                    <th>KM</th>
+                    <th>Litros</th>
+                    <th>Média</th>
+                    <th>Arla</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody id="todayTableBody"></tbody>
+        </table>
+        <div class="d-flex justify-content-between">
+            <button class="btn btn-outline-primary" onclick="showHistory()"><i class="bi bi-calendar3"></i> Histórico do Mês</button>
+            <button class="btn btn-danger" onclick="finalizeDay()">FINALIZAR DIA / GERAR RELATÓRIO</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Histórico Mensal -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Histórico de Relatórios (Mês Atual)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>KM</th>
-                            <th>Litros</th>
-                            <th>Preço/L</th>
-                            <th>Total</th>
-                            <th>KM/L</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyBody">
-                        <!-- Gerado via JS -->
-                    </tbody>
-                </table>
+            <div class="modal-body">
+                <div class="list-group" id="historyList">
+                    <!-- JS -->
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal Lista Extra -->
+<div class="modal fade" id="extraListModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Seleção de Placa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                <p class="text-muted small mb-3">Toque na placa para selecionar:</p>
+                <div id="extraListButtons" class="d-grid gap-2" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Alterar Lançamento -->
+<div class="modal fade" id="editEntryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Alterar / Excluir Lançamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Placa</label>
+                    <input type="text" class="form-control" id="edit_plate">
+                </div>
+                <div class="mb-3 p-2 bg-light border rounded">
+                    <small class="text-muted d-block">Último KM Válido:</small>
+                    <span id="edit_last_km_label" class="fw-bold text-primary" data-value="0">0</span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">KM Atual</label>
+                    <input type="number" class="form-control" id="edit_km">
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold">Diesel (L)</label>
+                        <input type="number" step="0.01" class="form-control" id="edit_liters">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold">Arla (L)</label>
+                        <input type="number" step="0.01" class="form-control" id="edit_arla">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-danger" onclick="deleteCurrentEntry()">EXCLUIR</button>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="saveEdit()">SALVAR ALTERAÇÃO</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Área do Relatório -->
+    <div id="reportArea" style="display:none;">
+    <div class="container py-4 text-center no-print">
+        <div class="d-grid gap-2 d-md-block">
+            <button class="btn btn-danger" onclick="generatePDF()"><i class="bi bi-file-earmark-pdf"></i> Compartilhar PDF</button>
+            <button class="btn btn-success" onclick="shareExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button class="btn btn-info text-white" onclick="shareText()"><i class="bi bi-whatsapp"></i> Texto</button>
+            <button class="btn btn-secondary" onclick="location.reload()">Voltar</button>
+        </div>
+    </div>
+
+    <div class="report-sheet" id="printableReport">
+        <div class="report-header">
+            <h3>Controle de Combustível Vale do Paraíso</h3>
+            <h5 id="reportDateHeader"></h5>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-6">
+                <strong>BOMBA DIESEL:</strong><br>
+                Início: <span id="r_diesel_start"></span> L | Final: <span id="r_diesel_end"></span> L<br>
+                <strong>Total Saída Bomba: <span id="r_diesel_total_pump"></span> L</strong>
+            </div>
+            <div class="col-6">
+                <strong>BOMBA ARLA:</strong><br>
+                Início: <span id="r_arla_start"></span> L | Final: <span id="r_arla_end"></span> L<br>
+                <strong>Total Saída Bomba: <span id="r_arla_total_pump"></span> L</strong>
+            </div>
+        </div>
+
+        <table class="table table-bordered table-sm">
+            <thead>
+                <tr class="table-light">
+                    <th>Placa</th>
+                    <th>KM Atual</th>
+                    <th>KM Percorrido</th>
+                    <th>L Diesel</th>
+                    <th>Média (KM/L)</th>
+                    <th>L Arla</th>
+                </tr>
+            </thead>
+            <tbody id="reportTableBody"></tbody>
+        </table>
+
+        <div class="mt-4 p-3 border bg-light">
+            <strong>RESUMO GERAL:</strong><br>
+            Total Diesel nos Veículos: <span id="r_total_v_diesel"></span> L<br>
+            Diferença Bomba vs Veículos: <span id="r_diff_diesel"></span> L<br>
+            Média Geral da Frota: <span id="r_avg_fleet"></span> KM/L
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    let logs = JSON.parse(localStorage.getItem('vroom_fuel_logs')) || [];
+    // BANCO DE DADOS PERSISTENTE
+    let db = JSON.parse(localStorage.getItem('vale_paraiso_v2')) || {
+        plates: ["OXD-7054 - 01", "OXD-6001 - 02", "OXD-7075 - 03", "OXD-7045 - 04", "OXD-7065 - 05", "PZZ-2503 - 06", "PZZ-2507 - 07", "RNY-5H18 - 09", "RTP-5G07 - 10", "SIZ-8I26 - 11", "TCG-7G96 - 12", "TCX-6J60 - 13"],
+        history: {}, // { placa: ultimoKM }
+        days: {} // { "YYYY-MM-DD": { diesel: {s,e}, arla: {s,e}, entries: [] } }
+    };
 
-    document.getElementById('date').valueAsDate = new Date();
+    let today = new Date().toISOString().split('T')[0];
 
-    const form = document.getElementById('fuelForm');
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const newLog = {
-            id: Date.now(),
-            date: document.getElementById('date').value,
-            km: parseFloat(document.getElementById('km').value),
-            liters: parseFloat(document.getElementById('liters').value),
-            price: parseFloat(document.getElementById('price').value)
-        };
-        logs.push(newLog);
-        logs.sort((a, b) => new Date(b.date) - new Date(a.date));
-        saveAndRefresh();
-        form.reset();
-        document.getElementById('date').valueAsDate = new Date();
-    });
-
-    function saveAndRefresh() {
-        localStorage.setItem('vroom_fuel_logs', JSON.stringify(logs));
-        render();
+    function save() { 
+        localStorage.setItem('vale_paraiso_v2', JSON.stringify(db)); 
+        console.log("DB Salvo:", db);
     }
 
-    function deleteLog(id) {
-        if(confirm('Excluir este registro?')) {
-            logs = logs.filter(l => l.id !== id);
-            saveAndRefresh();
+    // CARREGAR DADOS INICIAIS
+    function init() {
+        // Controle de versão para forçar atualização no navegador
+        const currentVersion = "2.6_" + new Date().getTime(); // Versão única baseada no tempo
+        const savedVersion = localStorage.getItem('app_version');
+        
+        // Se a versão salva for diferente da atual, força o reload do navegador ignorando o cache
+        if (savedVersion !== currentVersion) {
+            localStorage.setItem('app_version', currentVersion);
+            console.log("Nova versão detectada: " + currentVersion);
+        }
+
+        document.getElementById('changeDate').value = today;
+        refreshDayData();
+        updatePlateUI();
+        renderTable();
+    }
+
+    function refreshDayData() {
+        if (!db.days[today]) {
+            db.days[today] = { diesel: {s:0, e:0}, arla: {s:0, e:0}, entries: [] };
+        }
+        const dayData = db.days[today];
+        document.getElementById('pump_diesel_start').value = dayData.diesel.s || "";
+        document.getElementById('pump_diesel_end').value = dayData.diesel.e || "";
+        document.getElementById('pump_arla_start').value = dayData.arla.s || "";
+        document.getElementById('pump_arla_end').value = dayData.arla.e || "";
+    }
+
+    function changeSystemDate(newDate) {
+        if (!newDate) return;
+        today = newDate;
+        console.log("Data alterada para:", today);
+        refreshDayData();
+        renderTable();
+    }
+
+    function updatePlateUI() {
+        const list = document.getElementById('platesList');
+        list.innerHTML = '';
+        db.plates.sort().forEach(p => {
+            let opt = document.createElement('option');
+            opt.value = p;
+            list.appendChild(opt);
+        });
+    }
+
+    function savePumps() {
+        db.days[today].diesel.s = parseFloat(document.getElementById('pump_diesel_start').value) || 0;
+        db.days[today].diesel.e = parseFloat(document.getElementById('pump_diesel_end').value) || 0;
+        db.days[today].arla.s = parseFloat(document.getElementById('pump_arla_start').value) || 0;
+        db.days[today].arla.e = parseFloat(document.getElementById('pump_arla_end').value) || 0;
+        save();
+    }
+
+    function savePlateToList() {
+        const p = document.getElementById('v_plate').value.trim().toUpperCase();
+        if (p && !db.plates.includes(p)) {
+            db.plates.push(p);
+            save();
+            updatePlateUI();
+            alert("Placa salva!");
         }
     }
 
-    function render() {
-        const body = document.getElementById('historyBody');
-        body.innerHTML = '';
+    function showExtraList() {
+        console.log("Iniciando showExtraList");
+        const container = document.getElementById('extraListButtons');
+        if (!container) {
+            alert("Erro: Container da lista não encontrado!");
+            return;
+        }
         
-        let totalSpent = 0;
-        let totalLiters = 0;
-        let minKM = logs.length > 0 ? logs[logs.length-1].km : 0;
-        let maxKM = logs.length > 0 ? logs[0].km : 0;
+        container.innerHTML = '';
+        const plates = db.plates || [];
+        
+        if (plates.length === 0) {
+            container.innerHTML = '<p class="text-center w-100">Nenhuma placa cadastrada.</p>';
+        } else {
+            plates.sort().forEach((p, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'd-flex align-items-center gap-1 mb-2 w-100';
+                
+                // Botão da Placa (Selecionar)
+                let btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-outline-dark fw-bold py-3 flex-grow-1 text-start px-3';
+                btn.style.fontSize = '1.1rem';
+                btn.innerText = p;
+                btn.onclick = function() {
+                    document.getElementById('v_plate').value = p;
+                    const modalEl = document.getElementById('extraListModal');
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                    modalInstance.hide();
+                    setTimeout(() => document.getElementById('v_km').focus(), 300);
+                };
+                
+                // Botão de Excluir Placa da Lista
+                let delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.className = 'btn btn-danger py-3 px-3';
+                delBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                delBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    if (confirm(`Deseja remover a placa ${p} da lista permanente?`)) {
+                        db.plates = db.plates.filter(plate => plate !== p);
+                        save();
+                        updatePlateUI();
+                        showExtraList(); // Recarrega a lista no modal
+                    }
+                };
+                
+                wrapper.appendChild(btn);
+                wrapper.appendChild(delBtn);
+                container.appendChild(wrapper);
+            });
+        }
+        
+        const modalEl = document.getElementById('extraListModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modalInstance.show();
+    }
 
-        logs.forEach((log, index) => {
-            const total = log.liters * log.price;
-            totalSpent += total;
-            totalLiters += log.liters;
+    // LANÇAMENTO DE VEÍCULO
+    document.getElementById('vehicleForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        console.log("Iniciando salvamento de veículo...");
+        
+        try {
+            const plate = document.getElementById('v_plate').value.trim().toUpperCase();
+            const km = parseFloat(document.getElementById('v_km').value);
+            const liters = parseFloat(document.getElementById('v_liters').value);
+            const arla = parseFloat(document.getElementById('v_arla').value) || 0;
 
-            let kml = '-';
-            if (index < logs.length - 1) {
-                const prevLog = logs[index + 1];
-                const kmDiff = log.km - prevLog.km;
-                kml = (kmDiff / log.liters).toFixed(2);
+            if (!plate || isNaN(km) || isNaN(liters)) {
+                alert("Por favor, preencha Placa, KM e Litros Diesel corretamente.");
+                return;
             }
 
-            const row = `<tr>
-                <td>${log.date.split('-').reverse().join('/')}</td>
-                <td>${log.km}</td>
-                <td>${log.liters}L</td>
-                <td>R$ ${log.price.toFixed(2)}</td>
-                <td>R$ ${total.toFixed(2)}</td>
-                <td><span class="badge bg-success">${kml}</span></td>
-                <td class="text-end"><i class="bi bi-trash text-danger" style="cursor:pointer" onclick="deleteLog(${log.id})"></i></td>
-            </tr>`;
-            body.innerHTML += row;
-        });
+            // Cálculo de KM Percorrido e Média
+            const lastKM = db.history[plate] || km;
+            const diffKM = km - lastKM;
+            const avg = diffKM > 0 ? (diffKM / liters).toFixed(2) : "0.00";
 
-        document.getElementById('totalSpent').innerText = `R$ ${totalSpent.toFixed(2)}`;
-        document.getElementById('totalLiters').innerText = `${totalLiters.toFixed(1)} L`;
+            const entry = {
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                plate, km, liters, arla, diffKM, avg
+            };
+
+            // Garantir estrutura do dia
+            if (!db.days[today]) {
+                db.days[today] = { diesel: {s:0, e:0}, arla: {s:0, e:0}, entries: [] };
+            }
+
+            db.days[today].entries.push(entry);
+            db.history[plate] = km; // Atualiza histórico global
+            save();
+            
+            this.reset();
+            renderTable();
+            document.getElementById('v_plate').focus();
+            console.log("Veículo salvo com sucesso!");
+        } catch (err) {
+            console.error("Erro ao salvar veículo:", err);
+            alert("Erro ao salvar! Tente atualizar a página.");
+        }
+    });
+
+    function renderTable() {
+        const body = document.getElementById('todayTableBody');
+        body.innerHTML = '';
+        db.days[today].entries.forEach((e, index) => {
+            body.innerHTML += `
+                <tr onclick="showEditMenu(${index})" style="cursor:pointer">
+                    <td>${e.time}</td>
+                    <td>${e.plate}</td>
+                    <td>${e.km}</td>
+                    <td>${e.liters} L</td>
+                    <td><span class="badge bg-success">${e.avg} KM/L</span></td>
+                    <td>${e.arla} L</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary py-0 px-2" title="Editar"><i class="bi bi-pencil-square"></i></button>
+                        <button class="btn btn-sm btn-danger py-0 px-2" onclick="event.stopPropagation(); deleteEntry(${index});" title="Excluir"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    let editingIndex = -1;
+    function showEditMenu(index) {
+        editingIndex = index;
+        const entry = db.days[today].entries[index];
+        const plate = entry.plate;
+
+        // Buscar o último KM válido ANTES deste lançamento específico
+        let lastValidKM = 0;
         
-        const kmRodados = logs.length > 1 ? (logs[0].km - logs[logs.length-1].km) : 0;
-        document.getElementById('totalKM').innerText = kmRodados;
+        // 1. Procurar em lançamentos ANTERIORES de hoje
+        const todayEntries = db.days[today].entries;
+        for (let i = index - 1; i >= 0; i--) {
+            if (todayEntries[i].plate === plate) {
+                lastValidKM = todayEntries[i].km;
+                break;
+            }
+        }
+        
+        // 2. Se não achou hoje, procurar em dias anteriores
+        if (lastValidKM === 0) {
+            const dates = Object.keys(db.days).sort().reverse();
+            for (const d of dates) {
+                if (d >= today) continue;
+                const dayEntries = db.days[d].entries;
+                for (let i = dayEntries.length - 1; i >= 0; i--) {
+                    if (dayEntries[i].plate === plate) {
+                        lastValidKM = dayEntries[i].km;
+                        break;
+                    }
+                }
+                if (lastValidKM !== 0) break;
+            }
+        }
 
-        const avg = totalLiters > 0 && kmRodados > 0 ? (kmRodados / (totalLiters - logs[logs.length-1].liters)).toFixed(2) : '0,00';
-        document.getElementById('avgConsum').innerText = avg;
+        document.getElementById('edit_plate').value = plate;
+        document.getElementById('edit_km').value = entry.km;
+        document.getElementById('edit_liters').value = entry.liters;
+        document.getElementById('edit_arla').value = entry.arla;
+        
+        // Mostrar KM anterior no modal (adicionar campo se não existir ou usar um label)
+        const lastKmLabel = document.getElementById('edit_last_km_label');
+        if (lastKmLabel) {
+            lastKmLabel.innerText = lastValidKM > 0 ? lastValidKM : "Não encontrado";
+            lastKmLabel.dataset.value = lastValidKM;
+        }
+        
+        new bootstrap.Modal(document.getElementById('editEntryModal')).show();
     }
 
-    function exportCSV() {
-        if (logs.length === 0) return alert('Sem dados para exportar');
-        let csv = 'Data,KM,Litros,PrecoPorLitro,Total\n';
-        logs.forEach(l => {
-            csv += `${l.date},${l.km},${l.liters},${l.price},${(l.liters * l.price).toFixed(2)}\n`;
+    function saveEdit() {
+        if (editingIndex === -1) return;
+        
+        const plate = document.getElementById('edit_plate').value.trim().toUpperCase();
+        const km = parseFloat(document.getElementById('edit_km').value);
+        const liters = parseFloat(document.getElementById('edit_liters').value);
+        const arla = parseFloat(document.getElementById('edit_arla').value) || 0;
+        
+        // Recuperar o KM anterior que calculamos no showEditMenu
+        const lastValidKM = parseFloat(document.getElementById('edit_last_km_label').dataset.value) || km;
+
+        const diffKM = km - lastValidKM;
+        const avg = (diffKM > 0 && liters > 0) ? (diffKM / liters).toFixed(2) : "0.00";
+
+        db.days[today].entries[editingIndex] = {
+            ...db.days[today].entries[editingIndex],
+            plate, km, liters, arla, diffKM, avg
+        };
+        
+        // Atualizar o histórico global apenas se este for o lançamento mais recente da placa
+        updateGlobalHistory(plate);
+        
+        save();
+        renderTable();
+        bootstrap.Modal.getInstance(document.getElementById('editEntryModal')).hide();
+    }
+
+    function updateGlobalHistory(plate) {
+        const dates = Object.keys(db.days).sort().reverse();
+        for (const d of dates) {
+            const entries = db.days[d].entries;
+            for (let i = entries.length - 1; i >= 0; i--) {
+                if (entries[i].plate === plate) {
+                    db.history[plate] = entries[i].km;
+                    return;
+                }
+            }
+        }
+    }
+
+    function deleteCurrentEntry() {
+        if (confirm("Tem certeza que deseja EXCLUIR este lançamento?")) {
+            const entry = db.days[today].entries[editingIndex];
+            const plate = entry.plate;
+            
+            // Remove o lançamento
+            db.days[today].entries.splice(editingIndex, 1);
+            
+            // Recalcula o KM de referência para essa placa no banco (db.history)
+            // Procuramos o lançamento mais recente dessa placa em todo o histórico (começando por hoje)
+            let foundNewHistory = false;
+            
+            // 1. Procurar em hoje (depois de removido)
+            const todayEntries = db.days[today].entries;
+            for (let i = todayEntries.length - 1; i >= 0; i--) {
+                if (todayEntries[i].plate === plate) {
+                    db.history[plate] = todayEntries[i].km;
+                    foundNewHistory = true;
+                    break;
+                }
+            }
+            
+            // 2. Se não achou hoje, procurar em dias anteriores (ordem decrescente)
+            if (!foundNewHistory) {
+                const dates = Object.keys(db.days).sort().reverse();
+                for (const d of dates) {
+                    if (d >= today) continue; // Pula hoje e datas futuras
+                    const dayEntries = db.days[d].entries;
+                    for (let i = dayEntries.length - 1; i >= 0; i--) {
+                        if (dayEntries[i].plate === plate) {
+                            db.history[plate] = dayEntries[i].km;
+                            foundNewHistory = true;
+                            break;
+                        }
+                    }
+                    if (foundNewHistory) break;
+                }
+            }
+            
+            // 3. Se ainda assim não achou nada, remove a placa do histórico de KMs
+            if (!foundNewHistory) {
+                delete db.history[plate];
+            }
+
+            save();
+            renderTable();
+            bootstrap.Modal.getInstance(document.getElementById('editEntryModal')).hide();
+        }
+    }
+
+    function deleteEntry(index) {
+        // Agora delegamos para a função que lida com histórico corretamente
+        editingIndex = index;
+        deleteCurrentEntry();
+    }
+
+    // RELATÓRIO FINAL
+    function finalizeDay() {
+        const day = db.days[today];
+        if (day.entries.length === 0) return alert("Nenhum lançamento hoje.");
+        
+        document.querySelector('.container.no-print').style.display = 'none';
+        document.querySelector('.header-panel').style.display = 'none';
+        document.getElementById('reportArea').style.display = 'block';
+        
+        document.getElementById('reportDateHeader').innerText = today.split('-').reverse().join('/');
+        
+        // Bombas
+        const d_total = (day.diesel.e - day.diesel.s).toFixed(2);
+        const a_total = (day.arla.e - day.arla.s).toFixed(2);
+        
+        document.getElementById('r_diesel_start').innerText = day.diesel.s;
+        document.getElementById('r_diesel_end').innerText = day.diesel.e;
+        document.getElementById('r_diesel_total_pump').innerText = d_total;
+        
+        document.getElementById('r_arla_start').innerText = day.arla.s;
+        document.getElementById('r_arla_end').innerText = day.arla.e;
+        document.getElementById('r_arla_total_pump').innerText = a_total;
+
+        // Tabela Relatório
+        const repBody = document.getElementById('reportTableBody');
+        repBody.innerHTML = '';
+        let sumDiesel = 0;
+        let sumKM = 0;
+        
+        day.entries.forEach(e => {
+            sumDiesel += e.liters;
+            sumKM += e.diffKM;
+            repBody.innerHTML += `
+                <tr>
+                    <td>${e.plate}</td>
+                    <td>${e.km}</td>
+                    <td>${e.diffKM}</td>
+                    <td>${e.liters}</td>
+                    <td>${e.avg}</td>
+                    <td>${e.arla}</td>
+                </tr>
+            `;
         });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.setAttribute('href', url);
-        a.setAttribute('download', 'combustivel_vroom.csv');
-        a.click();
+
+        document.getElementById('r_total_v_diesel').innerText = sumDiesel.toFixed(2);
+        document.getElementById('r_diff_diesel').innerText = (d_total - sumDiesel).toFixed(2);
+        document.getElementById('r_avg_fleet').innerText = sumDiesel > 0 ? (sumKM / sumDiesel).toFixed(2) : "0.00";
     }
 
-    render();
-</script>
+    function shareExcel() {
+        const day = db.days[today];
+        generateExcelForDay(today, day);
+    }
 
+    function generateExcelForDay(dateStr, dayData) {
+        if (!dayData || dayData.entries.length === 0) {
+            alert("Não há lançamentos para esta data.");
+            return;
+        }
+        
+        try {
+            let data = [
+                ["RELATÓRIO VALE DO PARAÍSO", dateStr.split('-').reverse().join('/')],
+                [],
+                ["BOMBA DIESEL", "INÍCIO", "FINAL", "TOTAL"],
+                ["DIESEL", dayData.diesel.s, dayData.diesel.e, (dayData.diesel.e - dayData.diesel.s).toFixed(2)],
+                ["ARLA", dayData.arla.s, dayData.arla.e, (dayData.arla.e - dayData.arla.s).toFixed(2)],
+                [],
+                ["PLACA", "KM ATUAL", "KM PERCORRIDO", "L DIESEL", "MÉDIA", "L ARLA"]
+            ];
+
+            dayData.entries.forEach(e => {
+                data.push([e.plate, e.km, e.diffKM, e.liters, e.avg, e.arla]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Combustível");
+            const wbout = XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
+            const blob = new Blob([wbout], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+            const fileName = `Relatorio_Vale_${dateStr.split('-').reverse().join('_')}.xlsx`;
+            const file = new File([blob], fileName, {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    files: [file],
+                    title: 'Relatório Vale do Paraíso',
+                    text: `Segue relatório de combustível - ${dateStr.split('-').reverse().join('/')}`
+                }).catch(err => {
+                    console.error("Erro no compartilhamento:", err);
+                    downloadFallback(blob, fileName);
+                });
+            } else {
+                downloadFallback(blob, fileName);
+            }
+        } catch (err) {
+            console.error("Erro ao gerar Excel:", err);
+            alert("Erro ao gerar o arquivo. Tente novamente.");
+        }
+    }
+
+    function downloadFallback(blob, fileName) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        alert("O arquivo foi baixado. Agora você pode anexá-lo no WhatsApp.");
+    }
+
+    function shareText() {
+        const day = db.days[today];
+        if (!day || day.entries.length === 0) return alert("Sem dados.");
+        
+        let text = `*VALE DO PARAÍSO - ${today.split('-').reverse().join('/')}*\n\n`;
+        text += `*BOMBA DIESEL:* ${day.diesel.s} -> ${day.diesel.e} (Total: ${(day.diesel.e-day.diesel.s).toFixed(2)}L)\n`;
+        text += `*BOMBA ARLA:* ${day.arla.s} -> ${day.arla.e} (Total: ${(day.arla.e-day.arla.s).toFixed(2)}L)\n\n`;
+        text += `*LANÇAMENTOS:*\n`;
+        
+        day.entries.forEach(e => {
+            text += `- ${e.plate}: ${e.liters}L | Média: ${e.avg}\n`;
+        });
+        
+        const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    }
+
+    function generatePDF() {
+        const element = document.getElementById('reportArea');
+        const options = {
+            margin: 10,
+            filename: `Relatorio_Vale_${today.split('-').reverse().join('_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Esconder botões na geração do PDF
+        document.querySelector('#reportArea .no-print').style.display = 'none';
+
+        html2pdf().set(options).from(element).toPdf().get('pdf').then(function(pdf) {
+            const blob = pdf.output('blob');
+            const fileName = options.filename;
+            const file = new File([blob], fileName, { type: 'application/pdf' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    files: [file],
+                    title: 'Relatório Vale do Paraíso',
+                    text: 'Segue relatório de combustível em PDF'
+                }).then(() => {
+                    document.querySelector('#reportArea .no-print').style.display = 'block';
+                }).catch(err => {
+                    console.error("Erro ao compartilhar:", err);
+                    pdf.save(fileName);
+                    document.querySelector('#reportArea .no-print').style.display = 'block';
+                });
+            } else {
+                pdf.save(fileName);
+                document.querySelector('#reportArea .no-print').style.display = 'block';
+                alert("O PDF foi baixado. Agora você pode anexá-lo no WhatsApp.");
+            }
+        });
+    }
+
+    function showHistory() {
+        const list = document.getElementById('historyList');
+        list.innerHTML = '';
+        
+        // Pegar todos os dias que tem lançamentos, ordenados pelo mais recente
+        const sortedDays = Object.keys(db.days).sort((a,b) => b.localeCompare(a));
+        
+        // Filtrar apenas o mês atual para não sobrecarregar
+        const currentMonth = new Date().toISOString().substring(0, 7); // "YYYY-MM"
+        
+        const monthDays = sortedDays.filter(d => d.startsWith(currentMonth));
+
+        if (monthDays.length === 0) {
+            list.innerHTML = '<p class="text-center p-3">Nenhum relatório salvo este mês.</p>';
+        } else {
+            monthDays.forEach(d => {
+                const dayData = db.days[d];
+                const count = dayData.entries.length;
+                if (count > 0) {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        <div>
+                            <strong>${d.split('-').reverse().join('/')}</strong>
+                            <br><small class="text-muted">${count} lançamentos</small>
+                        </div>
+                        <button class="btn btn-sm btn-success" onclick="generateExcelForDay('${d}', db.days['${d}'])">
+                            <i class="bi bi-file-earmark-excel"></i> Baixar Excel
+                        </button>
+                    `;
+                    list.appendChild(item);
+                }
+            });
+        }
+        
+        new bootstrap.Modal(document.getElementById('historyModal')).show();
+    }
+
+    window.onload = init;
+</script>
 </body>
 </html>
