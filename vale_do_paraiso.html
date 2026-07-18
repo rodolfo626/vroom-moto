@@ -169,6 +169,10 @@
                     <label class="form-label fw-bold">Placa</label>
                     <input type="text" class="form-control" id="edit_plate">
                 </div>
+                <div class="mb-3 p-2 bg-light border rounded">
+                    <small class="text-muted d-block">Último KM Válido:</small>
+                    <span id="edit_last_km_label" class="fw-bold text-primary" data-value="0">0</span>
+                </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">KM Atual</label>
                     <input type="number" class="form-control" id="edit_km">
@@ -447,11 +451,47 @@
     function showEditMenu(index) {
         editingIndex = index;
         const entry = db.days[today].entries[index];
+        const plate = entry.plate;
+
+        // Buscar o último KM válido ANTES deste lançamento específico
+        let lastValidKM = 0;
         
-        document.getElementById('edit_plate').value = entry.plate;
+        // 1. Procurar em lançamentos ANTERIORES de hoje
+        const todayEntries = db.days[today].entries;
+        for (let i = index - 1; i >= 0; i--) {
+            if (todayEntries[i].plate === plate) {
+                lastValidKM = todayEntries[i].km;
+                break;
+            }
+        }
+        
+        // 2. Se não achou hoje, procurar em dias anteriores
+        if (lastValidKM === 0) {
+            const dates = Object.keys(db.days).sort().reverse();
+            for (const d of dates) {
+                if (d >= today) continue;
+                const dayEntries = db.days[d].entries;
+                for (let i = dayEntries.length - 1; i >= 0; i--) {
+                    if (dayEntries[i].plate === plate) {
+                        lastValidKM = dayEntries[i].km;
+                        break;
+                    }
+                }
+                if (lastValidKM !== 0) break;
+            }
+        }
+
+        document.getElementById('edit_plate').value = plate;
         document.getElementById('edit_km').value = entry.km;
         document.getElementById('edit_liters').value = entry.liters;
         document.getElementById('edit_arla').value = entry.arla;
+        
+        // Mostrar KM anterior no modal (adicionar campo se não existir ou usar um label)
+        const lastKmLabel = document.getElementById('edit_last_km_label');
+        if (lastKmLabel) {
+            lastKmLabel.innerText = lastValidKM > 0 ? lastValidKM : "Não encontrado";
+            lastKmLabel.dataset.value = lastValidKM;
+        }
         
         new bootstrap.Modal(document.getElementById('editEntryModal')).show();
     }
@@ -464,31 +504,36 @@
         const liters = parseFloat(document.getElementById('edit_liters').value);
         const arla = parseFloat(document.getElementById('edit_arla').value) || 0;
         
-        // Recalcular média
-        const dayEntries = db.days[today].entries;
-        // Pega o KM anterior (se houver um lançamento anterior para esta placa HOJE)
-        let previousKM = 0;
-        for (let i = editingIndex - 1; i >= 0; i--) {
-            if (dayEntries[i].plate === plate) {
-                previousKM = dayEntries[i].km;
-                break;
-            }
-        }
-        // Se não achou hoje, usa o KM de referência do db.history (aproximação)
-        if (previousKM === 0) previousKM = km - dayEntries[editingIndex].diffKM;
+        // Recuperar o KM anterior que calculamos no showEditMenu
+        const lastValidKM = parseFloat(document.getElementById('edit_last_km_label').dataset.value) || km;
 
-        const diffKM = km - previousKM;
-        const avg = diffKM > 0 ? (diffKM / liters).toFixed(2) : "0.00";
+        const diffKM = km - lastValidKM;
+        const avg = (diffKM > 0 && liters > 0) ? (diffKM / liters).toFixed(2) : "0.00";
 
-        dayEntries[editingIndex] = {
-            ...dayEntries[editingIndex],
+        db.days[today].entries[editingIndex] = {
+            ...db.days[today].entries[editingIndex],
             plate, km, liters, arla, diffKM, avg
         };
         
-        db.history[plate] = km;
+        // Atualizar o histórico global apenas se este for o lançamento mais recente da placa
+        updateGlobalHistory(plate);
+        
         save();
         renderTable();
         bootstrap.Modal.getInstance(document.getElementById('editEntryModal')).hide();
+    }
+
+    function updateGlobalHistory(plate) {
+        const dates = Object.keys(db.days).sort().reverse();
+        for (const d of dates) {
+            const entries = db.days[d].entries;
+            for (let i = entries.length - 1; i >= 0; i--) {
+                if (entries[i].plate === plate) {
+                    db.history[plate] = entries[i].km;
+                    return;
+                }
+            }
+        }
     }
 
     function deleteCurrentEntry() {
