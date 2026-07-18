@@ -271,15 +271,13 @@
     // CARREGAR DADOS INICIAIS
     function init() {
         // Controle de versão para forçar atualização no navegador
-        const currentVersion = "2.5";
+        const currentVersion = "2.6_" + new Date().getTime(); // Versão única baseada no tempo
         const savedVersion = localStorage.getItem('app_version');
+        
+        // Se a versão salva for diferente da atual, força o reload do navegador ignorando o cache
         if (savedVersion !== currentVersion) {
             localStorage.setItem('app_version', currentVersion);
-            if (savedVersion) {
-                alert("Nova atualização instalada! O sistema será recarregado.");
-                window.location.reload(true);
-                return;
-            }
+            console.log("Nova versão detectada: " + currentVersion);
         }
 
         document.getElementById('changeDate').value = today;
