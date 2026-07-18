@@ -493,7 +493,48 @@
 
     function deleteCurrentEntry() {
         if (confirm("Tem certeza que deseja EXCLUIR este lançamento?")) {
+            const entry = db.days[today].entries[editingIndex];
+            const plate = entry.plate;
+            
+            // Remove o lançamento
             db.days[today].entries.splice(editingIndex, 1);
+            
+            // Recalcula o KM de referência para essa placa no banco (db.history)
+            // Procuramos o lançamento mais recente dessa placa em todo o histórico (começando por hoje)
+            let foundNewHistory = false;
+            
+            // 1. Procurar em hoje (depois de removido)
+            const todayEntries = db.days[today].entries;
+            for (let i = todayEntries.length - 1; i >= 0; i--) {
+                if (todayEntries[i].plate === plate) {
+                    db.history[plate] = todayEntries[i].km;
+                    foundNewHistory = true;
+                    break;
+                }
+            }
+            
+            // 2. Se não achou hoje, procurar em dias anteriores (ordem decrescente)
+            if (!foundNewHistory) {
+                const dates = Object.keys(db.days).sort().reverse();
+                for (const d of dates) {
+                    if (d >= today) continue; // Pula hoje e datas futuras
+                    const dayEntries = db.days[d].entries;
+                    for (let i = dayEntries.length - 1; i >= 0; i--) {
+                        if (dayEntries[i].plate === plate) {
+                            db.history[plate] = dayEntries[i].km;
+                            foundNewHistory = true;
+                            break;
+                        }
+                    }
+                    if (foundNewHistory) break;
+                }
+            }
+            
+            // 3. Se ainda assim não achou nada, remove a placa do histórico de KMs
+            if (!foundNewHistory) {
+                delete db.history[plate];
+            }
+
             save();
             renderTable();
             bootstrap.Modal.getInstance(document.getElementById('editEntryModal')).hide();
@@ -501,12 +542,9 @@
     }
 
     function deleteEntry(index) {
-        // Mantido apenas por compatibilidade, mas agora usamos o showEditMenu
-        if (confirm("Excluir este lançamento?")) {
-            db.days[today].entries.splice(index, 1);
-            save();
-            renderTable();
-        }
+        // Agora delegamos para a função que lida com histórico corretamente
+        editingIndex = index;
+        deleteCurrentEntry();
     }
 
     // RELATÓRIO FINAL
