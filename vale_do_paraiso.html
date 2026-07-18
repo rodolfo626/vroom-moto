@@ -270,6 +270,18 @@
 
     // CARREGAR DADOS INICIAIS
     function init() {
+        // Controle de versão para forçar atualização no navegador
+        const currentVersion = "2.5";
+        const savedVersion = localStorage.getItem('app_version');
+        if (savedVersion !== currentVersion) {
+            localStorage.setItem('app_version', currentVersion);
+            if (savedVersion) {
+                alert("Nova atualização instalada! O sistema será recarregado.");
+                window.location.reload(true);
+                return;
+            }
+        }
+
         document.getElementById('changeDate').value = today;
         refreshDayData();
         updatePlateUI();
